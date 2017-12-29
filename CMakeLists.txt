@@ -1,6 +1,6 @@
 ## CMakeLists.txt for general camera driver
-#
-#
+# author: Shane Yuan
+# date: Dec 29, 2017
 #
 
 cmake_minimum_required (VERSION 3.1)
@@ -29,15 +29,30 @@ set(CUDA_NVCC_FLAGS
     )
 
 set(MY_HEADER_FILES
+    Exceptions.h
+    helper_cuda.h
+    helper_string.h
+    NPPJpegCoder.h
+    GenCameraDriver.hpp
+    # point grey camera
+    PointGrey/PointGreyCamera.h
+    # XIMEA camera
+    XIMEA/XIMEACamera.h
     # C++ header file
     cuda/NPPJpegCoderKernel.h
 )
 
 set(MY_SOURCE_FILES 
+    # point grey camera
+    PointGrey/PointGreyCamera.cpp
+    # XIMEA camera
+    XIMEA/XIMEACamera.cpp
     # C++ source file
     NPPJpegCoder.cpp
     # cuda source file
     cuda/NPPJpegCoderKernel.cu
+    # main function
+    main.cpp
 )
 
 include_directories(
