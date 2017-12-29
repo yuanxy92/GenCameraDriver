@@ -7,10 +7,10 @@ cmake_minimum_required (VERSION 3.1)
 set(name "GenCameraDriver")
 project ( ${name} )
 
-#c++ version
+# c++ version
 set (CMAKE_CXX_STANDARD 11)
 
-#opencv 
+# opencv 
 if ( WIN32 )
     set(OpenCV_DIR "E:/libs/OpenCV/x64/vc14/lib")
     set(OpenCV_CONFIG_PATH "E:/libs/OpenCV")
@@ -20,7 +20,7 @@ endif()
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-#cuda
+# cuda
 find_package(CUDA)
 set(CUDA_NVCC_FLAGS
     ${CUDA_NVCC_FLAGS}
@@ -28,12 +28,24 @@ set(CUDA_NVCC_FLAGS
 	-gencode=arch=compute_61,code=\"sm_61,compute_61\"
     )
 
+# pointgrey camera sdk
+set(PTGREY_SDK_INCLUDE_DIR "C:/Program Files/Point Grey Research/Spinnaker/include")
+set(PTGREY_SDK_LIBRARY_DEBUG "C:/Program Files/Point Grey Research/Spinnaker/lib64/vs2015/Spinnakerd_v140.lib")
+set(PTGREY_SDK_LIBRARY_RELEASE "C:/Program Files/Point Grey Research/Spinnaker/lib64/vs2015/Spinnaker_v140.lib")
+include_directories(${PTGREY_SDK_INCLUDE_DIR})
+
+# XIMEA camera
+set(XIMEA_SDK_INCLUDE_DIR "C:/XIMEA/API")
+set(XIMEA_SDK_LIBRARY_DEBUG "C:/XIMEA/API/x64/xiapi64.lib")
+set(XIMEA_SDK_LIBRARY_RELEASE "C:/XIMEA/API/x64/xiapi64.lib")
+include_directories(${XIMEA_SDK_INCLUDE_DIR})
+
 set(MY_HEADER_FILES
     Exceptions.h
     helper_cuda.h
     helper_string.h
     NPPJpegCoder.h
-    GenCameraDriver.hpp
+    GenCameraDriver.h
     # point grey camera
     PointGrey/PointGreyCamera.h
     # XIMEA camera
@@ -51,8 +63,25 @@ set(MY_SOURCE_FILES
     NPPJpegCoder.cpp
     # cuda source file
     cuda/NPPJpegCoderKernel.cu
+    # general camera driver
+    GenCameraDriver.cpp
     # main function
     main.cpp
+)
+
+source_group("PointGrey" FILES
+    PointGrey/PointGreyCamera.h
+    PointGrey/PointGreyCamera.cpp 
+)
+
+source_group("XIMEA" FILES
+    XIMEA/XIMEACamera.h
+    XIMEA/XIMEACamera.cpp
+)
+
+source_group("cuda" FILES
+    cuda/NPPJpegCoderKernel.h
+    cuda/NPPJpegCoderKernel.cu
 )
 
 include_directories(
@@ -71,6 +100,6 @@ target_link_libraries(${name}
     ${OpenCV_LIBS}
     ${CUDA_npp_LIBRARY}
     ${CUDA_nppc_LIBRARY}
-    debug ${PTGREY_SDK_LIBRARY_DEBUG}
-    optimized ${PTGREY_SDK_LIBRARY_RELEASE}
+    debug ${PTGREY_SDK_LIBRARY_DEBUG} ${XIMEA_SDK_LIBRARY_DEBUG}
+    optimized ${PTGREY_SDK_LIBRARY_RELEASE} ${XIMEA_SDK_LIBRARY_RELEASE}
 )
