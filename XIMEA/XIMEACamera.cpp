@@ -5,8 +5,6 @@ Implementation of XIMEA camera
 @date Dec 29, 2017
 */
 
-
-
 #include "XIMEACamera.h"
 
 namespace cam {
@@ -60,7 +58,7 @@ namespace cam {
 	*/
 	int GenCameraXIMEA::startCapture() {
 		for (size_t i = 0; i < this->cameraNum; i++) {
-			//checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_EXPOSURE, 50000));
+			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_AEAG, 1));
 			checkXIMEAErrors(xiStartAcquisition(hcams[i]));
 		}
 		this->isCapture = true;
