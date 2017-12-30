@@ -28,6 +28,12 @@
 
 namespace cam {
 
+	class GenCamInfo {
+		std::string sn;
+		int width;
+		int height;
+	}
+
 	enum class CameraModel {
 		XIMEA_xiC,
 		PointGrey_u3
@@ -38,6 +44,7 @@ namespace cam {
 		CameraModel camModel;
 		bool isInit;
 		bool isCapture;
+		std::vector<std::vector<cv::Mat>> bufferImgs;
 	public:
 
 	protected:
@@ -69,6 +76,27 @@ namespace cam {
 		@return int
 		*/
 		virtual int release() = 0;
+
+		/**
+		@brief set frame rate
+		@param int fps: input fps
+		@return int
+		*/
+		virtual int setFPS(int fps) = 0;
+
+		/**
+		@brief set camera buffer size
+		@param int bufferSize: input buffer size
+		@return int
+		*/
+		virtual int setBufferSize(int bufferSize) = 0;
+
+		/**
+		@brief get camera information
+		@param std::vector<GenCamInfo> & camInfos: output camera infos
+		@return int
+		*/
+		virtual int getCamInfos(std::vector<GenCamInfo> camInfos) = 0;
 
 		/**
 		@brief capture images
