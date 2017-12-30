@@ -140,11 +140,13 @@ namespace cam {
 		/*                     capturing function                    */
 		/*************************************************************/
 		/**
-		@brief set camera buffer size
-		@param int bufferSize: input buffer size
-		@return int
+		@brief set capturing mode
+		@param GenCamCaptureMode captureMode: capture mode
+		@param int size: buffer size
+		@return
 		*/
-		int setBufferSize(int bufferSize) override;
+		int setCaptureMode(GenCamCaptureMode captureMode,
+			int bufferSize) override;
 
 		/**
 		@brief capture images

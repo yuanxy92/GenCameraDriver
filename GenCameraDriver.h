@@ -144,9 +144,12 @@ namespace cam {
 	*/
 	class GenCamera {
 	protected:
+		// camera model
 		CameraModel camModel;
+		// camera status
 		bool isInit;
 		bool isCapture;
+		// camera buffer
 		std::vector<std::vector<cv::Mat>> bufferImgs;
 		size_t cameraNum;
 	public:
