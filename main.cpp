@@ -20,10 +20,18 @@
 #include "GenCameraDriver.h"
 
 int main(int argc, char* argv[]) {
+	std::vector<cam::GenCamInfo> camInfos;
 	std::shared_ptr<cam::GenCamera> cameraPtr 
 		= cam::createCamera(cam::CameraModel::XIMEA_xiC);
 	cameraPtr->init();
+	cameraPtr->getCamInfos(camInfos);
 	cameraPtr->startCapture();
+	cameraPtr->setFPS(-1, 20);
+	cameraPtr->setAutoExposure(-1, cam::Status::on);
+	cameraPtr->setAutoExposureLevel(-1, 40);
+	cameraPtr->setAutoWhiteBalance(-1, cam::Status::on);
+	cameraPtr->makeSetEffective();
+
 	std::vector<cv::Mat> imgs(2);
 	cameraPtr->captureOneFrameBayer(imgs);
 	cameraPtr->release();

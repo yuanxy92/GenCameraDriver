@@ -34,16 +34,27 @@ namespace cam {
 	public:
 
 	private:
+		
 
 	public:
 		GenCameraXIMEA();
 		~GenCameraXIMEA();
 
+		/***********************************************************/
+		/*                   basic camera functions                */
+		/***********************************************************/
 		/**
 		@brief init camera
 		@return int
 		*/
 		int init() override;
+
+		/**
+		@brief get camera information
+		@param std::vector<GenCamInfo> & camInfos: output camera infos
+		@return int
+		*/
+		int getCamInfos(std::vector<GenCamInfo> & camInfos) override;
 
 		/**
 		@brief start capture images
@@ -62,6 +73,78 @@ namespace cam {
 		@return int
 		*/
 		int release() override;
+
+		/***********************************************************/
+		/*                  camera setting functions               */
+		/***********************************************************/
+		/**
+		@brief set frame rate
+		@param float fps: input fps
+		@return int
+		*/
+		int setFPS(int camInd, float fps) override;
+
+		/**
+		@brief set auto white balance
+		@param int ind: index of camera (-1 means all the cameras)
+		@param Status autoWB: if use auto white balance
+		@return int
+		*/
+		int setAutoWhiteBalance(int camInd, Status autoWB) override;
+
+		/**
+		@brief set white balance
+		@param int camInd: index of camera (-1 means all the cameras)
+		@param float red: gain of red channel
+		@param float green: gain of green channel
+		@param float blue: gain of blur channel
+		@return int
+		*/
+		int setWhiteBalance(int camInd, float red,
+			float green, float blue) override;
+
+		/**
+		@brief set auto exposure
+		@param int ind: index of camera (-1 means all the cameras)
+		@param Status autoExposure: if use auto exposure 
+		@return int
+		*/
+		int setAutoExposure(int camInd, Status autoExposure) override;
+
+		/**
+		@brief set auto exposure level
+		@param int ind: index of camera (-1 means all the cameras)
+		@param float level: auto exposure level, average intensity of output
+		signal AEAG should achieve
+		@return int
+		*/
+		int setAutoExposureLevel(int camInd, float level) override;
+
+		/**
+		@brief set exposure time
+		@param int ind: index of camera (-1 means all the cameras)
+		@param int time: exposure time (in microseconds)
+		@return int
+		*/
+		int setExposure(int camInd, int time) override;
+
+		/**
+		@brief make setting effective
+		by capturing some frames
+		@param int k: capture image frames (default is 10)
+		@return int
+		*/
+		int makeSetEffective(int k = 10) override;
+
+		/*************************************************************/
+		/*                     capturing function                    */
+		/*************************************************************/
+		/**
+		@brief set camera buffer size
+		@param int bufferSize: input buffer size
+		@return int
+		*/
+		int setBufferSize(int bufferSize) override;
 
 		/**
 		@brief capture images
