@@ -134,9 +134,10 @@ namespace cam {
 	@brief capture mode class
 	*/
 	enum class GenCamCaptureMode {
-		NoBuffer,
-		Buffer,
-		BufferTrigger
+		Single, // capture one by one without buffer
+		Continous, // capture and buffer images
+		SingleTrigger,
+		ContinousTrigger
 	};
 
 	/**
@@ -152,6 +153,8 @@ namespace cam {
 		// camera buffer
 		std::vector<std::vector<cv::Mat>> bufferImgs;
 		size_t cameraNum;
+		std::vector<std::thread> ths; // threads to capture images
+		std::vector<int> thStatus; // status of capturing threads
 	public:
 
 	protected:
@@ -259,13 +262,18 @@ namespace cam {
 		/*                     capturing function                    */
 		/*************************************************************/
 		/**
+		@brief multi-thread capturing method
+		*/
+		int capture_thread_(std::vector<cv::Mat> imgs);
+
+		/**
 		@brief set capturing mode
 		@param GenCamCaptureMode captureMode: capture mode
 		@param int size: buffer size
 		@return
 		*/
-		virtual int setCaptureMode(GenCamCaptureMode captureMode,
-			int bufferSize) = 0;
+		int setCaptureMode(GenCamCaptureMode captureMode,
+			int bufferSize);
 
 		/**
 		@brief capture images

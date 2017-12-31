@@ -77,6 +77,8 @@ namespace cam {
 			memset(&xiImages[i], 0, sizeof(xiImages[i]));
 			xiImages[i].size = sizeof(XI_IMG);
 		}
+		ths.resize(this->cameraNum);
+		thStatus.resize(this->cameraNum);
 		this->isInit = true;
 		return 0;
 	}
@@ -284,34 +286,6 @@ namespace cam {
 	/*************************************************************/
 	/*                     capturing function                    */
 	/*************************************************************/
-	/**
-	@brief set capturing mode
-	@param GenCamCaptureMode captureMode: capture mode
-	@param int size: buffer size
-	@return
-	*/
-	int GenCameraXIMEA::setCaptureMode(GenCamCaptureMode captureMode,
-		int bufferSize) {
-		if (captureMode == cam::GenCamCaptureMode::Buffer ||
-			captureMode == cam::GenCamCaptureMode::BufferTrigger) {
-			// resize vector
-			this->bufferImgs.resize(bufferSize);
-			for (size_t i = 0; i < this->cameraNum; i ++) {
-				this->bufferImgs[i].resize(this->cameraNum);
-			}
-			// malloc mat memory
-			for (size_t i = 0; i < this->cameraNum; i ++) {
-				int width, height;
-				checkXIMEAErrors(xiGetParamInt(hcams[i], XI_PRM_WIDTH, &width));
-				checkXIMEAErrors(xiGetParamInt(hcams[i], XI_PRM_HEIGHT, &height));
-				for (size_t j = 0; j < bufferSize; j ++) {
-					this->bufferImgs[j][i].create(height, width, CV_8U);
-				}		
-			}
-		}
-		return 0;
-	}
-
 	/**
 	@brief capture images
 	@param std::vector<cv::Mat> & imgs: output captured images

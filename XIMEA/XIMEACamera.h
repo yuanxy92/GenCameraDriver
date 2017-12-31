@@ -140,15 +140,6 @@ namespace cam {
 		/*                     capturing function                    */
 		/*************************************************************/
 		/**
-		@brief set capturing mode
-		@param GenCamCaptureMode captureMode: capture mode
-		@param int size: buffer size
-		@return
-		*/
-		int setCaptureMode(GenCamCaptureMode captureMode,
-			int bufferSize) override;
-
-		/**
 		@brief capture images
 		@param std::vector<cv::Mat> & imgs: output captured images
 		@return int

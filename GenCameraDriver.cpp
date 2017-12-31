@@ -23,5 +23,39 @@ namespace cam {
 		}
 	}
 
+	/**
+	@brief set capturing mode
+	@param GenCamCaptureMode captureMode: capture mode
+	@param int size: buffer size
+	@return
+	*/
+	int GenCamera::setCaptureMode(GenCamCaptureMode captureMode,
+		int bufferSize) {
+		// get camera info
+		std::vector<GenCamInfo> camInfos;
+		this->getCamInfos(camInfos);
+		// init capture buffer
+		if (captureMode == cam::GenCamCaptureMode::Continous ||
+			captureMode == cam::GenCamCaptureMode::ContinousTrigger) {
+			// resize vector
+			this->bufferImgs.resize(bufferSize);
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				this->bufferImgs[i].resize(this->cameraNum);
+			}
+			// malloc mat memory
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				int width, height;
+				width = camInfos[i].width;
+				height = camInfos[i].height;
+				for (size_t j = 0; j < bufferSize; j++) {
+					this->bufferImgs[j][i].create(height, width, CV_8U);
+				}
+			}
+		}
+		// start capturing
+
+		return 0;
+	}
+
 }
 
