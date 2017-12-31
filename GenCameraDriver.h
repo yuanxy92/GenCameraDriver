@@ -301,6 +301,9 @@ namespace cam {
 		*/
 		virtual int captureFrame(int camInd, cv::Mat & img) = 0;
 
+		/*************************************************************/
+		/*                   non-virtual function                    */
+		/*************************************************************/
 		/**
 		@brief multi-thread capturing function 
 		used for continous mode
