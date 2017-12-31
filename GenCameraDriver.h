@@ -147,14 +147,24 @@ namespace cam {
 	protected:
 		// camera model
 		CameraModel camModel;
+		std::vector<GenCamInfo> camInfos;
 		// camera status
 		bool isInit;
 		bool isCapture;
+		bool isVerbose; // enable log in capturing images
 		// camera buffer
 		std::vector<std::vector<cv::Mat>> bufferImgs;
+		int bufferSize;
 		size_t cameraNum;
-		std::vector<std::thread> ths; // threads to capture images
-		std::vector<int> thStatus; // status of capturing threads
+		// threads used for capturing images
+		GenCamCaptureMode captureMode;
+		// threads to capture images
+		std::vector<std::thread> ths; 
+		// status of capturing threads
+		// true: keep capturing images, false: stop capturing images
+		std::vector<bool> thStatus; 
+		// frame indices in buffer
+		std::vector<int> thBufferInds; 
 	public:
 
 	protected:
@@ -261,26 +271,59 @@ namespace cam {
 		/*************************************************************/
 		/*                     capturing function                    */
 		/*************************************************************/
+
 		/**
-		@brief multi-thread capturing method
+		@brief capture single image of single camera in camera array
+		@param int camInd: input index of camera 
+		@param cv::Mat & img: output captured images 
+		@return int
 		*/
-		int capture_thread_(std::vector<cv::Mat> imgs);
+		virtual int captureFrame(int camInd, cv::Mat & img) = 0;
+
+		/**
+		@brief multi-thread capturing function 
+		used for continous mode
+		thread function to get images from camera and buffer to vector
+		and wait until the next frame (based on fps)
+		*/
+		void capture_thread_(int camInd);
+
+		/**
+		@brief multi-thread captureing function
+		used for single mode
+		thread function to get images from camera and buffer to vector
+		*/
+		void capture_thread_single_(int camInd, cv::Mat & img);
 
 		/**
 		@brief set capturing mode
 		@param GenCamCaptureMode captureMode: capture mode
 		@param int size: buffer size
-		@return
+		@return int
 		*/
 		int setCaptureMode(GenCamCaptureMode captureMode,
 			int bufferSize);
 
 		/**
-		@brief capture images
-		@param std::vector<cv::Mat> & imgs: output captured images
+		@brief start capture threads
+		@return int 
+		*/
+		int startCaptureThreads();
+
+		/**
+		@brief stop capture threads
 		@return int
 		*/
-		virtual int captureOneFrameBayer(std::vector<cv::Mat> & imgs) = 0;
+		int stopCaptureThreads();
+
+		/**
+		@brief capture one frame
+		@param std::vector<cv::Mat> & imgs: output captured images
+		if in single mode, memory of image mats should be malloced 
+		before using this function
+		@return int
+		*/
+		int captureFrame(std::vector<cv::Mat> & imgs);
 
 	};
 

@@ -287,21 +287,17 @@ namespace cam {
 	/*                     capturing function                    */
 	/*************************************************************/
 	/**
-	@brief capture images
-	@param std::vector<cv::Mat> & imgs: output captured images
+	@brief capture single image of single camera in camera array
+	@param int camInd: input index of camera
+	@param cv::Mat & img: output captured images
 	@return int
 	*/
-	int GenCameraXIMEA::captureOneFrameBayer(std::vector<cv::Mat> & imgs) {
+	int GenCameraXIMEA::captureFrame(int camInd, cv::Mat & img) {
 		// capture images
-		for (size_t i = 0; i < this->cameraNum; i++) {
-			checkXIMEAErrors(xiGetImage(hcams[i], 100, &xiImages[i]));
-		}
+		checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
 		// copy to opencv mat
-		for (size_t i = 0; i < this->cameraNum; i++) {
-			imgs[i].create(xiImages[i].height, xiImages[i].width, CV_8U);
-			memcpy(imgs[i].data, xiImages[i].bp, sizeof(unsigned char) *
-				xiImages[i].width * xiImages[i].height);
-		}
+		memcpy(img.data, xiImages[camInd].bp, sizeof(unsigned char) *
+			xiImages[camInd].width * xiImages[camInd].height);
 		return 0;
 	}
 
