@@ -21,11 +21,11 @@ Implementation of XIMEA camera
 namespace cam {
 
 	// function to check XIMEA function error
-	void check(XI_RETURN result, char const *const func,
+	void checkXIMEAInternal(XI_RETURN result, char const *const func,
 		const char *const file, int const line);
 
 	// XIMEA function safe call
-	#define checkXIMEAErrors(val)  check ( (val), #val, __FILE__, __LINE__ )
+	#define checkXIMEAErrors(val)  checkXIMEAInternal ( (val), #val, __FILE__, __LINE__ )
 
 	class GenCameraXIMEA : public GenCamera {
 	private:

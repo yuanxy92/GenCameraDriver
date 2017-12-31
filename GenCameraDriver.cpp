@@ -7,12 +7,10 @@
 #include "GenCameraDriver.h"
 #include "XIMEACamera.h"
 #include "PointGreyCamera.h"
-
 #include <time.h>
 
-cam::GenCamera::GenCamera() : isInit(false), isCapture(false),
-	isVerbose(false) {}
-cam::GenCamera::~GenCamera() {}
+// cuda npp JPEG coder
+#include "NPPJpegCoder.h"
 
 namespace cam {
 	/**
@@ -24,7 +22,15 @@ namespace cam {
 			std::shared_ptr<GenCameraXIMEA> cameraPtr = std::make_shared<GenCameraXIMEA>();
 			return std::static_pointer_cast<GenCamera>(cameraPtr);
 		}
+		else if (camModel == CameraModel::PointGrey_u3) {
+			std::shared_ptr<GenCameraPTGREY> cameraPtr = std::make_shared<GenCameraPTGREY>();
+			return std::static_pointer_cast<GenCamera>(cameraPtr);
+		}
 	}
+
+	GenCamera::GenCamera() : isInit(false), isCapture(false),
+		isVerbose(false), bufferType(GenCamBufferType::Raw) {}
+	GenCamera::~GenCamera() {}
 
 	/**
 	@brief multi-thread capturing function
@@ -82,19 +88,24 @@ namespace cam {
 		this->bufferSize = bufferSize;
 		if (captureMode == cam::GenCamCaptureMode::Continous ||
 			captureMode == cam::GenCamCaptureMode::ContinousTrigger) {
-			// resize vector
-			this->bufferImgs.resize(bufferSize);
-			for (size_t i = 0; i < bufferSize; i++) {
-				this->bufferImgs[i].resize(this->cameraNum);
-			}
-			// malloc mat memory
-			for (size_t i = 0; i < this->cameraNum; i++) {
-				int width, height;
-				width = camInfos[i].width;
-				height = camInfos[i].height;
-				for (size_t j = 0; j < bufferSize; j++) {
-					this->bufferImgs[j][i].create(height, width, CV_8U);
+			if (this->bufferType == GenCamBufferType::Raw) {
+				// resize vector
+				this->bufferImgs.resize(bufferSize);
+				for (size_t i = 0; i < bufferSize; i++) {
+					this->bufferImgs[i].resize(this->cameraNum);
 				}
+				// malloc mat memory
+				for (size_t i = 0; i < this->cameraNum; i++) {
+					int width, height;
+					width = camInfos[i].width;
+					height = camInfos[i].height;
+					for (size_t j = 0; j < bufferSize; j++) {
+						this->bufferImgs[j][i].create(height, width, CV_8U);
+					}
+				}
+			}
+			else if (this->bufferType == GenCamBufferType::JPEG) {
+
 			}
 		}
 		else if (captureMode == cam::GenCamCaptureMode::Single ||

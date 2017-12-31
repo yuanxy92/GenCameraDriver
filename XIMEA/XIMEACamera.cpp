@@ -9,7 +9,7 @@ Implementation of XIMEA camera
 
 namespace cam {
 	// function to check XIMEA function error
-	void cam::check(XI_RETURN result, char const *const func,
+	void cam::checkXIMEAInternal(XI_RETURN result, char const *const func,
 		const char *const file, int const line) {
 		if (result != XI_OK) {
 			char info[256];

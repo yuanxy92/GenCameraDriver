@@ -141,6 +141,25 @@ namespace cam {
 	};
 
 	/**
+	@brief buffer type
+	*/
+	enum class GenCamBufferType {
+		Raw,  // save raw images in buffer
+		JPEG, // save jpeg compressed images in buffer
+			  // usually need as power GPU to compress the raw images
+		RGB   // save demosaiced 3 channel RGB images in buffer 
+	};
+	
+	/**
+	@brief class to save JPEG data
+	*/
+	class JPEGdata {
+	public:
+		char* data; // jpeg data pointer
+		size_t length; // jpeg data length
+	};
+
+	/**
 	@brief general camera class
 	*/
 	class GenCamera {
@@ -153,7 +172,9 @@ namespace cam {
 		bool isCapture;
 		bool isVerbose; // enable log in capturing images
 		// camera buffer
+		GenCamBufferType bufferType;
 		std::vector<std::vector<cv::Mat>> bufferImgs;
+		std::vector<std::vector<JPEGdata>> bufferJPEGImgs;
 		int bufferSize;
 		size_t cameraNum;
 		// threads used for capturing images
