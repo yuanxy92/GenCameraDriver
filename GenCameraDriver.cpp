@@ -9,8 +9,7 @@
 #include "PointGreyCamera.h"
 #include <time.h>
 
-// cuda npp JPEG coder
-#include "NPPJpegCoder.h"
+
 
 namespace cam {
 	/**
@@ -29,7 +28,8 @@ namespace cam {
 	}
 
 	GenCamera::GenCamera() : isInit(false), isCapture(false),
-		isVerbose(false), bufferType(GenCamBufferType::Raw) {}
+		isVerbose(false), bufferType(GenCamBufferType::Raw),
+		camPurpose(GenCamCapturePurpose::Streaming) {}
 	GenCamera::~GenCamera() {}
 
 	/**
@@ -37,20 +37,32 @@ namespace cam {
 	used for continous mode
 	thread function to get images from camera and buffer to vector
 	and wait until the next frame (based on fps)
+	@param int camInd: index of camera
 	*/
-	void GenCamera::capture_thread_(int camInd) {
+	void GenCamera::capture_thread_raw_(int camInd) {
 		clock_t begin_time, end_time;
 		double time = 1000.0 / static_cast<double>(camInfos[camInd].fps);
-		thStatus[camInd] = true;
+		thStatus[camInd] = 1;
 		for (;;) {
 			begin_time = clock();
 			// check status
-			if (thStatus[camInd] == false)
+			if (thStatus[camInd] == 0)
 				break;
 			// capture image
 			this->captureFrame(camInd, bufferImgs[thBufferInds[camInd]][camInd]);
 			end_time = clock();
 			float waitTime = time - static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
+			// increase index
+			if (camPurpose == GenCamCapturePurpose::Streaming)
+				thBufferInds[camInd] = (thBufferInds[camInd] + 1) % bufferSize;
+			else {
+				thBufferInds[camInd] = thBufferInds[camInd] + 1;
+				if (thBufferInds[camInd] == bufferSize) {
+					thStatus[camInd] = 0;
+					continue;
+				}
+			}
+			// wait some time
 			if (waitTime > 0) {
 				std::this_thread::sleep_for(std::chrono::milliseconds((long long)waitTime));
 			}
@@ -58,8 +70,6 @@ namespace cam {
 				printf("Camera %d captures one frame, wait %lld milliseconds for next frame ...\n",
 					camInd, waitTime);
 			}
-			// increase index
-			thBufferInds[camInd] = (thBufferInds[camInd] + 1) % bufferSize;
 		}
 	}
 
@@ -67,10 +77,63 @@ namespace cam {
 	@brief multi-thread captureing function
 	used for single mode
 	thread function to get images from camera and buffer to vector
+	@param int camInd: index of camera
+	@param cv::Mat & img: output captured image
 	*/
 	void GenCamera::capture_thread_single_(int camInd, cv::Mat & img) {
 		// capture image
 		this->captureFrame(camInd, img);
+	}
+
+	/**
+	@brief multi-thread capturing function (jpeg buffer)
+	used for continous mode
+	thread function to get images from camera and wait for compresss
+	thread to compress the raw data into jpeg data
+	@param int camInd: index of camera
+	*/
+	void GenCamera::capture_thread_JPEG_(int camInd) {
+		clock_t begin_time, end_time;
+		double time = 1000.0 / static_cast<double>(camInfos[camInd].fps);
+		thStatus[camInd] = 1;
+		for (;;) {
+			begin_time = clock();
+			// check status
+			if (thStatus[camInd] == 0)
+				break;
+			while (thStatus[camInd] == 2) {
+				// still in jpeg compression wait for some time
+				std::this_thread::sleep_for(std::chrono::milliseconds((long long)5));
+			}
+			// capture image
+			this->captureFrame(camInd, bufferImgs[0][camInd]);
+			end_time = clock();
+			float waitTime = time - static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
+			// set status to 2, wait for compress
+			thStatus[camInd] = 2;
+			// wait for some time
+			if (waitTime > 0) {
+				std::this_thread::sleep_for(std::chrono::milliseconds((long long)waitTime));
+			}
+			if (isVerbose) {
+				printf("Camera %d captures one frame, wait %lld milliseconds for next frame ...\n",
+					camInd, waitTime);
+			}	
+		}
+	}
+
+	/**
+	@brief single-thread compressing function
+	because npp only support single thread, jpeg compress function is not
+	thread safe
+	thread function to compress raw image into jpeg data
+	and wait until the next frame (based on fps)
+	*/
+	void GenCamera::compress_thread_JPEG_() {
+		clock_t begin_time, end_time;
+		for (;;) {
+			begin_time = clock();
+		}
 	}
 
 	/**
@@ -105,13 +168,47 @@ namespace cam {
 				}
 			}
 			else if (this->bufferType == GenCamBufferType::JPEG) {
-
+				// resize vector
+				this->bufferJPEGImgs.resize(bufferSize);
+				for (size_t i = 0; i < bufferSize; i++) {
+					this->bufferJPEGImgs[i].resize(this->cameraNum);
+				}
+				// pre-malloc jpeg data
+				for (size_t i = 0; i < this->cameraNum; i++) {
+					// pre-calculate compressed jpeg data size
+					size_t maxLength = static_cast<size_t>(camInfos[i].width * camInfos[i].height * 0.1f);
+					for (size_t j = 0; j < bufferSize; j++) {
+						this->bufferJPEGImgs[j][i].data = new uchar[maxLength];
+						this->bufferJPEGImgs[j][i].maxLength = maxLength;
+					}
+				}
+				// malloc one frame cv::Mat data
+				this->bufferImgs.resize(1);
+				this->bufferImgs[0].resize(this->cameraNum);
+				for (size_t i = 0; i < this->cameraNum; i++) {
+					this->bufferImgs[0][i].create(camInfos[i].height, camInfos[i].width, CV_8U);
+				}
+				// init npp jpeg coder
+				this->coders.resize(this->cameraNum);
+				for (size_t i = 0; i < this->cameraNum; i++) {
+					coders[i].init(camInfos[i].width, camInfos[i].height, 85);
+				}
 			}
 		}
 		else if (captureMode == cam::GenCamCaptureMode::Single ||
 			captureMode == cam::GenCamCaptureMode::SingleTrigger) {
 			this->ths.resize(this->cameraNum);
 		}
+		return 0;
+	}
+
+	/**
+	@brief set capture purpose
+	@param GenCamCapturePurpose camPurpose: purpose, for streaming or recording
+	@return int
+	*/
+	int GenCamera::setCapturePurpose(GenCamCapturePurpose camPurpose) {
+		this->camPurpose = camPurpose;
 		return 0;
 	}
 
@@ -127,12 +224,12 @@ namespace cam {
 			thStatus.resize(this->cameraNum);
 			thBufferInds.resize(this->cameraNum);
 			for (size_t i = 0; i < this->cameraNum; i++) {
-				thStatus[i] = false;
+				thStatus[i] = 0;
 				thBufferInds[i] = 0;
 			}
 			// start capturing threads
 			for (size_t i = 0; i < this->cameraNum; i++) {
-				ths[i] = std::thread(&GenCamera::capture_thread_, this, i);
+				ths[i] = std::thread(&GenCamera::capture_thread_raw_, this, i);
 			}
 		}
 		else {
@@ -149,7 +246,7 @@ namespace cam {
 	int GenCamera::stopCaptureThreads() {
 		// set th status to false
 		for (size_t i = 0; i < this->cameraNum; i++) {
-			thStatus[i] = false;
+			thStatus[i] = 0;
 		}
 		// make sure all the threads are terminated
 		for (size_t i = 0; i < this->cameraNum; i++) {
@@ -173,7 +270,8 @@ namespace cam {
 			captureMode == GenCamCaptureMode::ContinousTrigger) {
 			// get images from buffer
 			for (size_t camInd = 0; camInd < this->cameraNum; camInd++) {
-				imgs[camInd] = bufferImgs[thBufferInds[camInd]][camInd];
+				int index = (thBufferInds[camInd] - 1 + bufferSize) % bufferSize;
+				imgs[camInd] = bufferImgs[index][camInd];
 			}
 
 		}

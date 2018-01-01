@@ -27,6 +27,9 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 
+// cuda npp JPEG coder
+#include "NPPJpegCoder.h"
+
 namespace cam {
 
 	// colorful terminal output and file utility
@@ -131,13 +134,21 @@ namespace cam {
 	};
 
 	/**
-	@brief capture mode class
+	@brief capture mode 
 	*/
 	enum class GenCamCaptureMode {
 		Single, // capture one by one without buffer
 		Continous, // capture and buffer images
 		SingleTrigger,
 		ContinousTrigger
+	};
+
+	/**
+	@brief capture purpose
+	*/
+	enum class GenCamCapturePurpose {
+		Streaming, // capture images to buffers circularly  
+		Recording // capture images to fill the buffer once
 	};
 
 	/**
@@ -155,7 +166,8 @@ namespace cam {
 	*/
 	class JPEGdata {
 	public:
-		char* data; // jpeg data pointer
+		uchar* data; // jpeg data pointer
+		size_t maxLength; // max malloced memory size
 		size_t length; // jpeg data length
 	};
 
@@ -166,26 +178,42 @@ namespace cam {
 	protected:
 		// camera model
 		CameraModel camModel;
+		GenCamCapturePurpose camPurpose;
 		std::vector<GenCamInfo> camInfos;
+
 		// camera status
 		bool isInit;
 		bool isCapture;
 		bool isVerbose; // enable log in capturing images
+
 		// camera buffer
 		GenCamBufferType bufferType;
 		std::vector<std::vector<cv::Mat>> bufferImgs;
 		std::vector<std::vector<JPEGdata>> bufferJPEGImgs;
 		int bufferSize;
 		size_t cameraNum;
-		// threads used for capturing images
+
+		// capture model
 		GenCamCaptureMode captureMode;
+
 		// threads to capture images
 		std::vector<std::thread> ths; 
+
 		// status of capturing threads
-		// true: keep capturing images, false: stop capturing images
-		std::vector<bool> thStatus; 
+		// 0: stop capturing images, exit
+		// 1: capturing images
+		// 2: compress images use jpeg
+		std::vector<int> thStatus; 
+
 		// frame indices in buffer
 		std::vector<int> thBufferInds; 
+
+		// npp jpeg coder class
+		std::vector<npp::NPPJpegCoder> coders;
+
+		// capture for real-time view or saving
+
+
 	public:
 
 	protected:
@@ -305,19 +333,40 @@ namespace cam {
 		/*                   non-virtual function                    */
 		/*************************************************************/
 		/**
-		@brief multi-thread capturing function 
+		@brief multi-thread capturing function (raw buffer)
 		used for continous mode
 		thread function to get images from camera and buffer to vector
 		and wait until the next frame (based on fps)
+		@param int camInd: index of camera
 		*/
-		void capture_thread_(int camInd);
+		void capture_thread_raw_(int camInd);
 
 		/**
 		@brief multi-thread captureing function
 		used for single mode
 		thread function to get images from camera and buffer to vector
+		@param int camInd: index of camera
+		@param cv::Mat & img: output captured image
 		*/
 		void capture_thread_single_(int camInd, cv::Mat & img);
+
+		/**
+		@brief multi-thread capturing function (jpeg buffer)
+		used for continous mode
+		thread function to get images from camera and wait for compresss
+		thread to compress the raw data into jpeg data
+		@param int camInd: index of camera
+		*/
+		void capture_thread_JPEG_(int camInd);
+
+		/**
+		@brief single-thread compressing function
+		because npp only support single thread, jpeg compress function is not 
+		thread safe
+		thread function to compress raw image into jpeg data
+		and wait until the next frame (based on fps)
+		*/
+		void compress_thread_JPEG_();
 
 		/**
 		@brief set capturing mode
@@ -327,6 +376,13 @@ namespace cam {
 		*/
 		int setCaptureMode(GenCamCaptureMode captureMode,
 			int bufferSize);
+
+		/**
+		@brief set capture purpose
+		@param GenCamCapturePurpose camPurpose: purpose, for streaming or recording
+		@return int
+		*/
+		int setCapturePurpose(GenCamCapturePurpose camPurpose);
 
 		/**
 		@brief start capture threads
