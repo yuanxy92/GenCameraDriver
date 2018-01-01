@@ -129,6 +129,14 @@ namespace cam {
 		int setExposure(int camInd, int time) override;
 
 		/**
+		@brief set/get bayer pattern
+		@param int camInd: input camera index
+		@param GenCamBayerPattern & bayerPattern: output bayer pattern
+		@return int
+		*/
+		int getBayerPattern(int camInd, GenCamBayerPattern & bayerPattern) override;
+
+		/**
 		@brief make setting effective
 		by capturing some frames
 		@param int k: capture image frames (default is 10)

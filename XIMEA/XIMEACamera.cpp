@@ -147,6 +147,7 @@ namespace cam {
 			camInfos[i].fps = fps;
 			camInfos[i].autoExposure = static_cast<cam::Status>(autoExposure);
 			camInfos[i].autoWhiteBalance = static_cast<cam::Status>(autoWhiteBalance);
+			this->getBayerPattern(i, camInfos[i].bayerPattern);
 		}
 		return 0;
 	}
@@ -280,6 +281,29 @@ namespace cam {
 		}
 		else
 			checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_EXPOSURE, time));
+		return 0;
+	}
+
+	/**
+	@brief set/get bayer pattern
+	@param int camInd: input camera index
+	@param GenCamBayerPattern & bayerPattern: output bayer pattern
+	@return int
+	*/
+	int getBayerPattern(int camInd, GenCamBayerPattern & bayerPattern) {
+		int cfa;
+		xiGetParamInt(hcams[camInd], XI_PRM_COLOR_FILTER_ARRAY, &cfa);
+		switch(cfa) {
+		case XI_CFA_BAYER_RGGB: bayerPattern = GenCamBayerPattern::BayerRGGB; break;
+		case XI_CFA_BAYER_BGGR: bayerPattern = GenCamBayerPattern::BayerBGGR; break;
+		case XI_CFA_BAYER_GRBG; bayerPattern = GenCamBayerPattern::BayerGRBG; break;
+		case XI_CFA_BAYER_GBRG: bayerPattern = GenCamBayerPattern::BayerGBRG; break;
+		default: 
+		SysUtil::errorOutput(std::string("Camera index " + camInd + ", unknown " \
+			"cfa bayer pattern ! "));
+			exit(-1);
+		break;
+		}
 		return 0;
 	}
 

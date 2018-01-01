@@ -302,6 +302,16 @@ namespace npp {
 	NPPJpegCoder::~NPPJpegCoder() {}
 
 	/**
+	@brief set bayer type
+	@param int cfaBayerType: cfa bayer type
+	@return int
+	*/
+	int NPPJpegCoder::setCfaBayerType(int cfaBayerType) {
+		this->cfaBayerType = cfaBayerType;
+		return 0;
+	}
+
+	/**
 	@brief init jpeg encoder
 	@param int width: input image width
 	@param int height: input image height
@@ -482,6 +492,9 @@ namespace npp {
 		// malloc rgb image buffer
 		rgb_img_d = nppiMalloc_8u_C3(width, height, &step_rgb);
 
+		// set defaut cfa bayer pattern
+		this->cfaBayerType = NPPI_BAYER_RGGB;
+
 		return 0;
 	}
 
@@ -546,7 +559,7 @@ namespace npp {
 
 		// bayer to rgb
 		NPP_CHECK_NPP(nppiCFAToRGB_8u_C1C3R(bayer_img_d, this->width, osize,
-			orect, rgb_img_d, step_rgb, NPPI_BAYER_RGGB, NPPI_INTER_UNDEFINED));
+			orect, rgb_img_d, step_rgb, cfaBayerType, NPPI_INTER_UNDEFINED));
 
 		// rgb to yuv420
 		NPP_CHECK_NPP(nppiRGBToYUV420_8u_C3P3R(rgb_img_d, step_rgb, apDstImage, aDstImageStep,

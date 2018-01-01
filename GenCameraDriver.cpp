@@ -9,8 +9,6 @@
 #include "PointGreyCamera.h"
 #include <time.h>
 
-
-
 namespace cam {
 	/**
 	@breif function to init camera array
@@ -131,8 +129,33 @@ namespace cam {
 	*/
 	void GenCamera::compress_thread_JPEG_() {
 		clock_t begin_time, end_time;
+		std::vector<cudaStream_t> streams(this->cameraNum);
+		for (size_t camInd = 0; camInd < this->cameraNum; camInd ++) {
+			cudaStreamCreate(&streams[camInd]);
+		}
 		for (;;) {
-			begin_time = clock();
+			// check if all the images are captured
+			for (size_t i = 0; i < this->cameraNum; i ++) {
+				int sum = std::accumulate(thStatus.begin(), thStatus.end(), 0, std::add<int>());
+				if (sum != 2 * this->cameraNum) {
+					std::this_thread::sleep_for(std::chrono::milliseconds((long long)5));
+				}
+			}
+			// compress images
+			for (size_t camInd = 0; camInd < this->cameraNum; camInd ++) {
+				coder[i].encode(bufferImgs[0][camInd], 
+					bufferJPEGImgs[thBufferInds[camInd]][camInd].data,
+					&bufferJPEGImgs[thBufferInds[camInd]][camInd].length,
+					steams[camInd]);
+			}
+			for (size_t camInd = 0; camInd < this->cameraNum; camInd ++) {	
+				// synchronize and destroy threads
+				cudaStreamSynchronize(streams[camInd]);
+				cudaStreamDestroy(streams[camInd]);
+				// set thread status to 1
+				thStatus[camInd] = 1;
+			}
+
 		}
 	}
 
@@ -192,6 +215,7 @@ namespace cam {
 				this->coders.resize(this->cameraNum);
 				for (size_t i = 0; i < this->cameraNum; i++) {
 					coders[i].init(camInfos[i].width, camInfos[i].height, 85);
+					coders[i].setCfaBayerType(static_cast<int>(camInfos[i].bayerPattern));
 				}
 			}
 		}

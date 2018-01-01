@@ -74,6 +74,9 @@ namespace npp {
 
 	class NPPJpegCoder {
 	private:
+		// cfa bayer pattern type
+		int cfaBayerType;
+
 		QuantizationTable aQuantizationTables[4];
 		Npp8u *pdQuantizationTables;
 		HuffmanTable aHuffmanTables[4];
@@ -227,8 +230,6 @@ namespace npp {
 	private:
 
 	public:
-
-
 		NPPJpegCoder();
 		~NPPJpegCoder();
 
@@ -240,6 +241,13 @@ namespace npp {
 		@return 
 		*/
 		int init(int width, int height, int quality = -1);
+
+		/**
+		@brief set bayer type
+		@param int cfaBayerType: cfa bayer type
+		@return int
+		*/
+		int setCfaBayerType(int cfaBayerType);
 
 		/**
 		@brief release jpeg encode

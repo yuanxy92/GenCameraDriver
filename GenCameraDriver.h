@@ -121,6 +121,16 @@ namespace cam {
 	};
 
 	/**
+	@brief bayer pattern type (same as Nvidia NPP setting)
+	*/
+	enum class GenCamBayerPattern {
+		BayerBGGR = 0,
+		BayerRGGB = 1,
+		BayerGBRG = 2,
+		BayerGRBG = 3
+	}
+
+	/**
 	@brief camera info class
 	*/
 	class GenCamInfo {
@@ -131,6 +141,7 @@ namespace cam {
 		float fps;
 		Status autoExposure;
 		Status autoWhiteBalance;
+		GenCamBayerPattern bayerPattern;	
 	};
 
 	/**
@@ -160,6 +171,7 @@ namespace cam {
 			  // usually need as power GPU to compress the raw images
 		RGB   // save demosaiced 3 channel RGB images in buffer 
 	};
+
 	
 	/**
 	@brief class to save JPEG data
@@ -178,6 +190,7 @@ namespace cam {
 	protected:
 		// camera model
 		CameraModel camModel;
+		// capture for real-time view or saving
 		GenCamCapturePurpose camPurpose;
 		std::vector<GenCamInfo> camInfos;
 
@@ -210,9 +223,6 @@ namespace cam {
 
 		// npp jpeg coder class
 		std::vector<npp::NPPJpegCoder> coders;
-
-		// capture for real-time view or saving
-
 
 	public:
 
@@ -309,6 +319,14 @@ namespace cam {
 		@return int
 		*/
 		virtual int setExposure(int camInd, int time) = 0;
+
+		/**
+		@brief set/get bayer pattern
+		@param int camInd: input camera index
+		@param GenCamBayerPattern & bayerPattern: output bayer pattern
+		@return int
+		*/
+		virtual int getBayerPattern(int camInd, GenCamBayerPattern bayerPattern) = 0;
 
 		/**
 		@brief make setting effective
