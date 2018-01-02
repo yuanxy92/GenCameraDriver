@@ -132,6 +132,16 @@ namespace cam {
 	}
 
 	/**
+	@brief set/get bayer pattern
+	@param int camInd: input camera index
+	@param GenCamBayerPattern & bayerPattern: output bayer pattern
+	@return int
+	*/
+	int GenCameraPTGREY::getBayerPattern(int camInd, GenCamBayerPattern & bayerPattern) {
+		return 0;
+	}
+
+	/**
 	@brief make setting effective
 	by capturing some frames
 	@param int k: capture image frames (default is 10)

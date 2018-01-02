@@ -75,7 +75,7 @@ namespace npp {
 	class NPPJpegCoder {
 	private:
 		// cfa bayer pattern type
-		int cfaBayerType;
+		NppiBayerGridPosition cfaBayerType;
 
 		QuantizationTable aQuantizationTables[4];
 		Npp8u *pdQuantizationTables;
@@ -259,21 +259,21 @@ namespace npp {
 		@brief encode raw image data to jpeg
 		@param unsigned char* bayer_img_d: input bayer image
 		@param unsigned char* jpegdata: output jpeg data
-		@param int* datalength: output data length
+		@param size_t* datalength: output data length
 		@param cudaStream_t stream: cudastream
 		@return int
 		*/
 		int encode(unsigned char* bayer_img_d, unsigned char* jpegdata, 
-			int* datalength, cudaStream_t stream);
+			size_t* datalength, cudaStream_t stream);
 
 		/**
 		@brief decode jpeg image to raw image data (full)
 		@param unsigned char* jpegdata: input jpeg data
-		@param int input_datalength: input jpeg data length
+		@param size_t input_datalength: input jpeg data length
 		@param cv::cuda::GpuMat: output gpu mat image
 		@return int
 		*/
-		int decode(unsigned char* jpegdata, int input_datalength,
+		int decode(unsigned char* jpegdata, size_t input_datalength,
 			cv::cuda::GpuMat & outimg);
 	};
 

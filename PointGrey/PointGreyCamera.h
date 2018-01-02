@@ -50,13 +50,6 @@ namespace cam {
 		int init() override;
 
 		/**
-		@brief get camera information
-		@param std::vector<GenCamInfo> & camInfos: output camera infos
-		@return int
-		*/
-		int getCamInfos(std::vector<GenCamInfo> & camInfos) override;
-
-		/**
 		@brief start capture images
 		@return int
 		*/
@@ -73,6 +66,13 @@ namespace cam {
 		@return int
 		*/
 		int release() override;
+
+		/**
+		@brief get camera information
+		@param std::vector<GenCamInfo> & camInfos: output camera infos
+		@return int
+		*/
+		int getCamInfos(std::vector<GenCamInfo> & camInfos) override;
 
 		/***********************************************************/
 		/*                  camera setting functions               */
@@ -127,6 +127,14 @@ namespace cam {
 		@return int
 		*/
 		int setExposure(int camInd, int time) override;
+
+		/**
+		@brief set/get bayer pattern
+		@param int camInd: input camera index
+		@param GenCamBayerPattern & bayerPattern: output bayer pattern
+		@return int
+		*/
+		int getBayerPattern(int camInd, GenCamBayerPattern & bayerPattern) override;
 
 		/**
 		@brief make setting effective

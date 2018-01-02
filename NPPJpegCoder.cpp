@@ -305,7 +305,7 @@ namespace npp {
 	@return int
 	*/
 	int NPPJpegCoder::setCfaBayerType(int cfaBayerType) {
-		this->cfaBayerType = cfaBayerType;
+		this->cfaBayerType = static_cast<NppiBayerGridPosition>(cfaBayerType);
 		return 0;
 	}
 
@@ -523,11 +523,11 @@ namespace npp {
 	@brief encode raw image data to jpeg
 	@param unsigned char* bayer_img_d: input bayer image
 	@param char* jpegdata: output jpeg data
-	@param int* datalength: output data length
+	@param size_t* datalength: output data length
 	@param cudaStream_t stream: cudastream
 	@return
 	*/
-	int NPPJpegCoder::encode(unsigned char* bayer_img_d, unsigned char* jpegdata, int* datalength, cudaStream_t stream) {
+	int NPPJpegCoder::encode(unsigned char* bayer_img_d, unsigned char* jpegdata, size_t* datalength, cudaStream_t stream) {
 		
 		nppSetStream(stream);
 		NppiDCTState *pDCTState;
@@ -631,11 +631,11 @@ namespace npp {
 	/**
 	@brief decode jpeg image to raw image data (full)
 	@param unsigned char* jpegdata: input jpeg data
-	@param int input_datalength: input jpeg data length
+	@param size_t input_datalength: input jpeg data length
 	@param cv::cuda::GpuMat: output gpu mat image
 	@return int
 	*/
-	int NPPJpegCoder::decode(unsigned char* jpegdata, int input_datalength,
+	int NPPJpegCoder::decode(unsigned char* jpegdata, size_t input_datalength,
 		cv::cuda::GpuMat & outimg) {
 		// init state
 		NppiDCTState *pDCTState;

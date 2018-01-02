@@ -128,7 +128,7 @@ namespace cam {
 		BayerRGGB = 1,
 		BayerGBRG = 2,
 		BayerGRBG = 3
-	}
+	};
 
 	/**
 	@brief camera info class
@@ -326,7 +326,7 @@ namespace cam {
 		@param GenCamBayerPattern & bayerPattern: output bayer pattern
 		@return int
 		*/
-		virtual int getBayerPattern(int camInd, GenCamBayerPattern bayerPattern) = 0;
+		virtual int getBayerPattern(int camInd, GenCamBayerPattern & bayerPattern) = 0;
 
 		/**
 		@brief make setting effective

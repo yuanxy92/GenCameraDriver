@@ -290,17 +290,18 @@ namespace cam {
 	@param GenCamBayerPattern & bayerPattern: output bayer pattern
 	@return int
 	*/
-	int getBayerPattern(int camInd, GenCamBayerPattern & bayerPattern) {
+	int GenCameraXIMEA::getBayerPattern(int camInd, GenCamBayerPattern & bayerPattern) {
 		int cfa;
 		xiGetParamInt(hcams[camInd], XI_PRM_COLOR_FILTER_ARRAY, &cfa);
 		switch(cfa) {
 		case XI_CFA_BAYER_RGGB: bayerPattern = GenCamBayerPattern::BayerRGGB; break;
 		case XI_CFA_BAYER_BGGR: bayerPattern = GenCamBayerPattern::BayerBGGR; break;
-		case XI_CFA_BAYER_GRBG; bayerPattern = GenCamBayerPattern::BayerGRBG; break;
+		case XI_CFA_BAYER_GRBG: bayerPattern = GenCamBayerPattern::BayerGRBG; break;
 		case XI_CFA_BAYER_GBRG: bayerPattern = GenCamBayerPattern::BayerGBRG; break;
 		default: 
-		SysUtil::errorOutput(std::string("Camera index " + camInd + ", unknown " \
-			"cfa bayer pattern ! "));
+			char info[256];
+			sprintf(info, "Camera index %d unknown cfa bayer pattern ! ", camInd);
+			SysUtil::errorOutput(std::string(info));
 			exit(-1);
 		break;
 		}

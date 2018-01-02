@@ -8,6 +8,9 @@
 #include "XIMEACamera.h"
 #include "PointGreyCamera.h"
 #include <time.h>
+#include <algorithm>
+#include <functional>   // std::minus
+#include <numeric>      // std::accumulate
 
 namespace cam {
 	/**
@@ -20,6 +23,7 @@ namespace cam {
 			return std::static_pointer_cast<GenCamera>(cameraPtr);
 		}
 		else if (camModel == CameraModel::PointGrey_u3) {
+			SysUtil::warningOutput("GenCamDriver is not funtional for PointGrey cameras yet!");
 			std::shared_ptr<GenCameraPTGREY> cameraPtr = std::make_shared<GenCameraPTGREY>();
 			return std::static_pointer_cast<GenCamera>(cameraPtr);
 		}
@@ -136,17 +140,17 @@ namespace cam {
 		for (;;) {
 			// check if all the images are captured
 			for (size_t i = 0; i < this->cameraNum; i ++) {
-				int sum = std::accumulate(thStatus.begin(), thStatus.end(), 0, std::add<int>());
+				int sum = std::accumulate(thStatus.begin(), thStatus.end(), 0);
 				if (sum != 2 * this->cameraNum) {
 					std::this_thread::sleep_for(std::chrono::milliseconds((long long)5));
 				}
 			}
 			// compress images
 			for (size_t camInd = 0; camInd < this->cameraNum; camInd ++) {
-				coder[i].encode(bufferImgs[0][camInd], 
+				coders[camInd].encode(bufferImgs[0][camInd].data, 
 					bufferJPEGImgs[thBufferInds[camInd]][camInd].data,
 					&bufferJPEGImgs[thBufferInds[camInd]][camInd].length,
-					steams[camInd]);
+					streams[camInd]);
 			}
 			for (size_t camInd = 0; camInd < this->cameraNum; camInd ++) {	
 				// synchronize and destroy threads
