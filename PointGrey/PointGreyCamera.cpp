@@ -80,23 +80,9 @@ namespace cam {
 	/**
 	@brief set auto white balance
 	@param int ind: index of camera (-1 means all the cameras)
-	@param Status autoWB: if use auto white balance
 	@return int
 	*/
-	int GenCameraPTGREY::setAutoWhiteBalance(int camInd, Status autoWB) {
-		return 0;
-	}
-
-	/**
-	@brief set white balance
-	@param int camInd: index of camera (-1 means all the cameras)
-	@param float red: gain of red channel
-	@param float green: gain of green channel
-	@param float blue: gain of blur channel
-	@return int
-	*/
-	int GenCameraPTGREY::setWhiteBalance(int camInd, float red,
-		float green, float blue) {
+	int GenCameraPTGREY::setWhiteBalance(int camInd) {
 		return 0;
 	}
 

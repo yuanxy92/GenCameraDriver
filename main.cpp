@@ -31,7 +31,7 @@ int preview(int argc, char* argv[]) {
 	cameraPtr->setFPS(-1, 20);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);
 	cameraPtr->setAutoExposureLevel(-1, 40);
-	cameraPtr->setAutoWhiteBalance(-1, cam::Status::on);
+	cameraPtr->setWhiteBalance(-1);
 	cameraPtr->makeSetEffective();
 	// set capturing setting
 	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
@@ -58,22 +58,23 @@ int record(int argc, char* argv[]) {
 		= cam::createCamera(cam::CameraModel::XIMEA_xiC);
 	cameraPtr->init();
 	// set camera setting
-	cameraPtr->getCamInfos(camInfos);
 	cameraPtr->startCapture();
 	cameraPtr->setFPS(-1, 20);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);
 	cameraPtr->setAutoExposureLevel(-1, 25);
-	cameraPtr->setAutoWhiteBalance(-1, cam::Status::on);
+	cameraPtr->setWhiteBalance(-1);
 	cameraPtr->makeSetEffective();
 	// set capturing setting
 	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
 	cameraPtr->setJPEGQuality(85, 0.15);
-	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
+	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 1000);
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
+	cameraPtr->setVerbose(true);
 	cameraPtr->startCaptureThreads();
 	// wait for recoding to finish
 	cameraPtr->waitForRecordFinish();
-	cameraPtr->saveImages("test");
+	//cameraPtr->saveImages("test");
+	cameraPtr->saveVideos("test");
 	cameraPtr->stopCaptureThreads();
 	cameraPtr->release();
 	return 0;

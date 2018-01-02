@@ -69,7 +69,11 @@ namespace cam {
 		}
 		// set camera inside buffers to 1 (can get the newest image)
 		for (size_t i = 0; i < this->cameraNum; i++) {
-			xiSetParamInt(hcams[i], XI_PRM_BUFFERS_QUEUE_SIZE, 1);
+			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_BUFFERS_QUEUE_SIZE, 1));
+		}
+		// enable lut
+		for (size_t i = 0; i < this->cameraNum; i++) {
+			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LUT_EN, 1));
 		}
 		// init images
 		xiImages.resize(this->cameraNum);
@@ -146,7 +150,9 @@ namespace cam {
 			checkXIMEAErrors(xiGetParamInt(hcams[i], XI_PRM_AUTO_WB, &autoWhiteBalance));
 			camInfos[i].fps = fps;
 			camInfos[i].autoExposure = static_cast<cam::Status>(autoExposure);
-			camInfos[i].autoWhiteBalance = static_cast<cam::Status>(autoWhiteBalance);
+			checkXIMEAErrors(xiGetParamFloat(hcams[i], XI_PRM_WB_KR, &camInfos[i].redGain));
+			checkXIMEAErrors(xiGetParamFloat(hcams[i], XI_PRM_WB_KG, &camInfos[i].greenGain));
+			checkXIMEAErrors(xiGetParamFloat(hcams[i], XI_PRM_WB_KB, &camInfos[i].blueGain));
 			this->getBayerPattern(i, camInfos[i].bayerPattern);
 		}
 		return 0;
@@ -177,11 +183,9 @@ namespace cam {
 	@param Status autoWB: if use auto white balance
 	@return int
 	*/
-	int GenCameraXIMEA::setAutoWhiteBalance(int camInd, Status autoWB) {
+	int GenCameraXIMEA::setWhiteBalance(int camInd) {
 		if (camInd == -1) {
 			for (size_t i = 0; i < this->cameraNum; i++) {
-				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_AUTO_WB, 
-					static_cast<int>(autoWB)));
 				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_MANUAL_WB,
 					1));
 				checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
@@ -190,42 +194,9 @@ namespace cam {
 		}
 		else {
 			checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_AUTO_WB,
-				static_cast<int>(autoWB)));
-			checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_MANUAL_WB,
 				1));
 			checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
 			checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
-		}
-		return 0;
-	}
-
-	/**
-	@brief set white balance
-	@param int camInd: index of camera (-1 means all the cameras)
-	@param float red: gain of red channel
-	@param float green: gain of green channel
-	@param float blue: gain of blur channel
-	@return int
-	*/
-	int GenCameraXIMEA::setWhiteBalance(int camInd, float red,
-		float green, float blue) {
-		if (camInd == -1) {
-			for (size_t i = 0; i < this->cameraNum; i++) {
-				// set auto white balance to off
-				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_AUTO_WB, 0));
-				// set dest white balance
-				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_WB_KR, red));
-				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_WB_KG, green));
-				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_WB_KB, blue));
-			}
-		}
-		else {
-			// set auto white balance to off
-			checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_AUTO_WB, 0));
-			// set dest white balance
-			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_WB_KR, red));
-			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_WB_KG, green));
-			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_WB_KB, blue));
 		}
 		return 0;
 	}
@@ -303,16 +274,16 @@ namespace cam {
 		int cfa;
 		xiGetParamInt(hcams[camInd], XI_PRM_COLOR_FILTER_ARRAY, &cfa);
 		switch(cfa) {
-		case XI_CFA_BAYER_RGGB: bayerPattern = GenCamBayerPattern::BayerRGGB; break;
-		case XI_CFA_BAYER_BGGR: bayerPattern = GenCamBayerPattern::BayerBGGR; break;
-		case XI_CFA_BAYER_GRBG: bayerPattern = GenCamBayerPattern::BayerGRBG; break;
-		case XI_CFA_BAYER_GBRG: bayerPattern = GenCamBayerPattern::BayerGBRG; break;
-		default: 
-			char info[256];
-			sprintf(info, "Camera index %d unknown cfa bayer pattern ! ", camInd);
-			SysUtil::errorOutput(std::string(info));
-			exit(-1);
-		break;
+			case XI_CFA_BAYER_RGGB: bayerPattern = GenCamBayerPattern::BayerRGGB; break;
+			case XI_CFA_BAYER_BGGR: bayerPattern = GenCamBayerPattern::BayerBGGR; break;
+			case XI_CFA_BAYER_GRBG: bayerPattern = GenCamBayerPattern::BayerGRBG; break;
+			case XI_CFA_BAYER_GBRG: bayerPattern = GenCamBayerPattern::BayerGBRG; break;
+			default: 
+				char info[256];
+				sprintf(info, "Camera index %d unknown cfa bayer pattern ! ", camInd);
+				SysUtil::errorOutput(std::string(info));
+				exit(-1);
+			break;
 		}
 		return 0;
 	}

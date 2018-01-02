@@ -76,6 +76,10 @@ namespace npp {
 	private:
 		// cfa bayer pattern type
 		NppiBayerGridPosition cfaBayerType;
+		// white balance gain
+		float redGain;
+		float greenGain;
+		float blueGain;
 
 		QuantizationTable aQuantizationTables[4];
 		Npp8u *pdQuantizationTables;
@@ -120,6 +124,12 @@ namespace npp {
 		int nMCUBlocksV = 0;
 
 	public:
+		// white balance color twist
+		Npp32f wbTwist[3][4] = {
+			{1.0, 0.0, 0.0, 0.0},
+			{0.0, 1.0, 0.0, 0.0},
+			{0.0, 0.0, 1.0, 0.0}
+		};
 		// quantization table
 		unsigned char quantiztionTableLuminance[64] = {
 			16,  11,  10,  16,  24,  40,  51,  61,
@@ -248,6 +258,15 @@ namespace npp {
 		@return int
 		*/
 		int setCfaBayerType(int cfaBayerType);
+
+		/**
+		@brief set white balance gain
+		@param float redGain: gain of red channel
+		@param float greenGain: gain of green channel
+		@param float blueGain: gain of blue channel
+		@return int
+		*/
+		int setWhiteBalanceGain(float redGain, float greenGain, float blueGain);
 
 		/**
 		@brief release jpeg encode

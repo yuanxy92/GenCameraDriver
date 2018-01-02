@@ -310,6 +310,23 @@ namespace npp {
 	}
 
 	/**
+	@brief set white balance gain
+	@param float redGain: gain of red channel
+	@param float greenGain: gain of green channel
+	@param float blueGain: gain of blue channel
+	@return int
+	*/
+	int NPPJpegCoder::setWhiteBalanceGain(float redGain, float greenGain, float blueGain) {
+		this->redGain = redGain;
+		this->greenGain = greenGain;
+		this->blueGain = blueGain;
+		wbTwist[0][0] = redGain;
+		wbTwist[1][1] = greenGain;
+		wbTwist[2][2] = blueGain;
+		return 0;
+	}
+
+	/**
 	@brief init jpeg encoder
 	@param int width: input image width
 	@param int height: input image height
@@ -560,6 +577,9 @@ namespace npp {
 		// bayer to rgb
 		NPP_CHECK_NPP(nppiCFAToRGB_8u_C1C3R(bayer_img_d, this->width, osize,
 			orect, rgb_img_d, step_rgb, cfaBayerType, NPPI_INTER_UNDEFINED));
+		
+		// apply white balance
+		NPP_CHECK_NPP(nppiColorTwist32f_8u_C3IR(rgb_img_d, step_rgb, osize, wbTwist));
 
 		// rgb to yuv420
 		NPP_CHECK_NPP(nppiRGBToYUV420_8u_C3P3R(rgb_img_d, step_rgb, apDstImage, aDstImageStep,

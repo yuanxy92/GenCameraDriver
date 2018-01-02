@@ -101,11 +101,11 @@ namespace cam {
 			}
 			// wait some time
 			if (waitTime > 0) {
-				std::this_thread::sleep_for(std::chrono::milliseconds((long long)waitTime));
+				std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<long long>(waitTime)));
 			}
 			if (isVerbose) {
 				printf("Camera %d captures one frame, wait %lld milliseconds for next frame ...\n",
-					camInd, waitTime);
+					camInd, static_cast<long long>(waitTime));
 			}
 		}
 	}
@@ -140,7 +140,7 @@ namespace cam {
 				break;
 			while (thStatus[camInd] == 2) {
 				// still in jpeg compression wait for some time
-				std::this_thread::sleep_for(std::chrono::milliseconds((long long)5));
+				std::this_thread::sleep_for(std::chrono::milliseconds(5));
 				if (isVerbose) {
 					SysUtil::warningOutput("Compress thread still not finish compress image yet !" \
 						" Please set lower framerate! ");
@@ -154,11 +154,11 @@ namespace cam {
 			thStatus[camInd] = 2;
 			// wait for some time
 			if (waitTime > 0) {
-				std::this_thread::sleep_for(std::chrono::milliseconds((long long)waitTime));
+				std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<long long>(waitTime)));
 			}
 			if (isVerbose) {
 				printf("Camera %d captures one frame, wait %lld milliseconds for next frame ...\n",
-					camInd, waitTime);
+					camInd, static_cast<long long>(waitTime));
 			}	
 		}
 	}
@@ -289,6 +289,7 @@ namespace cam {
 				for (size_t i = 0; i < this->cameraNum; i++) {
 					coders[i].init(camInfos[i].width, camInfos[i].height, JPEGQuality);
 					coders[i].setCfaBayerType(static_cast<int>(camInfos[i].bayerPattern));
+					coders[i].setWhiteBalanceGain(camInfos[i].redGain, camInfos[i].greenGain, camInfos[i].blueGain);
 				}
 			}
 		}
@@ -396,6 +397,10 @@ namespace cam {
 		if (this->bufferType == GenCamBufferType::JPEG) {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				cudaFree(this->bufferImgs_cuda[i]);
+				for (size_t j = 0; j < this->cameraNum; j++) {
+					delete bufferJPEGImgs[j][i].data;
+					bufferJPEGImgs[j][i].maxLength = 0;
+				}
 			}
 		}
 		return 0;
@@ -460,5 +465,35 @@ namespace cam {
 		return 0;
 	}
 
+	/**
+	@brief save captured videos to dir
+	@param std::string dir: input dir to save videos
+	@return int
+	*/
+	int GenCamera::saveVideos(std::string dir) {
+		if (this->bufferType == GenCamBufferType::JPEG) {
+			SysUtil::mkdir(dir);
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				std::string videoname = cv::format("%s/cam_%02d.avi", dir.c_str(), i);
+				cv::VideoWriter writer(videoname, cv::VideoWriter::fourcc('D', 'I', 'V', 'X'), 
+					camInfos[i].fps, cv::Size(camInfos[i].width, camInfos[i].height), true);
+				cv::cuda::GpuMat img_d(camInfos[i].height, camInfos[i].width, CV_8UC3);
+				cv::Mat img(camInfos[i].height, camInfos[i].width, CV_8UC3);
+				for (size_t j = 0; j < this->bufferSize; j++) {
+					coders[i].decode(this->bufferJPEGImgs[j][i].data, 
+						this->bufferJPEGImgs[j][i].length,
+						img_d);
+					img_d.download(img);
+					writer << img;
+				}
+				writer.release();
+			}
+		}
+		else {
+			SysUtil::errorOutput("Sorry, save function for other buffer types is not support yet. ");
+			exit(-1);
+		}
+		return 0;
+	}
 }
 

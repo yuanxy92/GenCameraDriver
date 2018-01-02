@@ -140,8 +140,10 @@ namespace cam {
 		int height;
 		float fps;
 		Status autoExposure;
-		Status autoWhiteBalance;
 		GenCamBayerPattern bayerPattern;	
+		float redGain;
+		float greenGain;
+		float blueGain;
 	};
 
 	/**
@@ -288,18 +290,7 @@ namespace cam {
 		@param Status autoWB: if use auto white balance
 		@return int
 		*/
-		virtual int setAutoWhiteBalance(int camInd, Status autoWB) = 0;
-
-		/**
-		@brief set white balance
-		@param int camInd: index of camera (-1 means all the cameras)
-		@param float red: gain of red channel
-		@param float green: gain of green channel
-		@param float blue: gain of blur channel
-		@return int
-		*/
-		virtual int setWhiteBalance(int camInd, float red,
-			float green, float blue) = 0;
+		virtual int setWhiteBalance(int camInd) = 0;
 
 		/**
 		@brief set auto exposure
@@ -469,6 +460,13 @@ namespace cam {
 		@return int
 		*/
 		int saveImages(std::string dir);
+
+		/**
+		@brief save captured videos to dir
+		@param std::string dir: input dir to save videos
+		@return int
+		*/
+		int saveVideos(std::string dir);
 	};
 
 	/**
