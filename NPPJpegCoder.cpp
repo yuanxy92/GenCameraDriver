@@ -23,7 +23,7 @@
 
 using namespace std;
 
-#define MEASURE_KERNEL_TIME
+// #define MEASURE_KERNEL_TIME
 
 namespace npp {
 
@@ -524,10 +524,12 @@ namespace npp {
 	@param unsigned char* bayer_img_d: input bayer image
 	@param char* jpegdata: output jpeg data
 	@param size_t* datalength: output data length
+	@param size_t maxlength: max length (bytes) could be copied to in jpeg data
 	@param cudaStream_t stream: cudastream
 	@return
 	*/
-	int NPPJpegCoder::encode(unsigned char* bayer_img_d, unsigned char* jpegdata, size_t* datalength, cudaStream_t stream) {
+	int NPPJpegCoder::encode(unsigned char* bayer_img_d, unsigned char* jpegdata,
+		size_t* datalength, size_t maxlength, cudaStream_t stream) {
 		
 		nppSetStream(stream);
 		NppiDCTState *pDCTState;
@@ -609,6 +611,11 @@ namespace npp {
 		writeScanHeader(oScanHeader, pDstOutput);
 
 		NPP_CHECK_CUDA(cudaMemcpyAsync(pDstOutput, pdScan, nScanLength, cudaMemcpyDeviceToHost, stream));
+
+		if (static_cast<size_t>(pDstOutput + nScanLength + 2 - jpegdata) > maxlength) {
+			std::cerr << "FATAL ERROR: Pre-malloced jpeg data size is too small ! " << std::endl;
+			exit(-1);
+		}
 
 		pDstOutput += nScanLength;
 		writeMarker(0x0D9, pDstOutput);

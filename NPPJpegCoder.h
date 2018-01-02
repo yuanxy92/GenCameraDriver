@@ -260,11 +260,12 @@ namespace npp {
 		@param unsigned char* bayer_img_d: input bayer image
 		@param unsigned char* jpegdata: output jpeg data
 		@param size_t* datalength: output data length
+		@param size_t maxlength: max length (bytes) could be copied to in jpeg data
 		@param cudaStream_t stream: cudastream
 		@return int
 		*/
 		int encode(unsigned char* bayer_img_d, unsigned char* jpegdata, 
-			size_t* datalength, cudaStream_t stream);
+			size_t* datalength, size_t maxlength, cudaStream_t stream);
 
 		/**
 		@brief decode jpeg image to raw image data (full)

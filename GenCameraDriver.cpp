@@ -31,8 +31,43 @@ namespace cam {
 
 	GenCamera::GenCamera() : isInit(false), isCapture(false),
 		isVerbose(false), bufferType(GenCamBufferType::Raw),
-		camPurpose(GenCamCapturePurpose::Streaming) {}
+		camPurpose(GenCamCapturePurpose::Streaming),
+		JPEGQuality(75), sizeRatio(0.12) {}
 	GenCamera::~GenCamera() {}
+
+	/**
+	@brief set verbose
+	@param bool isVerbose: true, verbose mode, output many infomations
+	for debugging
+	@return int
+	*/
+	int GenCamera::setVerbose(bool isVerbose) {
+		this->isVerbose = isVerbose;
+		return 0;
+	}
+
+	/**
+	@brief set buffer type
+	@param GenCamBufferType type: buffer type
+	@return int
+	*/
+	int GenCamera::setCamBufferType(GenCamBufferType type) {
+		this->bufferType = type;
+		return 0;
+	}
+
+	/**
+	@brief set jpeg compression quality
+	@param int quality: JPEG compression quality (1 - 100)
+	@param float sizeRatio: expected compression ratio used for
+	pre-malloc memory
+	@return int
+	*/
+	int GenCamera::setJPEGQuality(int quality, float sizeRatio) {
+		this->JPEGQuality = quality;
+		this->sizeRatio = sizeRatio;
+		return 0;
+	}
 
 	/**
 	@brief multi-thread capturing function
@@ -106,6 +141,10 @@ namespace cam {
 			while (thStatus[camInd] == 2) {
 				// still in jpeg compression wait for some time
 				std::this_thread::sleep_for(std::chrono::milliseconds((long long)5));
+				if (isVerbose) {
+					SysUtil::warningOutput("Compress thread still not finish compress image yet !" \
+						" Please set lower framerate! ");
+				}
 			}
 			// capture image
 			this->captureFrame(camInd, bufferImgs[0][camInd]);
@@ -132,35 +171,59 @@ namespace cam {
 	and wait until the next frame (based on fps)
 	*/
 	void GenCamera::compress_thread_JPEG_() {
-		clock_t begin_time, end_time;
-		std::vector<cudaStream_t> streams(this->cameraNum);
-		for (size_t camInd = 0; camInd < this->cameraNum; camInd ++) {
-			cudaStreamCreate(&streams[camInd]);
-		}
+		cudaStream_t stream;
+		cudaStreamCreate(&stream);
+		bool hasFrame = false;
 		for (;;) {
-			// check if all the images are captured
-			for (size_t i = 0; i < this->cameraNum; i ++) {
-				int sum = std::accumulate(thStatus.begin(), thStatus.end(), 0);
-				if (sum != 2 * this->cameraNum) {
-					std::this_thread::sleep_for(std::chrono::milliseconds((long long)5));
-				}
-			}
+			// check if threads are need to exit
+			int sum = std::accumulate(thBufferInds.begin(), thBufferInds.end(), 0);
+			if (sum == bufferSize * this->cameraNum)
+				break;
 			// compress images
 			for (size_t camInd = 0; camInd < this->cameraNum; camInd ++) {
-				coders[camInd].encode(bufferImgs[0][camInd].data, 
+				// check if all the images are captured
+				if (thStatus[camInd] != 2 || thBufferInds[camInd] == bufferSize)
+					continue;
+				else hasFrame = true;
+				// copy data to GPU
+				cudaMemcpy(this->bufferImgs_cuda[camInd], bufferImgs[0][camInd].data, 
+					sizeof(uchar) * camInfos[camInd].width * camInfos[camInd].height,
+					cudaMemcpyHostToDevice);
+				// compress
+				coders[camInd].encode(this->bufferImgs_cuda[camInd],
 					bufferJPEGImgs[thBufferInds[camInd]][camInd].data,
 					&bufferJPEGImgs[thBufferInds[camInd]][camInd].length,
-					streams[camInd]);
-			}
-			for (size_t camInd = 0; camInd < this->cameraNum; camInd ++) {	
-				// synchronize and destroy threads
-				cudaStreamSynchronize(streams[camInd]);
-				cudaStreamDestroy(streams[camInd]);
+					bufferJPEGImgs[thBufferInds[camInd]][camInd].maxLength,
+					stream);
+				cudaStreamSynchronize(stream);
+				if (isVerbose) {
+					printf("Camera %d compress one frame, buffer to index %d ...\n",
+						camInd, thBufferInds[camInd]);
+				}
+				// increase index
+				if (camPurpose == GenCamCapturePurpose::Streaming)
+					thBufferInds[camInd] = (thBufferInds[camInd] + 1) % bufferSize;
+				else {
+					thBufferInds[camInd] = thBufferInds[camInd] + 1;
+					if (thBufferInds[camInd] == bufferSize) {
+						thStatus[camInd] = 0;
+						continue;
+					}
+				}
 				// set thread status to 1
 				thStatus[camInd] = 1;
+				// if no image is compressed in this for loop, wait 5ms
+				if (camInd == this->cameraNum - 1) {
+					if (hasFrame == false) {
+						std::this_thread::sleep_for(std::chrono::milliseconds((long long)5));
+					}
+					else
+						hasFrame = true;
+				}
 			}
-
 		}
+		cudaStreamDestroy(stream);
+		SysUtil::infoOutput("JPEG compress thread exit successfully !");
 	}
 
 	/**
@@ -203,11 +266,17 @@ namespace cam {
 				// pre-malloc jpeg data
 				for (size_t i = 0; i < this->cameraNum; i++) {
 					// pre-calculate compressed jpeg data size
-					size_t maxLength = static_cast<size_t>(camInfos[i].width * camInfos[i].height * 0.1f);
+					size_t maxLength = static_cast<size_t>(camInfos[i].width * camInfos[i].height * sizeRatio);
 					for (size_t j = 0; j < bufferSize; j++) {
 						this->bufferJPEGImgs[j][i].data = new uchar[maxLength];
 						this->bufferJPEGImgs[j][i].maxLength = maxLength;
 					}
+				}
+				// pre-malloc cuda memory for debayer and jpeg compression
+				this->bufferImgs_cuda.resize(this->cameraNum);
+				for (size_t i = 0; i < this->cameraNum; i++) {
+					cudaMalloc(&this->bufferImgs_cuda[i], sizeof(uchar)
+						* camInfos[i].width * camInfos[i].height);
 				}
 				// malloc one frame cv::Mat data
 				this->bufferImgs.resize(1);
@@ -218,7 +287,7 @@ namespace cam {
 				// init npp jpeg coder
 				this->coders.resize(this->cameraNum);
 				for (size_t i = 0; i < this->cameraNum; i++) {
-					coders[i].init(camInfos[i].width, camInfos[i].height, 85);
+					coders[i].init(camInfos[i].width, camInfos[i].height, JPEGQuality);
 					coders[i].setCfaBayerType(static_cast<int>(camInfos[i].bayerPattern));
 				}
 			}
@@ -241,6 +310,29 @@ namespace cam {
 	}
 
 	/**
+	@brief wait for recording threads to finish
+	@return int
+	*/
+	int GenCamera::waitForRecordFinish() {
+		if (this->camPurpose != GenCamCapturePurpose::Recording) {
+			SysUtil::warningOutput("This function is only valid in recording mode");
+			return -1;
+		}
+		if (this->bufferType == GenCamBufferType::Raw) {
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				ths[i].join();
+			}
+		}
+		else if (this->bufferType == GenCamBufferType::JPEG) {
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				ths[i].join();
+			}
+			this->thJPEG.join();
+		}
+		return 0;
+	}
+
+	/**
 	@brief start capture threads
 	@return int
 	*/
@@ -255,9 +347,24 @@ namespace cam {
 				thStatus[i] = 0;
 				thBufferInds[i] = 0;
 			}
-			// start capturing threads
-			for (size_t i = 0; i < this->cameraNum; i++) {
-				ths[i] = std::thread(&GenCamera::capture_thread_raw_, this, i);
+			// start threads based on buffer type
+			if (this->bufferType == GenCamBufferType::Raw) {
+				// start capturing threads
+				for (size_t i = 0; i < this->cameraNum; i++) {
+					ths[i] = std::thread(&GenCamera::capture_thread_raw_, this, i);
+				}
+			}
+			else if (this->bufferType == GenCamBufferType::JPEG) {
+				// start compress theads
+				thJPEG = std::thread(&GenCamera::compress_thread_JPEG_, this);
+				// start capturing threads
+				for (size_t i = 0; i < this->cameraNum; i++) {
+					ths[i] = std::thread(&GenCamera::capture_thread_JPEG_, this, i);
+				}
+			}
+			else if (this->bufferType == GenCamBufferType::RGB) {
+				SysUtil::errorOutput("BufferType RGB is not support yet! ");
+				exit(-1);
 			}
 		}
 		else {
@@ -278,10 +385,18 @@ namespace cam {
 		}
 		// make sure all the threads are terminated
 		for (size_t i = 0; i < this->cameraNum; i++) {
-			ths[i].join();
-			char info[256];
-			sprintf(info, "Capturing thread %d terminate correctly !", i);
-			SysUtil::infoOutput(std::string(info));
+			if (ths[i].joinable()) {
+				ths[i].join();
+				char info[256];
+				sprintf(info, "Capturing thread %d terminate correctly !", i);
+				SysUtil::infoOutput(std::string(info));
+			}
+		}
+		// release memory
+		if (this->bufferType == GenCamBufferType::JPEG) {
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				cudaFree(this->bufferImgs_cuda[i]);
+			}
 		}
 		return 0;
 	}
@@ -316,5 +431,34 @@ namespace cam {
 		}
 		return 0;
 	}
+
+	/*************************************************************/
+	/*        function to save capture images to files           */
+	/*************************************************************/
+	/**
+	@brief save captured images to dir
+	@param std::string dir: input dir to save images
+	@return int
+	*/
+	int GenCamera::saveImages(std::string dir) {
+		if (this->bufferType == GenCamBufferType::JPEG) {
+			SysUtil::mkdir(dir);
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				for (size_t j = 0; j < this->bufferSize; j++) {
+					char outname[256];
+					sprintf(outname, "%s/%02d_%05d.jpg", dir.c_str(), i, j);
+					std::ofstream outputFile(outname, std::ios::out | std::ios::binary);
+					outputFile.write(reinterpret_cast<const char*>(this->bufferJPEGImgs[j][i].data),
+						this->bufferJPEGImgs[j][i].length);
+				}
+			}
+		}
+		else {
+			SysUtil::errorOutput("Sorry, save function for other buffer types is not support yet. ");
+			exit(-1);
+		}
+		return 0;
+	}
+
 }
 

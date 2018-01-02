@@ -19,10 +19,8 @@
 
 #include "GenCameraDriver.h"
 
-int main(int argc, char* argv[]) {
-
+int preview(int argc, char* argv[]) {
 	std::vector<cv::Mat> imgs(2);
-
 	std::vector<cam::GenCamInfo> camInfos;
 	std::shared_ptr<cam::GenCamera> cameraPtr 
 		= cam::createCamera(cam::CameraModel::XIMEA_xiC);
@@ -50,6 +48,40 @@ int main(int argc, char* argv[]) {
 	}
 	cameraPtr->stopCaptureThreads();
 	cameraPtr->release();
+	return 0;
+}
+
+int record(int argc, char* argv[]) {
+	std::vector<cv::Mat> imgs(2);
+	std::vector<cam::GenCamInfo> camInfos;
+	std::shared_ptr<cam::GenCamera> cameraPtr
+		= cam::createCamera(cam::CameraModel::XIMEA_xiC);
+	cameraPtr->init();
+	// set camera setting
+	cameraPtr->getCamInfos(camInfos);
+	cameraPtr->startCapture();
+	cameraPtr->setFPS(-1, 20);
+	cameraPtr->setAutoExposure(-1, cam::Status::on);
+	cameraPtr->setAutoExposureLevel(-1, 25);
+	cameraPtr->setAutoWhiteBalance(-1, cam::Status::on);
+	cameraPtr->makeSetEffective();
+	// set capturing setting
+	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
+	cameraPtr->setJPEGQuality(85, 0.15);
+	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
+	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
+	cameraPtr->startCaptureThreads();
+	// wait for recoding to finish
+	cameraPtr->waitForRecordFinish();
+	cameraPtr->saveImages("test");
+	cameraPtr->stopCaptureThreads();
+	cameraPtr->release();
+	return 0;
+}
+
+
+int main(int argc, char* argv[]) {
+	record(argc, argv);
 	return 0;
 }
 

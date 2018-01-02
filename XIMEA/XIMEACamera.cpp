@@ -182,11 +182,20 @@ namespace cam {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_AUTO_WB, 
 					static_cast<int>(autoWB)));
+				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_MANUAL_WB,
+					1));
+				checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
+				checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
 			}
 		}
-		else
+		else {
 			checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_AUTO_WB,
 				static_cast<int>(autoWB)));
+			checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_MANUAL_WB,
+				1));
+			checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
+			checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
+		}
 		return 0;
 	}
 

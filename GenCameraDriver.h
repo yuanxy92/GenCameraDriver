@@ -190,6 +190,7 @@ namespace cam {
 	protected:
 		// camera model
 		CameraModel camModel;
+
 		// capture for real-time view or saving
 		GenCamCapturePurpose camPurpose;
 		std::vector<GenCamInfo> camInfos;
@@ -203,6 +204,7 @@ namespace cam {
 		GenCamBufferType bufferType;
 		std::vector<std::vector<cv::Mat>> bufferImgs;
 		std::vector<std::vector<JPEGdata>> bufferJPEGImgs;
+		std::vector<uchar*> bufferImgs_cuda;
 		int bufferSize;
 		size_t cameraNum;
 
@@ -211,6 +213,8 @@ namespace cam {
 
 		// threads to capture images
 		std::vector<std::thread> ths; 
+		// thread to compress raw image into jpeg
+		std::thread thJPEG;
 
 		// status of capturing threads
 		// 0: stop capturing images, exit
@@ -222,6 +226,8 @@ namespace cam {
 		std::vector<int> thBufferInds; 
 
 		// npp jpeg coder class
+		int JPEGQuality;
+		float sizeRatio;
 		std::vector<npp::NPPJpegCoder> coders;
 
 	public:
@@ -351,6 +357,31 @@ namespace cam {
 		/*                   non-virtual function                    */
 		/*************************************************************/
 		/**
+		@brief set verbose 
+		@param bool isVerbose: true, verbose mode, output many infomations
+		for debugging
+		@return int
+		*/
+		int setVerbose(bool isVerbose);
+
+		/**
+		@brief set buffer type
+		@param GenCamBufferType type: buffer type
+		@return int
+		*/
+		int setCamBufferType(GenCamBufferType type);
+
+		/**
+		@brief set jpeg compression quality
+		@param int quality: JPEG compression quality (1 - 100)
+		@param float sizeRatio: expected compression ratio used for 
+			pre-malloc memory, too small will cause npp jpeg coder crash
+			(default 0.2)
+		@return int
+		*/
+		int setJPEGQuality(int quality, float sizeRatio = 0.2);
+
+		/**
 		@brief multi-thread capturing function (raw buffer)
 		used for continous mode
 		thread function to get images from camera and buffer to vector
@@ -403,6 +434,12 @@ namespace cam {
 		int setCapturePurpose(GenCamCapturePurpose camPurpose);
 
 		/**
+		@brief wait for recording threads to finish
+		@return int
+		*/
+		int waitForRecordFinish();
+
+		/**
 		@brief start capture threads
 		@return int 
 		*/
@@ -423,6 +460,15 @@ namespace cam {
 		*/
 		int captureFrame(std::vector<cv::Mat> & imgs);
 
+		/*************************************************************/
+		/*        function to save capture images to files           */
+		/*************************************************************/
+		/**
+		@brief save captured images to dir
+		@param std::string dir: input dir to save images
+		@return int
+		*/
+		int saveImages(std::string dir);
 	};
 
 	/**
