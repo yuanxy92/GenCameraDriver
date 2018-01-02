@@ -50,8 +50,6 @@ set(MY_HEADER_FILES
     PointGrey/PointGreyCamera.h
     # XIMEA camera
     XIMEA/XIMEACamera.h
-    # C++ header file
-    cuda/NPPJpegCoderKernel.h
 )
 
 set(MY_SOURCE_FILES 
@@ -61,8 +59,6 @@ set(MY_SOURCE_FILES
     XIMEA/XIMEACamera.cpp
     # C++ source file
     NPPJpegCoder.cpp
-    # cuda source file
-    cuda/NPPJpegCoderKernel.cu
     # general camera driver
     GenCameraDriver.cpp
     # main function

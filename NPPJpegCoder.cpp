@@ -15,8 +15,6 @@
 #include <fstream>
 #include <iostream>
 
-#include "NPPJpegCoderKernel.h"
-
 #include "Exceptions.h"
 #include "NPPJpegCoder.h"
 
