@@ -45,7 +45,6 @@ namespace cam {
 				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);	
 				Spinnaker::GenApi::INodeMap & sNodeMap = pCam->GetStreamNodeMap();
 				CIntegerPtr StreamNode = sNodeMap.GetNode(“StreamDefaultBufferCount”);
-				INT64 bufferCount = StreamNode->GetValue();
 				StreamNode->SetValue(1);
 				// set pixel format to bayer 8
 
@@ -73,11 +72,12 @@ namespace cam {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				// Select camera
 				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
-				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
+				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetTLDeviceNodeMap();
 				// get serial number
 				Spinnaker::GenApi::CStringPtr ptrStringSerial = nodeMap.GetNode("DeviceSerialNumber");
 				camInfos[i].sn = ptrStringSerial->GetValue();
 				// get image size
+				nodeMap = pCam->GetNodeMap();
 				Spinnaker::GenApi::CIntegerPtr widthPtr = nodeMap.GetNode("Width");
 				camInfos[i].width = widthPtr->GetValue();
 				Spinnaker::GenApi::CIntegerPtr heightPtr = nodeMap.GetNode("Height");
