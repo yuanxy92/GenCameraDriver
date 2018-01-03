@@ -29,6 +29,24 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraPTGREY::init() {
+		// get camera lists
+		sysPtr = Spinnaker::System::GetInstance();
+		camList = sysPtr->GetCameras();
+		this->cameraNum = camList.GetSize();
+		// init cameras
+		try {
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				camList.GetByIndex(i)->Init();
+			}
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.what());
+		}
+		// init images
+		ptgreyImages.resize(this->cameraNum);
+		ths.resize(this->cameraNum);
+		thStatus.resize(this->cameraNum);
+		this->isInit = true;
 		return 0;
 	}
 
@@ -38,6 +56,59 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraPTGREY::getCamInfos(std::vector<GenCamInfo> & camInfos) {
+		camInfos.resize(this->cameraNum);
+		try {
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				// Select camera
+				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
+				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
+				// get serial number
+				Spinnaker::GenApi::CStringPtr ptrStringSerial = nodeMap.GetNode("DeviceSerialNumber");
+				camInfos[i].sn = ptrStringSerial->GetValue();
+				// get image size
+				Spinnaker::GenApi::CIntegerPtr widthPtr = nodeMap.GetNode("Width");
+				camInfos[i].width = widthPtr->GetValue();
+				Spinnaker::GenApi::CIntegerPtr heightPtr = nodeMap.GetNode("Height");
+				camInfos[i].height = heightPtr->GetValue();
+				// get fps
+				Spinnaker::GenApi::CFloatPtr fpsPtr = nodeMap.GetNode("AcquisitionFrameRate");
+				camInfos[i].fps = fpsPtr->GetValue();
+				// get auto exposure status
+				Spinnaker::GenApi::CEnumerationPtr exposureAutoPtr = nodeMap.GetNode("ExposureAuto");
+				if (exposureAutoPtr->GetIntValue() == exposureAutoPtr->GetEntryByName("Off")->GetValue()) {
+					camInfos[i].autoExposure = Status::off;
+				}
+				else {
+					camInfos[i].autoExposure = Status::on;
+				}
+				// get bayer pattern
+				Spinnaker::GenApi::CStringPtr bayerPatternPtr = nodeMap.GetNode("PixelColorFilter");
+				std::string bayerPattern = bayerPatternPtr->GetValue();
+				if (bayerPattern.compare("BayerRG") == 0) {
+					camInfos[i].bayerPattern = GenCamBayerPattern::BayerRGGB;
+				}
+				else if (bayerPattern.compare("BayerBG") == 0) {
+					camInfos[i].bayerPattern = GenCamBayerPattern::BayerBGGR;
+				}
+				else if (bayerPattern.compare("BayerGB") == 0) {
+					camInfos[i].bayerPattern = GenCamBayerPattern::BayerGBRG;
+				}
+				else if (bayerPattern.compare("BayerGR") == 0) {
+					camInfos[i].bayerPattern = GenCamBayerPattern::BayerGBRG;
+				}
+				// get white balance gain
+				Spinnaker::GenApi::CFloatPtr balanceRatioPtr = nodeMap.GetNode("BalanceRatio");
+				Spinnaker::GenApi::CEnumerationPtr balanceRatioSelectorPtr = nodeMap.GetNode("BalanceRatioSelector");
+				balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Blue")->GetValue());
+				camInfos[i].blueGain = balanceRatioPtr->GetValue();
+				balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Red")->GetValue());
+				camInfos[i].redGain = balanceRatioPtr->GetValue();
+				camInfos[i].greenGain = 1.0f;
+			}
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.what());
+		}
 		return 0;
 	}
 

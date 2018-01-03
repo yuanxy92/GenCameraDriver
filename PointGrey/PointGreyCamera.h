@@ -25,12 +25,14 @@ namespace cam {
 	void checkPTGREYInternal(int result, char const *const func,
 		const char *const file, int const line);
 
-	// XIMEA function safe call
+	// pointgrey function safe call
 #define checkPTGREYErrors(val)  checkPTGREYInternal ( (val), #val, __FILE__, __LINE__ )
 
 	class GenCameraPTGREY : public GenCamera {
 	private:
-
+		Spinnaker::SystemPtr sysPtr;
+		Spinnaker::CameraList camList;
+		std::vector<Spinnaker::ImagePtr> ptgreyImages;
 	public:
 
 	private:
