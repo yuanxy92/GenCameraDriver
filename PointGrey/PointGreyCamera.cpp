@@ -35,8 +35,20 @@ namespace cam {
 		this->cameraNum = camList.GetSize();
 		// init cameras
 		try {
+			// init camera
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				camList.GetByIndex(i)->Init();
+			}
+			// set some default values
+			for (size_t i = 0; i < this->cameraNum; i ++) {
+				// set camera inside buffers to 1 (can get the newest image)
+				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);	
+				Spinnaker::GenApi::INodeMap & sNodeMap = pCam->GetStreamNodeMap();
+				CIntegerPtr StreamNode = sNodeMap.GetNode(“StreamDefaultBufferCount”);
+				INT64 bufferCount = StreamNode->GetValue();
+				StreamNode->SetValue(1);
+				// set pixel format to bayer 8
+
 			}
 		}
 		catch (Spinnaker::Exception &e) {
@@ -145,6 +157,30 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraPTGREY::setFPS(int camInd, float fps) {
+		try {
+			size_t beginInd, endInd;
+			if (camInd == -1) {
+				beginInd = 0;
+				endInd = this->cameraNum - 1;
+			}
+			else {
+				beginInd = camInd;
+				endInd = camInd;
+			}
+			for (size_t i = beginInd; i <= endInd; i ++) {
+				// Select camera
+				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
+				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
+				// turn of FPS auto to off
+				
+				// set fps
+				Spinnaker::GenApi::CFloatPtr fpsPtr = nodeMap.GetNode("AcquisitionFrameRate");
+				fpsPtr->SetValue(fps);	
+			}
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.what());
+		}
 		return 0;
 	}
 
@@ -169,6 +205,7 @@ namespace cam {
 
 	/**
 	@brief set auto exposure level
+	for pointgrey camera auto exposure level is adjusted by EV
 	@param int ind: index of camera (-1 means all the cameras)
 	@param float level: auto exposure level, average intensity of output
 	signal AEAG should achieve
@@ -195,6 +232,27 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraPTGREY::getBayerPattern(int camInd, GenCamBayerPattern & bayerPattern) {
+		try {
+			Spinnaker::CameraPtr pCam = camList.GetByIndex(camInd);
+			Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
+			Spinnaker::GenApi::CStringPtr bayerPatternPtr = nodeMap.GetNode("PixelColorFilter");
+			std::string bayerPattern = bayerPatternPtr->GetValue();
+			if (bayerPattern.compare("BayerRG") == 0) {
+				bayerPattern = GenCamBayerPattern::BayerRGGB;
+			}
+			else if (bayerPattern.compare("BayerBG") == 0) {
+				bayerPattern = GenCamBayerPattern::BayerBGGR;
+			}
+			else if (bayerPattern.compare("BayerGB") == 0) {
+				bayerPattern = GenCamBayerPattern::BayerGBRG;
+			}
+			else if (bayerPattern.compare("BayerGR") == 0) {
+				bayerPattern = GenCamBayerPattern::BayerGBRG;
+			}
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.what());
+		} 
 		return 0;
 	}
 
