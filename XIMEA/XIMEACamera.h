@@ -5,8 +5,8 @@ Implementation of XIMEA camera
 @date Dec 29, 2017
 */
 
-#ifndef __GENERAL_CAMERA_DRIVER_XIMEA_HPP__
-#define __GENERAL_CAMERA_DRIVER__XIMEA_HPP__
+#ifndef __GENERIC_CAMERA_DRIVER_XIMEA_HPP__
+#define __GENERIC_CAMERA_DRIVER__XIMEA_HPP__
 
 #include "GenCameraDriver.h"
 

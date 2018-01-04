@@ -4,8 +4,8 @@
 @date Dec 29, 2017
 */
 
-#ifndef __GENERAL_CAMERA_DRIVER_HPP__
-#define __GENERAL_CAMERA_DRIVER_HPP__
+#ifndef __GENERIC_CAMERA_DRIVER_HPP__
+#define __GENERIC_CAMERA_DRIVER_HPP__
 
 // include std
 #include <cstdio>
