@@ -31,7 +31,7 @@ int preview(int argc, char* argv[]) {
 	cameraPtr->setFPS(-1, 20);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);
 	cameraPtr->setAutoExposureLevel(-1, 40);
-	cameraPtr->setWhiteBalance(-1);
+	cameraPtr->setAutoWhiteBalance(-1);
 	cameraPtr->makeSetEffective();
 	// set capturing setting
 	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
@@ -62,7 +62,7 @@ int record(int argc, char* argv[]) {
 	cameraPtr->setFPS(-1, 20);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);
 	cameraPtr->setAutoExposureLevel(-1, 25);
-	cameraPtr->setWhiteBalance(-1);
+	cameraPtr->setAutoWhiteBalance(-1);
 	cameraPtr->makeSetEffective();
 	// set capturing setting
 	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);

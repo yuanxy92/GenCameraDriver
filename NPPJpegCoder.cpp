@@ -296,7 +296,7 @@ namespace npp {
 	/**
 	@brief constructor
 	*/
-	NPPJpegCoder::NPPJpegCoder() {}
+	NPPJpegCoder::NPPJpegCoder(): isWBRaw(false) {}
 	NPPJpegCoder::~NPPJpegCoder() {}
 
 	/**
@@ -306,6 +306,17 @@ namespace npp {
 	*/
 	int NPPJpegCoder::setCfaBayerType(int cfaBayerType) {
 		this->cfaBayerType = static_cast<NppiBayerGridPosition>(cfaBayerType);
+		return 0;
+	}
+
+	/**
+	@brief set input raw data type
+	before auto white balance adjustment or
+	@param int cfaBayerType: cfa bayer type
+	@return int
+	*/
+	int NPPJpegCoder::setWBRawType(bool isWBRaw) {
+		this->isWBRaw = isWBRaw;
 		return 0;
 	}
 
@@ -578,8 +589,10 @@ namespace npp {
 		NPP_CHECK_NPP(nppiCFAToRGB_8u_C1C3R(bayer_img_d, this->width, osize,
 			orect, rgb_img_d, step_rgb, cfaBayerType, NPPI_INTER_UNDEFINED));
 		
-		// apply white balance
-		NPP_CHECK_NPP(nppiColorTwist32f_8u_C3IR(rgb_img_d, step_rgb, osize, wbTwist));
+		if (isWBRaw == false) {
+			// apply white balance
+			NPP_CHECK_NPP(nppiColorTwist32f_8u_C3IR(rgb_img_d, step_rgb, osize, wbTwist));
+		}
 
 		// rgb to yuv420
 		NPP_CHECK_NPP(nppiRGBToYUV420_8u_C3P3R(rgb_img_d, step_rgb, apDstImage, aDstImageStep,

@@ -144,6 +144,10 @@ namespace cam {
 		float redGain;
 		float greenGain;
 		float blueGain;
+		// raw wb type
+		// true: raw data is after white balance
+		// false: raw data is before white balance
+		bool isWBRaw;
 	};
 
 	/**
@@ -287,10 +291,20 @@ namespace cam {
 		/**
 		@brief set auto white balance
 		@param int ind: index of camera (-1 means all the cameras)
-		@param Status autoWB: if use auto white balance
 		@return int
 		*/
-		virtual int setWhiteBalance(int camInd) = 0;
+		virtual int setAutoWhiteBalance(int camInd) = 0;
+
+		/**
+		@brief set auto white balance
+		@param int ind: index of camera (-1 means all the cameras)
+		@param float redGain: red gain of the white balance
+		@param float greenGain: green gain of the white balance
+		@param float blueGain: blue gain of the white balance
+		@return int
+		*/
+		virtual int setWhiteBalance(int camInd, float redGain,
+			float greenGain, float blueGain) = 0;
 
 		/**
 		@brief set auto exposure
@@ -301,13 +315,25 @@ namespace cam {
 		virtual int setAutoExposure(int camInd, Status autoExposure) = 0;
 
 		/**
-		@brief set auto exposure level
+		@brief set auto exposure level (only support XIMEA cameras)
 		@param int ind: index of camera (-1 means all the cameras)
 		@param float level: auto exposure level, average intensity of output
 		signal AEAG should achieve
 		@return int
 		*/
 		virtual int setAutoExposureLevel(int camInd, float level) = 0;
+
+		/**
+		@brief set auto exposure compensation (only support PointGrey cameras)
+		@param int ind: index of camera (-1 means all the cameras)
+		@param Status status: if use auto EV value
+		@param float relativeEV: only valid when the second argument is off.
+		The reason why use relative EV value here is to directly set a absolute 
+		value is difficult
+		@return int
+		*/
+		virtual int setAutoExposureCompensation(int camInd, 
+			Status status, float relativeEV) = 0;
 
 		/**
 		@brief set exposure time

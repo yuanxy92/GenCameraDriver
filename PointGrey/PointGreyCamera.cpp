@@ -24,6 +24,30 @@ namespace cam {
 	GenCameraPTGREY::GenCameraPTGREY() {}
 	GenCameraPTGREY::~GenCameraPTGREY() {}
 
+	/***********************************************************/
+	/*                   basic camera functions                */
+	/***********************************************************/
+	/**
+	@brief make setting effective
+	by capturing some frames
+	@param int k: capture image frames (default is 10)
+	@return int
+	*/
+	int GenCameraPTGREY::makeSetEffective(int k) {
+		if (!this->isCapture) {
+			SysUtil::warningOutput("This function must be executed after " \
+				"starting capturing !");
+			return -1;
+		}
+		Spinnaker::ImagePtr image;
+		for (size_t k = 0; k < 10; k++) {
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				image = camList.GetByIndex(i)->GetNextImage();
+			}
+		}
+		return 0;
+	}
+
 	/**
 	@brief init camera
 	@return int
@@ -41,17 +65,60 @@ namespace cam {
 			}
 			// set some default values
 			for (size_t i = 0; i < this->cameraNum; i ++) {
-				// set camera inside buffers to 1 (can get the newest image)
-				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);	
-				Spinnaker::GenApi::INodeMap & sNodeMap = pCam->GetStreamNodeMap();
-				CIntegerPtr StreamNode = sNodeMap.GetNode(“StreamDefaultBufferCount”);
-				StreamNode->SetValue(1);
-				// set pixel format to bayer 8
 
+				// set camera inside buffers strategy
+				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);	
+				Spinnaker::GenApi::INodeMap & sNodeMap = pCam->GetTLStreamNodeMap();
+				Spinnaker::GenApi::CIntegerPtr StreamNode = sNodeMap.GetNode("StreamDefaultBufferCount");
+				StreamNode->SetValue(10);
+				Spinnaker::GenApi::CEnumerationPtr StreamModeNode = sNodeMap.GetNode("StreamBufferHandlingMode");
+				StreamModeNode->SetIntValue(StreamModeNode->GetEntryByName("NewestFirst")->GetValue());
+
+				// set pixel format to bayer 8
+				// get pixel format
+				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
+				Spinnaker::GenApi::CEnumerationPtr pixelFormatPtr = nodeMap.GetNode("PixelFormat");
+				// get pixel color filter
+				Spinnaker::GenApi::CStringPtr bayerPatternPtr = nodeMap.GetNode("PixelColorFilter");
+				std::string bayerPattern = bayerPatternPtr->GetValue();
+				Spinnaker::GenICam::gcstring dstPixelFormat;
+				if (bayerPattern.compare("BayerRG") == 0) {
+					dstPixelFormat = "Bayer RG 8";
+				}
+				else if (bayerPattern.compare("BayerBG") == 0) {
+					dstPixelFormat = "Bayer BG 8";
+				}
+				else if (bayerPattern.compare("BayerGB") == 0) {
+					dstPixelFormat = "Bayer GB 8";
+				}
+				else if (bayerPattern.compare("BayerGR") == 0) {
+					dstPixelFormat = "Bayer GR 8";
+				}
+				pixelFormatPtr->SetIntValue(pixelFormatPtr->GetEntryByName(dstPixelFormat)->GetValue());
+
+				// Set acquisition mode to continuous
+				Spinnaker::GenApi::CEnumerationPtr acquisitionModePtr = nodeMap.GetNode("AcquisitionMode");
+				acquisitionModePtr->SetIntValue(acquisitionModePtr->GetEntryByName("Continuous")->GetValue());
+
+				// Set fps
+				Spinnaker::GenApi::CEnumerationPtr fpsAutoPtr = nodeMap.GetNode("AcquisitionFrameRateAuto");
+				fpsAutoPtr->SetIntValue(fpsAutoPtr->GetEntryByName("Off")->GetValue());
+				Spinnaker::GenApi::CFloatPtr fpsPtr = nodeMap.GetNode("AcquisitionFrameRate");
+				fpsPtr->SetValue(12);
+
+				// Set auto exposure and auto gain
+				Spinnaker::GenApi::CEnumerationPtr exposureModePtr = nodeMap.GetNode("ExposureMode");
+				exposureModePtr->SetIntValue(exposureModePtr->GetEntryByName("Timed")->GetValue());
+
+				// set gain and exposure to auto first
+				Spinnaker::GenApi::CEnumerationPtr gainAutoPtr = nodeMap.GetNode("GainAuto");
+				gainAutoPtr->SetIntValue(gainAutoPtr->GetEntryByName("Continuous")->GetValue());
+				Spinnaker::GenApi::CEnumerationPtr exposureAutoPtr = nodeMap.GetNode("ExposureAuto");
+				exposureAutoPtr->SetIntValue(exposureAutoPtr->GetEntryByName("Continuous")->GetValue());
 			}
 		}
 		catch (Spinnaker::Exception &e) {
-			SysUtil::errorOutput(e.what());
+			SysUtil::errorOutput(e.GetFullErrorMessage());
 		}
 		// init images
 		ptgreyImages.resize(this->cameraNum);
@@ -116,10 +183,12 @@ namespace cam {
 				balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Red")->GetValue());
 				camInfos[i].redGain = balanceRatioPtr->GetValue();
 				camInfos[i].greenGain = 1.0f;
+				// set raw type, after white balance
+				camInfos[i].isWBRaw = true;
 			}
 		}
 		catch (Spinnaker::Exception &e) {
-			SysUtil::errorOutput(e.what());
+			SysUtil::errorOutput(e.GetFullErrorMessage());
 		}
 		return 0;
 	}
@@ -129,6 +198,15 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraPTGREY::startCapture() {
+		try {
+			for (size_t camInd = 0; camInd < this->cameraNum; camInd ++) {
+				camList.GetByIndex(camInd)->BeginAcquisition();
+			}
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.GetFullErrorMessage());
+		}
+		this->isCapture = true;
 		return 0;
 	}
 
@@ -137,6 +215,15 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraPTGREY::stopCapture() {
+		try {
+			for (size_t camInd = 0; camInd < this->cameraNum; camInd++) {
+				camList.GetByIndex(camInd)->EndAcquisition();
+			}
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.GetFullErrorMessage());
+		}
+		this->isCapture = false;
 		return 0;
 	}
 
@@ -145,6 +232,22 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraPTGREY::release() {
+		if (this->isCapture == true)
+			this->stopCapture();
+		// close cameras
+		try {
+			// de-init cameras
+			for (size_t camInd = 0; camInd < this->cameraNum; camInd++) {
+				camList.GetByIndex(camInd)->DeInit();
+			}
+			// clear camera list
+			camList.Clear();
+			// release system
+			sysPtr->ReleaseInstance();
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.GetFullErrorMessage());
+		}
 		return 0;
 	}
 
@@ -172,14 +275,15 @@ namespace cam {
 				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
 				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
 				// turn of FPS auto to off
-				
+				Spinnaker::GenApi::CEnumerationPtr fpsAutoPtr = nodeMap.GetNode("AcquisitionFrameRateAuto");
+				fpsAutoPtr->SetIntValue(fpsAutoPtr->GetEntryByName("Off")->GetValue());
 				// set fps
 				Spinnaker::GenApi::CFloatPtr fpsPtr = nodeMap.GetNode("AcquisitionFrameRate");
 				fpsPtr->SetValue(fps);	
 			}
 		}
 		catch (Spinnaker::Exception &e) {
-			SysUtil::errorOutput(e.what());
+			SysUtil::errorOutput(e.GetFullErrorMessage());
 		}
 		return 0;
 	}
@@ -189,7 +293,52 @@ namespace cam {
 	@param int ind: index of camera (-1 means all the cameras)
 	@return int
 	*/
-	int GenCameraPTGREY::setWhiteBalance(int camInd) {
+	int GenCameraPTGREY::setAutoWhiteBalance(int camInd) {
+		SysUtil::warningOutput("This not is not implemented yet.");
+		return 0;
+	}
+
+	/**
+	@brief set auto white balance
+	@param int ind: index of camera (-1 means all the cameras)
+	@param float redGain: red gain of the white balance
+	@param float greenGain: green gain of the white balance
+	@param float blueGain: blue gain of the white balance
+	@return int
+	*/
+	int GenCameraPTGREY::setWhiteBalance(int camInd, float redGain,
+		float greenGain, float blueGain) {
+		try {
+			size_t beginInd, endInd;
+			if (camInd == -1) {
+				beginInd = 0;
+				endInd = this->cameraNum - 1;
+			}
+			else {
+				beginInd = camInd;
+				endInd = camInd;
+			}
+
+			for (size_t i = beginInd; i <= endInd; i++) {
+				// Select camera
+				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
+				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
+				// make green gain into 1.0 first
+				redGain = redGain / greenGain;
+				blueGain = blueGain / greenGain;
+				greenGain = 1.0f;
+				// get white balance gain
+				Spinnaker::GenApi::CFloatPtr balanceRatioPtr = nodeMap.GetNode("BalanceRatio");
+				Spinnaker::GenApi::CEnumerationPtr balanceRatioSelectorPtr = nodeMap.GetNode("BalanceRatioSelector");
+				balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Blue")->GetValue());
+				balanceRatioPtr->SetValue(blueGain);
+				balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Red")->GetValue());
+				balanceRatioPtr->SetValue(redGain);
+			}
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.GetFullErrorMessage());
+		}
 		return 0;
 	}
 
@@ -200,6 +349,37 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraPTGREY::setAutoExposure(int camInd, Status autoExposure) {
+		try {
+			size_t beginInd, endInd;
+			if (camInd == -1) {
+				beginInd = 0;
+				endInd = this->cameraNum - 1;
+			}
+			else {
+				beginInd = camInd;
+				endInd = camInd;
+			}
+
+			Spinnaker::GenICam::gcstring status;
+			if (autoExposure == Status::on)
+				status = "Continuous";
+			else if (autoExposure == Status::off)
+				status = "Off";
+
+			for (size_t i = beginInd; i <= endInd; i++) {
+				// Select camera
+				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
+				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
+				// set auto exposure and auto gain status
+				Spinnaker::GenApi::CEnumerationPtr gainAutoPtr = nodeMap.GetNode("GainAuto");
+				gainAutoPtr->SetIntValue(gainAutoPtr->GetEntryByName("Continuous")->GetValue());
+				Spinnaker::GenApi::CEnumerationPtr exposureAutoPtr = nodeMap.GetNode("ExposureAuto");
+				exposureAutoPtr->SetIntValue(exposureAutoPtr->GetEntryByName("Continuous")->GetValue());
+			}
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.GetFullErrorMessage());
+		}
 		return 0;
 	}
 
@@ -212,6 +392,64 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraPTGREY::setAutoExposureLevel(int camInd, float level) {
+		SysUtil::warningOutput("setAutoExposureLevel function is not "\
+			"support for PointGrey camera. \n"\
+			"Please use setAutoExposureCompensation instead !");
+		return 0;
+	}
+
+	/**
+	@brief set auto exposure compensation (only support PointGrey cameras)
+	@param int ind: index of camera (-1 means all the cameras)
+	@param Status status: if use auto EV value
+	@param float relativeEV: only valid when the second argument is off.
+	The reason why use relative EV value here is to directly set a absolute
+	value is difficult
+	@return int
+	*/
+	int GenCameraPTGREY::setAutoExposureCompensation(int camInd,
+		Status status, float relativeEV) {
+		try {
+			size_t beginInd, endInd;
+			if (camInd == -1) {
+				beginInd = 0;
+				endInd = this->cameraNum - 1;
+			}
+			else {
+				beginInd = camInd;
+				endInd = camInd;
+			}
+
+			Spinnaker::ImagePtr image;
+			for (size_t i = beginInd; i <= endInd; i++) {
+				// Select camera
+				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
+				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
+				// set auto exposure and auto gain status
+				Spinnaker::GenApi::CEnumerationPtr evAuto = nodeMap.GetNode("pgrExposureCompensationAuto");
+				evAuto->SetIntValue(evAuto->GetEntryByName("Continuous")->GetValue());
+				image = camList.GetByIndex(camInd)->GetNextImage();
+				SysUtil::sleep(500);
+				image = camList.GetByIndex(camInd)->GetNextImage();
+				SysUtil::sleep(500);
+				if (status == Status::off) {
+					// get value
+					Spinnaker::GenApi::CFloatPtr evPtr = nodeMap.GetNode("pgrExposureCompensation");
+					float evVal = evPtr->GetValue();
+					// turn off auto EV
+					evAuto->SetIntValue(evAuto->GetEntryByName("Off")->GetValue());
+					// set new value
+					evPtr->SetValue(evVal + relativeEV);
+					image = camList.GetByIndex(camInd)->GetNextImage();
+					SysUtil::sleep(500);
+					image = camList.GetByIndex(camInd)->GetNextImage();
+					SysUtil::sleep(500);
+				}
+			}
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.GetFullErrorMessage());
+		}
 		return 0;
 	}
 
@@ -222,6 +460,34 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraPTGREY::setExposure(int camInd, int time) {
+		try {
+			size_t beginInd, endInd;
+			if (camInd == -1) {
+				beginInd = 0;
+				endInd = this->cameraNum - 1;
+			}
+			else {
+				beginInd = camInd;
+				endInd = camInd;
+			}
+
+			Spinnaker::ImagePtr image;
+			for (size_t i = beginInd; i <= endInd; i++) {
+				// Select camera
+				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
+				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
+				// set auto exposure and auto gain status
+				Spinnaker::GenApi::CEnumerationPtr exposureAutoPtr = nodeMap.GetNode("ExposureAuto");
+				exposureAutoPtr->SetIntValue(exposureAutoPtr->GetEntryByName("Off")->GetValue());
+				Spinnaker::GenApi::CEnumerationPtr exposureModePtr = nodeMap.GetNode("ExposureMode");
+				exposureModePtr->SetIntValue(exposureModePtr->GetEntryByName("Timed")->GetValue());
+				Spinnaker::GenApi::CFloatPtr exposureTimePtr = nodeMap.GetNode("ExposureTime");
+				exposureTimePtr->SetValue(time);
+			}
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.GetFullErrorMessage());
+		}
 		return 0;
 	}
 
@@ -236,33 +502,23 @@ namespace cam {
 			Spinnaker::CameraPtr pCam = camList.GetByIndex(camInd);
 			Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
 			Spinnaker::GenApi::CStringPtr bayerPatternPtr = nodeMap.GetNode("PixelColorFilter");
-			std::string bayerPattern = bayerPatternPtr->GetValue();
-			if (bayerPattern.compare("BayerRG") == 0) {
+			std::string bayerPatternStr = bayerPatternPtr->GetValue();
+			if (bayerPatternStr.compare("BayerRG") == 0) {
 				bayerPattern = GenCamBayerPattern::BayerRGGB;
 			}
-			else if (bayerPattern.compare("BayerBG") == 0) {
+			else if (bayerPatternStr.compare("BayerBG") == 0) {
 				bayerPattern = GenCamBayerPattern::BayerBGGR;
 			}
-			else if (bayerPattern.compare("BayerGB") == 0) {
+			else if (bayerPatternStr.compare("BayerGB") == 0) {
 				bayerPattern = GenCamBayerPattern::BayerGBRG;
 			}
-			else if (bayerPattern.compare("BayerGR") == 0) {
+			else if (bayerPatternStr.compare("BayerGR") == 0) {
 				bayerPattern = GenCamBayerPattern::BayerGBRG;
 			}
 		}
 		catch (Spinnaker::Exception &e) {
-			SysUtil::errorOutput(e.what());
+			SysUtil::errorOutput(e.GetFullErrorMessage());
 		} 
-		return 0;
-	}
-
-	/**
-	@brief make setting effective
-	by capturing some frames
-	@param int k: capture image frames (default is 10)
-	@return int
-	*/
-	int GenCameraPTGREY::makeSetEffective(int k) {
 		return 0;
 	}
 
@@ -276,6 +532,16 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraPTGREY::captureFrame(int camInd, cv::Mat & img) {
+		// capture images
+		try {
+			ptgreyImages[camInd] = camList.GetByIndex(camInd)->GetNextImage();
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.GetFullErrorMessage());
+		}
+		// copy to opencv mat
+		std::memcpy(img.data, ptgreyImages[camInd]->GetData(), sizeof(unsigned char) *
+			ptgreyImages[camInd]->GetWidth() * ptgreyImages[camInd]->GetHeight());
 		return 0;
 	}
 }

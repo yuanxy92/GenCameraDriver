@@ -89,7 +89,18 @@ namespace cam {
 		@param int ind: index of camera (-1 means all the cameras)
 		@return int
 		*/
-		int setWhiteBalance(int camInd) override;
+		int setAutoWhiteBalance(int camInd) override;
+
+		/**
+		@brief set auto white balance
+		@param int ind: index of camera (-1 means all the cameras)
+		@param float redGain: red gain of the white balance
+		@param float greenGain: green gain of the white balance
+		@param float blueGain: blue gain of the white balance
+		@return int
+		*/
+		int setWhiteBalance(int camInd, float redGain,
+			float greenGain, float blueGain) override;
 
 		/**
 		@brief set auto exposure
@@ -107,6 +118,18 @@ namespace cam {
 		@return int
 		*/
 		int setAutoExposureLevel(int camInd, float level) override;
+
+		/**
+		@brief set auto exposure compensation (only support PointGrey cameras)
+		@param int ind: index of camera (-1 means all the cameras)
+		@param Status status: if use auto EV value
+		@param float relativeEV: only valid when the second argument is off.
+		The reason why use relative EV value here is to directly set a absolute
+		value is difficult
+		@return int
+		*/
+		int setAutoExposureCompensation(int camInd,
+			Status status, float relativeEV) override;
 
 		/**
 		@brief set exposure time

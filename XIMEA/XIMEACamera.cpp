@@ -93,7 +93,6 @@ namespace cam {
 	*/
 	int GenCameraXIMEA::startCapture() {
 		for (size_t i = 0; i < this->cameraNum; i++) {
-			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_AEAG, 1));
 			checkXIMEAErrors(xiStartAcquisition(hcams[i]));
 		}
 		this->isCapture = true;
@@ -123,7 +122,6 @@ namespace cam {
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			checkXIMEAErrors(xiCloseDevice(hcams[i]));
 		}
-		this->isCapture = true;
 		return 0;
 	}
 
@@ -154,6 +152,7 @@ namespace cam {
 			checkXIMEAErrors(xiGetParamFloat(hcams[i], XI_PRM_WB_KG, &camInfos[i].greenGain));
 			checkXIMEAErrors(xiGetParamFloat(hcams[i], XI_PRM_WB_KB, &camInfos[i].blueGain));
 			this->getBayerPattern(i, camInfos[i].bayerPattern);
+			camInfos[i].isWBRaw = false;
 		}
 		return 0;
 	}
@@ -183,7 +182,7 @@ namespace cam {
 	@param Status autoWB: if use auto white balance
 	@return int
 	*/
-	int GenCameraXIMEA::setWhiteBalance(int camInd) {
+	int GenCameraXIMEA::setAutoWhiteBalance(int camInd) {
 		if (camInd == -1) {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_MANUAL_WB,
@@ -195,6 +194,35 @@ namespace cam {
 		else {
 			checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_AUTO_WB,
 				1));
+			checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
+			checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
+		}
+		return 0;
+	}
+
+	/**
+	@brief set auto white balance
+	@param int ind: index of camera (-1 means all the cameras)
+	@param float redGain: red gain of the white balance
+	@param float greenGain: green gain of the white balance
+	@param float blueGain: blue gain of the white balance
+	@return int
+	*/
+	int GenCameraXIMEA::setWhiteBalance(int camInd, float redGain,
+		float greenGain, float blueGain) {
+		if (camInd == -1) {
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_WB_KR, redGain));
+				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_WB_KG, greenGain));
+				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_WB_KB, blueGain));
+				checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
+				checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
+			}
+		}
+		else {
+			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_WB_KR, redGain));
+			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_WB_KG, greenGain));
+			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_WB_KB, blueGain));
 			checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
 			checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
 		}
@@ -244,6 +272,23 @@ namespace cam {
 				checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
 			}
 		}
+		return 0;
+	}
+
+	/**
+	@brief set auto exposure compensation (only support PointGrey cameras)
+	@param int ind: index of camera (-1 means all the cameras)
+	@param Status status: if use auto EV value
+	@param float relativeEV: only valid when the second argument is off.
+	The reason why use relative EV value here is to directly set a absolute
+	value is difficult
+	@return int
+	*/
+	int GenCameraXIMEA::setAutoExposureCompensation(int camInd,
+		Status status, float relativeEV) {
+		SysUtil::warningOutput("setAutoExposureCompensation function is not "\
+			" support for PointGrey camera. \n"\
+			"Please use setAutoExposureLevel instead !");
 		return 0;
 	}
 
@@ -301,7 +346,7 @@ namespace cam {
 		// capture images
 		checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
 		// copy to opencv mat
-		memcpy(img.data, xiImages[camInd].bp, sizeof(unsigned char) *
+		std::memcpy(img.data, xiImages[camInd].bp, sizeof(unsigned char) *
 			xiImages[camInd].width * xiImages[camInd].height);
 		return 0;
 	}

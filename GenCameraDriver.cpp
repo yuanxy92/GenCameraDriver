@@ -289,6 +289,7 @@ namespace cam {
 				for (size_t i = 0; i < this->cameraNum; i++) {
 					coders[i].init(camInfos[i].width, camInfos[i].height, JPEGQuality);
 					coders[i].setCfaBayerType(static_cast<int>(camInfos[i].bayerPattern));
+					coders[i].setWBRawType(camInfos[i].isWBRaw);
 					coders[i].setWhiteBalanceGain(camInfos[i].redGain, camInfos[i].greenGain, camInfos[i].blueGain);
 				}
 			}

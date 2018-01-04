@@ -80,6 +80,8 @@ namespace npp {
 		float redGain;
 		float greenGain;
 		float blueGain;
+		// is raw data already adjusted
+		bool isWBRaw;
 
 		QuantizationTable aQuantizationTables[4];
 		Npp8u *pdQuantizationTables;
@@ -267,6 +269,14 @@ namespace npp {
 		@return int
 		*/
 		int setWhiteBalanceGain(float redGain, float greenGain, float blueGain);
+
+		/**
+		@brief set input raw data type
+		before auto white balance adjustment or
+		@param int cfaBayerType: cfa bayer type
+		@return int
+		*/
+		int setWBRawType(bool isWBRaw);
 
 		/**
 		@brief release jpeg encode
