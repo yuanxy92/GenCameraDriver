@@ -43,6 +43,17 @@ namespace cam {
 		cyan = 11
 	};
 
+#ifndef WIN32
+#define BLACK_TEXT(x) "\033[30;1m" x "\033[0m"
+#define RED_TEXT(x) "\033[31;1m" x "\033[0m"
+#define GREEN_TEXT(x) "\033[32;1m" x "\033[0m"
+#define YELLOW_TEXT(x) "\033[33;1m" x "\033[0m"
+#define BLUE_TEXT(x) "\033[34;1m" x "\033[0m"
+#define MAGENTA_TEXT(x) "\033[35;1m" x "\033[0m"
+#define CYAN_TEXT(x) "\033[36;1m" x "\033[0m"
+#define WHITE_TEXT(x) "\033[37;1m" x "\033[0m"
+#endif
+
 	class SysUtil {
 	public:
 		/***********************************************************/
@@ -74,7 +85,9 @@ namespace cam {
 		/*             make colorful console output                */
 		/***********************************************************/
 		static int setConsoleColor(ConsoleColor color) {
+#ifdef WIN32
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), static_cast<int>(color));
+#endif
 			return 0;
 		}
 
@@ -82,30 +95,50 @@ namespace cam {
 		/*                 warning error output                    */
 		/***********************************************************/
 		static int errorOutput(std::string info) {
+#ifdef WIN32
 			SysUtil::setConsoleColor(ConsoleColor::red);
 			std::cerr << "ERROR: " << info.c_str() << std::endl;
 			SysUtil::setConsoleColor(ConsoleColor::white);
+#else
+			std::cerr << RED_TEXT("ERROR: ") << RED_TEXT(info.c_str())
+				<< std::endl;
+#endif
 			return 0;
 		}
 
 		static int warningOutput(std::string info) {
+#ifdef WIN32
 			SysUtil::setConsoleColor(ConsoleColor::yellow);
 			std::cerr << "WARNING: " << info.c_str() << std::endl;
 			SysUtil::setConsoleColor(ConsoleColor::white);
+#else
+			std::cerr << YELLOW_TEXT("ERROR: ") << RED_TEXT(info.c_str())
+				<< std::endl;
+#endif
 			return 0;
 		}
 
 		static int infoOutput(std::string info) {
+#ifdef WIN32
 			SysUtil::setConsoleColor(ConsoleColor::green);
 			std::cerr << "INFO: " << info.c_str() << std::endl;
 			SysUtil::setConsoleColor(ConsoleColor::white);
+#else
+			std::cerr << GREEN_TEXT("ERROR: ") << RED_TEXT(info.c_str())
+				<< std::endl;
+#endif
 			return 0;
 		}
 
 		static int debugOutput(std::string info) {
+#ifdef WIN32
 			SysUtil::setConsoleColor(ConsoleColor::pink);
 			std::cerr << "DEBUG INFO: " << info.c_str() << std::endl;
 			SysUtil::setConsoleColor(ConsoleColor::white);
+#else
+			std::cerr << MAGENTA_TEXT("ERROR: ") << RED_TEXT(info.c_str())
+				<< std::endl;
+#endif
 			return 0;
 		}
 	};
