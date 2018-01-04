@@ -40,10 +40,16 @@ namespace cam {
 			return -1;
 		}
 		Spinnaker::ImagePtr image;
-		for (size_t k = 0; k < 10; k++) {
-			for (size_t i = 0; i < this->cameraNum; i++) {
-				image = camList.GetByIndex(i)->GetNextImage();
+		try {
+			for (size_t k = 0; k < 10; k++) {
+				for (size_t i = 0; i < this->cameraNum; i++) {
+					image = camList.GetByIndex(i)->GetNextImage();
+				}
 			}
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		}
 		return 0;
 	}
@@ -79,22 +85,23 @@ namespace cam {
 				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
 				Spinnaker::GenApi::CEnumerationPtr pixelFormatPtr = nodeMap.GetNode("PixelFormat");
 				// get pixel color filter
-				Spinnaker::GenApi::CStringPtr bayerPatternPtr = nodeMap.GetNode("PixelColorFilter");
-				std::string bayerPattern = bayerPatternPtr->GetValue();
-				Spinnaker::GenICam::gcstring dstPixelFormat;
-				if (bayerPattern.compare("BayerRG") == 0) {
-					dstPixelFormat = "Bayer RG 8";
+				Spinnaker::GenApi::CEnumerationPtr bayerPatternPtr = nodeMap.GetNode("PixelColorFilter");
+				std::string bayerPattern = bayerPatternPtr->GetCurrentEntry()->GetName().c_str();
+				std::string dstPixelFormat;
+				if (bayerPattern.compare("EnumEntry_PixelColorFilter_BayerRG") == 0) {
+					dstPixelFormat = "BayerRG8";
 				}
-				else if (bayerPattern.compare("BayerBG") == 0) {
-					dstPixelFormat = "Bayer BG 8";
+				else if (bayerPattern.compare("EnumEntry_PixelColorFilter_BayerBG") == 0) {
+					dstPixelFormat = "BayerBG8";
 				}
-				else if (bayerPattern.compare("BayerGB") == 0) {
-					dstPixelFormat = "Bayer GB 8";
+				else if (bayerPattern.compare("EnumEntry_PixelColorFilter_BayerGB") == 0) {
+					dstPixelFormat = "BayerGB8";
 				}
-				else if (bayerPattern.compare("BayerGR") == 0) {
-					dstPixelFormat = "Bayer GR 8";
+				else if (bayerPattern.compare("EnumEntry_PixelColorFilter_BayerGR") == 0) {
+					dstPixelFormat = "BayerGR8";
 				}
-				pixelFormatPtr->SetIntValue(pixelFormatPtr->GetEntryByName(dstPixelFormat)->GetValue());
+				pixelFormatPtr->SetIntValue(pixelFormatPtr->
+					GetEntryByName(Spinnaker::GenICam::gcstring(dstPixelFormat.c_str()))->GetValue());
 
 				// Set acquisition mode to continuous
 				Spinnaker::GenApi::CEnumerationPtr acquisitionModePtr = nodeMap.GetNode("AcquisitionMode");
@@ -119,6 +126,7 @@ namespace cam {
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		}
 		// init images
 		ptgreyImages.resize(this->cameraNum);
@@ -139,12 +147,12 @@ namespace cam {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				// Select camera
 				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
-				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetTLDeviceNodeMap();
+				Spinnaker::GenApi::INodeMap & deviceNodeMap = pCam->GetTLDeviceNodeMap();
 				// get serial number
-				Spinnaker::GenApi::CStringPtr ptrStringSerial = nodeMap.GetNode("DeviceSerialNumber");
+				Spinnaker::GenApi::CStringPtr ptrStringSerial = deviceNodeMap.GetNode("DeviceSerialNumber");
 				camInfos[i].sn = ptrStringSerial->GetValue();
 				// get image size
-				nodeMap = pCam->GetNodeMap();
+				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
 				Spinnaker::GenApi::CIntegerPtr widthPtr = nodeMap.GetNode("Width");
 				camInfos[i].width = widthPtr->GetValue();
 				Spinnaker::GenApi::CIntegerPtr heightPtr = nodeMap.GetNode("Height");
@@ -161,18 +169,18 @@ namespace cam {
 					camInfos[i].autoExposure = Status::on;
 				}
 				// get bayer pattern
-				Spinnaker::GenApi::CStringPtr bayerPatternPtr = nodeMap.GetNode("PixelColorFilter");
-				std::string bayerPattern = bayerPatternPtr->GetValue();
-				if (bayerPattern.compare("BayerRG") == 0) {
+				Spinnaker::GenApi::CEnumerationPtr bayerPatternPtr = nodeMap.GetNode("PixelColorFilter");
+				std::string bayerPattern = bayerPatternPtr->GetCurrentEntry()->GetName().c_str();
+				if (bayerPattern.compare("EnumEntry_PixelColorFilter_BayerRG") == 0) {
 					camInfos[i].bayerPattern = GenCamBayerPattern::BayerRGGB;
 				}
-				else if (bayerPattern.compare("BayerBG") == 0) {
+				else if (bayerPattern.compare("EnumEntry_PixelColorFilter_BayerBG") == 0) {
 					camInfos[i].bayerPattern = GenCamBayerPattern::BayerBGGR;
 				}
-				else if (bayerPattern.compare("BayerGB") == 0) {
+				else if (bayerPattern.compare("EnumEntry_PixelColorFilter_BayerGB") == 0) {
 					camInfos[i].bayerPattern = GenCamBayerPattern::BayerGBRG;
 				}
-				else if (bayerPattern.compare("BayerGR") == 0) {
+				else if (bayerPattern.compare("EnumEntry_PixelColorFilter_BayerGR") == 0) {
 					camInfos[i].bayerPattern = GenCamBayerPattern::BayerGBRG;
 				}
 				// get white balance gain
@@ -189,6 +197,7 @@ namespace cam {
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		}
 		return 0;
 	}
@@ -205,6 +214,7 @@ namespace cam {
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		}
 		this->isCapture = true;
 		return 0;
@@ -222,6 +232,7 @@ namespace cam {
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		}
 		this->isCapture = false;
 		return 0;
@@ -247,6 +258,7 @@ namespace cam {
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		}
 		return 0;
 	}
@@ -284,6 +296,7 @@ namespace cam {
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		}
 		return 0;
 	}
@@ -294,7 +307,8 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraPTGREY::setAutoWhiteBalance(int camInd) {
-		SysUtil::warningOutput("This not is not implemented yet.");
+		SysUtil::warningOutput("This function setAutoWhiteBalance "\
+			" for PointGrey camera is not implemented yet.");
 		return 0;
 	}
 
@@ -338,6 +352,7 @@ namespace cam {
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		}
 		return 0;
 	}
@@ -379,6 +394,7 @@ namespace cam {
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		}
 		return 0;
 	}
@@ -421,9 +437,9 @@ namespace cam {
 			}
 
 			Spinnaker::ImagePtr image;
-			for (size_t i = beginInd; i <= endInd; i++) {
+			for (size_t camInd = beginInd; camInd <= endInd; camInd++) {
 				// Select camera
-				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
+				Spinnaker::CameraPtr pCam = camList.GetByIndex(camInd);
 				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
 				// set auto exposure and auto gain status
 				Spinnaker::GenApi::CEnumerationPtr evAuto = nodeMap.GetNode("pgrExposureCompensationAuto");
@@ -449,6 +465,7 @@ namespace cam {
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		}
 		return 0;
 	}
@@ -487,6 +504,7 @@ namespace cam {
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		}
 		return 0;
 	}
@@ -501,23 +519,24 @@ namespace cam {
 		try {
 			Spinnaker::CameraPtr pCam = camList.GetByIndex(camInd);
 			Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
-			Spinnaker::GenApi::CStringPtr bayerPatternPtr = nodeMap.GetNode("PixelColorFilter");
-			std::string bayerPatternStr = bayerPatternPtr->GetValue();
-			if (bayerPatternStr.compare("BayerRG") == 0) {
+			Spinnaker::GenApi::CEnumerationPtr bayerPatternPtr = nodeMap.GetNode("PixelColorFilter");
+			std::string bayerPatternStr = bayerPatternPtr->GetCurrentEntry()->GetName().c_str();
+			if (bayerPatternStr.compare("EnumEntry_PixelColorFilter_BayerRG") == 0) {
 				bayerPattern = GenCamBayerPattern::BayerRGGB;
 			}
-			else if (bayerPatternStr.compare("BayerBG") == 0) {
+			else if (bayerPatternStr.compare("EnumEntry_PixelColorFilter_BayerBG") == 0) {
 				bayerPattern = GenCamBayerPattern::BayerBGGR;
 			}
-			else if (bayerPatternStr.compare("BayerGB") == 0) {
+			else if (bayerPatternStr.compare("EnumEntry_PixelColorFilter_BayerGB") == 0) {
 				bayerPattern = GenCamBayerPattern::BayerGBRG;
 			}
-			else if (bayerPatternStr.compare("BayerGR") == 0) {
+			else if (bayerPatternStr.compare("EnumEntry_PixelColorFilter_BayerGR") == 0) {
 				bayerPattern = GenCamBayerPattern::BayerGBRG;
 			}
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		} 
 		return 0;
 	}
@@ -538,6 +557,7 @@ namespace cam {
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
 		}
 		// copy to opencv mat
 		std::memcpy(img.data, ptgreyImages[camInd]->GetData(), sizeof(unsigned char) *

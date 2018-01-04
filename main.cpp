@@ -55,19 +55,20 @@ int record(int argc, char* argv[]) {
 	std::vector<cv::Mat> imgs(2);
 	std::vector<cam::GenCamInfo> camInfos;
 	std::shared_ptr<cam::GenCamera> cameraPtr
-		= cam::createCamera(cam::CameraModel::XIMEA_xiC);
+		= cam::createCamera(cam::CameraModel::PointGrey_u3);
 	cameraPtr->init();
 	// set camera setting
 	cameraPtr->startCapture();
-	cameraPtr->setFPS(-1, 20);
+	cameraPtr->setFPS(-1, 12);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);
 	cameraPtr->setAutoExposureLevel(-1, 25);
+	cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, 0);
 	cameraPtr->setAutoWhiteBalance(-1);
 	cameraPtr->makeSetEffective();
 	// set capturing setting
 	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
 	cameraPtr->setJPEGQuality(85, 0.15);
-	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 1000);
+	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 50);
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
 	cameraPtr->setVerbose(true);
 	cameraPtr->startCaptureThreads();

@@ -23,7 +23,6 @@ namespace cam {
 			return std::static_pointer_cast<GenCamera>(cameraPtr);
 		}
 		else if (camModel == CameraModel::PointGrey_u3) {
-			SysUtil::warningOutput("GenCamDriver is not funtional for PointGrey cameras yet!");
 			std::shared_ptr<GenCameraPTGREY> cameraPtr = std::make_shared<GenCameraPTGREY>();
 			return std::static_pointer_cast<GenCamera>(cameraPtr);
 		}
