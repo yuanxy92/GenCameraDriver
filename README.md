@@ -1,5 +1,5 @@
 # GenCameraDriver
-General Industry Camera Driver, support capturing (software synchronization), JPEG compression, Saving to video
+Generic Industry Camera Driver, support capturing (software synchronization), JPEG compression, Saving to video
 
 Now two kinds of cameras are support 
 

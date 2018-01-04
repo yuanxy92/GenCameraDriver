@@ -1,5 +1,5 @@
 /**
-@brief General Camera Driver Class
+@brief Generic Camera Driver Class
 Implementation of XIMEA camera
 @author Shane Yuan
 @date Dec 31, 2017

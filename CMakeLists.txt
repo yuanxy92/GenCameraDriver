@@ -1,4 +1,4 @@
-## CMakeLists.txt for general camera driver
+## CMakeLists.txt for generic camera driver
 # author: Shane Yuan
 # date: Dec 29, 2017
 #
@@ -59,7 +59,7 @@ set(MY_SOURCE_FILES
     XIMEA/XIMEACamera.cpp
     # C++ source file
     NPPJpegCoder.cpp
-    # general camera driver
+    # generic camera driver
     GenCameraDriver.cpp
     # main function
     main.cpp

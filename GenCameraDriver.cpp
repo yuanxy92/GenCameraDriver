@@ -1,5 +1,5 @@
 /**
-@brief General Camera Driver Class
+@brief Generic Camera Driver Class
 @author Shane Yuan
 @date Dec 29, 2017
 */

@@ -1,5 +1,5 @@
 /**
-@brief General Camera Driver Class
+@brief Generic Camera Driver Class
 @author Shane Yuan
 @date Dec 29, 2017
 */
@@ -223,7 +223,7 @@ namespace cam {
 	};
 
 	/**
-	@brief general camera class
+	@brief generic camera class
 	*/
 	class GenCamera {
 	protected:
