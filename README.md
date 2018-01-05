@@ -14,4 +14,7 @@ Camera SDKs downloads:
 
 link: https://pan.baidu.com/s/1mhBJ0i0 passwd: pafn
 
+Pre-compiled windows libs: (Windows 10 + VS2015 + CUDA8)
+link: https://pan.baidu.com/s/1o7DHkam passwd: 2mfi
+
 Good luck!
