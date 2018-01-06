@@ -107,17 +107,9 @@ namespace cam {
 				Spinnaker::GenApi::CEnumerationPtr acquisitionModePtr = nodeMap.GetNode("AcquisitionMode");
 				acquisitionModePtr->SetIntValue(acquisitionModePtr->GetEntryByName("Continuous")->GetValue());
 
-				// Set fps
-				Spinnaker::GenApi::CEnumerationPtr fpsAutoPtr = nodeMap.GetNode("AcquisitionFrameRateAuto");
-				fpsAutoPtr->SetIntValue(fpsAutoPtr->GetEntryByName("Off")->GetValue());
-				Spinnaker::GenApi::CFloatPtr fpsPtr = nodeMap.GetNode("AcquisitionFrameRate");
-				fpsPtr->SetValue(12);
-
 				// Set auto exposure and auto gain
 				Spinnaker::GenApi::CEnumerationPtr exposureModePtr = nodeMap.GetNode("ExposureMode");
 				exposureModePtr->SetIntValue(exposureModePtr->GetEntryByName("Timed")->GetValue());
-
-				// set gain and exposure to auto first
 				Spinnaker::GenApi::CEnumerationPtr gainAutoPtr = nodeMap.GetNode("GainAuto");
 				gainAutoPtr->SetIntValue(gainAutoPtr->GetEntryByName("Continuous")->GetValue());
 				Spinnaker::GenApi::CEnumerationPtr exposureAutoPtr = nodeMap.GetNode("ExposureAuto");

@@ -5,8 +5,8 @@
 */
 
 #include "GenCameraDriver.h"
-#include "XIMEACamera.h"
-#include "PointGreyCamera.h"
+#include "XIMEA/XIMEACamera.h"
+#include "PointGrey/PointGreyCamera.h"
 #include <time.h>
 #include <algorithm>
 #include <functional>   // std::minus
@@ -33,6 +33,14 @@ namespace cam {
 		camPurpose(GenCamCapturePurpose::Streaming),
 		JPEGQuality(75), sizeRatio(0.12) {}
 	GenCamera::~GenCamera() {}
+
+	/**
+	@brief get camera model
+	@return
+	*/
+	CameraModel GenCamera::getCamModel() {
+		return camModel;
+	}
 
 	/**
 	@brief set verbose
@@ -492,6 +500,53 @@ namespace cam {
 		else {
 			SysUtil::errorOutput("Sorry, save function for other buffer types is not support yet. ");
 			exit(-1);
+		}
+		return 0;
+	}
+
+	/*************************************************************/
+	/*    function to set mapping vector of capture function     */
+	/*************************************************************/
+	/**
+	@brief set mapping vector of capture function
+	@param std::vector<size_t> mappingVector: input mapping vector
+	@return int
+	*/
+	int GenCamera::setMappingVector(std::vector<size_t> mappingVector) {
+		this->mappingVector = mappingVector;
+		return 0;
+	}
+
+	/**
+	@brief capture one frame with Mapping
+	@param std::vector<cv::Mat> & imgs: output captured images
+	if in single mode, memory of image mats should be malloced
+	before using this function
+	@return int
+	*/
+	int GenCamera::captureFrameWithMapping(std::vector<cv::Mat> & imgs) {
+		size_t camInd;
+		if (captureMode == GenCamCaptureMode::Continous ||
+			captureMode == GenCamCaptureMode::ContinousTrigger) {
+			// get images from buffer
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				camInd = mappingVector[i];
+				int index = (thBufferInds[camInd] - 1 + bufferSize) % bufferSize;
+				imgs[i] = bufferImgs[index][camInd];
+			}
+
+		}
+		else if (captureMode == GenCamCaptureMode::Single ||
+			captureMode == GenCamCaptureMode::SingleTrigger) {
+			// get images from camera
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				camInd = mappingVector[i];
+				ths[i] = std::thread(&GenCamera::capture_thread_single_, this, camInd, std::ref(imgs[i]));
+			}
+			// wait for all the threads to exit
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				ths[i].join();
+			}
 		}
 		return 0;
 	}

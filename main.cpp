@@ -26,7 +26,6 @@ int preview(int argc, char* argv[]) {
 		= cam::createCamera(cam::CameraModel::XIMEA_xiC);
 	cameraPtr->init();
 	// set camera setting
-	cameraPtr->getCamInfos(camInfos);
 	cameraPtr->startCapture();
 	cameraPtr->setFPS(-1, 20);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);

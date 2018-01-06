@@ -269,6 +269,9 @@ namespace cam {
 		float sizeRatio;
 		std::vector<npp::NPPJpegCoder> coders;
 
+		// image mapping vector in capturing function
+		std::vector<size_t> mappingVector;
+
 	public:
 
 	protected:
@@ -310,6 +313,12 @@ namespace cam {
 		@return int
 		*/
 		virtual int getCamInfos(std::vector<GenCamInfo> & camInfos) = 0;
+
+		/**
+		@brief get camera model
+		@return 
+		*/
+		CameraModel getCamModel();
 
 		/*************************************************************/
 		/*                  camera setting function                  */
@@ -526,6 +535,26 @@ namespace cam {
 		@return int
 		*/
 		int saveVideos(std::string dir);
+
+		/*************************************************************/
+		/*    function to set mapping vector of capture function     */
+		/*************************************************************/
+		/**
+		@brief set mapping vector of capture function
+		@param std::vector<size_t> mappingVector: input mapping vector
+		@return int
+		*/
+		int setMappingVector(std::vector<size_t> mappingVector);
+
+		/**
+		@brief capture one frame with Mapping
+		@param std::vector<cv::Mat> & imgs: output captured images
+		if in single mode, memory of image mats should be malloced
+		before using this function
+		@return int
+		*/
+		int captureFrameWithMapping(std::vector<cv::Mat> & imgs);
+
 	};
 
 	/**
