@@ -20,7 +20,9 @@ namespace cam {
 		}
 	}
 
-	GenCameraXIMEA::GenCameraXIMEA() {}
+	GenCameraXIMEA::GenCameraXIMEA() {
+		this->camModel = CameraModel::XIMEA_xiC;
+	}
 	GenCameraXIMEA::~GenCameraXIMEA() {}
 
 	/***********************************************************/
@@ -261,11 +263,18 @@ namespace cam {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_AEAG_LEVEL,
 					level));
+				char info[256];
+				sprintf(info, "XIMEA camera %d, exposure level set to %f%% ", camInd, level);
+				SysUtil::infoOutput(info);
 			}
 		}
-		else
+		else {
 			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_AEAG_LEVEL,
 				level));
+			char info[256];
+			sprintf(info, "XIMEA camera %d, exposure level set to %f%%", camInd, level);
+			SysUtil::infoOutput(info);
+		}
 
 		for (size_t frame = 0; frame < 20; frame++) {
 			for (size_t i = 0; i < this->cameraNum; i++) {

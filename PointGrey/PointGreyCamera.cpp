@@ -21,7 +21,9 @@ namespace cam {
 	}
 	
 	// constructor
-	GenCameraPTGREY::GenCameraPTGREY() {}
+	GenCameraPTGREY::GenCameraPTGREY() {
+		this->camModel = CameraModel::PointGrey_u3;
+	}
 	GenCameraPTGREY::~GenCameraPTGREY() {}
 
 	/***********************************************************/
@@ -452,6 +454,9 @@ namespace cam {
 					SysUtil::sleep(500);
 					image = camList.GetByIndex(camInd)->GetNextImage();
 					SysUtil::sleep(500);
+					char info[256];
+					sprintf(info, "PointGrey camera %d, exposure compensation set to %f EV", camInd, evVal + relativeEV);
+					SysUtil::infoOutput(info);
 				}
 			}
 		}
