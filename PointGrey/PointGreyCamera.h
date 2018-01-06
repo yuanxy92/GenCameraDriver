@@ -1,6 +1,6 @@
 /**
 @brief Generic Camera Driver Class
-Implementation of XIMEA camera
+Implementation of PointGrey camera
 @author Shane Yuan
 @date Dec 31, 2017
 */
