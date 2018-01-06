@@ -394,12 +394,10 @@ namespace cam {
 		}
 		// make sure all the threads are terminated
 		for (size_t i = 0; i < this->cameraNum; i++) {
-			if (ths[i].joinable()) {
-				ths[i].join();
-				char info[256];
-				sprintf(info, "Capturing thread %d terminate correctly !", i);
-				SysUtil::infoOutput(std::string(info));
-			}
+			ths[i].join();
+			char info[256];
+			sprintf(info, "Capturing thread %d terminate correctly !", i);
+			SysUtil::infoOutput(std::string(info));
 		}
 		// release memory
 		if (this->bufferType == GenCamBufferType::JPEG) {

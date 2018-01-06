@@ -167,8 +167,6 @@ namespace cam {
 		@return int
 		*/
 		int captureFrame(int camInd, cv::Mat & img) override;
-
-
 	};
 
 };
