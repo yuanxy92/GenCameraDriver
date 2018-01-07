@@ -27,7 +27,7 @@ namespace cam {
 	// XIMEA function safe call
 	#define checkXIMEAErrors(val)  checkXIMEAInternal ( (val), #val, __FILE__, __LINE__ )
 
-	class GenCameraXIMEA : public GenCamera {
+	class GenCameraXIMEA : public RealCamera {
 	private:
 		std::vector<HANDLE> hcams;
 		std::vector<XI_IMG> xiImages;

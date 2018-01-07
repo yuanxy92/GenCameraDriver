@@ -28,7 +28,7 @@ namespace cam {
 	// pointgrey function safe call
 #define checkPTGREYErrors(val)  checkPTGREYInternal ( (val), #val, __FILE__, __LINE__ )
 
-	class GenCameraPTGREY : public GenCamera {
+	class GenCameraPTGREY : public RealCamera {
 	private:
 		Spinnaker::SystemPtr sysPtr;
 		Spinnaker::CameraList camList;
