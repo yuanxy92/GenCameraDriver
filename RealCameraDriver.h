@@ -11,9 +11,94 @@ directly
 
 #include "GenCameraDriver.h"
 
-namespace cam {
-    class RealCameraDriver : public GenCameraDriver {
+// cuda npp JPEG coder
+#include "NPPJpegCoder.h"
 
+namespace cam {
+    class RealCamera : public GenCamera {
+        protected:
+            // buffers to save cuda memory pointer
+		    std::vector<uchar*> bufferImgs_cuda;
+
+            // threads to capture images
+		    std::vector<std::thread> ths; 
+		    // thread to compress raw image into jpeg
+            std::thread thJPEG;
+
+            // status of capturing threads
+            // 0: stop capturing images, exit
+            // 1: capturing images
+            // 2: compress images use jpeg
+            std::vector<int> thStatus; 
+
+            // NPP JPEG coders
+		    std::vector<npp::NPPJpegCoder> coders;
+        public:
+
+        protected:
+            /**
+            @brief multi-thread capturing function (raw buffer)
+            used for continous mode
+            thread function to get images from camera and buffer to vector
+            and wait until the next frame (based on fps)
+            @param int camInd: index of camera
+            */
+            void capture_thread_raw_(int camInd);
+
+            /**
+            @brief multi-thread captureing function
+            used for single mode
+            thread function to get images from camera and buffer to vector
+            @param int camInd: index of camera
+            @param Imagedata & img: output captured image
+            */
+            void capture_thread_single_(int camInd, Imagedata & img);
+
+            /**
+            @brief multi-thread capturing function (jpeg buffer)
+            used for continous mode
+            thread function to get images from camera and wait for compresss
+            thread to compress the raw data into jpeg data
+            @param int camInd: index of camera
+            */
+            void capture_thread_JPEG_(int camInd);
+
+            /**
+            @brief single-thread compressing function
+            because npp only support single thread, jpeg compress function is not 
+            thread safe
+            thread function to compress raw image into jpeg data
+            and wait until the next frame (based on fps)
+            */
+            void compress_thread_JPEG_();
+
+        public:
+            RealCamera();
+            ~RealCamera(); 
+
+            /**
+            @brief init npp jpeg coder
+            @return int
+            */
+            int initNPPJpegCoder();
+
+            /**
+            @brief wait for recording threads to finish
+            @return int
+            */
+            int waitForRecordFinish();
+ 
+            /**
+            @brief start capture threads
+            @return int 
+            */
+            int startCaptureThreads();
+
+            /**
+            @brief stop capture threads
+            @return int
+            */
+            int stopCaptureThreads();
     };
 };
 

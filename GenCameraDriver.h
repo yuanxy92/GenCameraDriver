@@ -14,8 +14,8 @@
 #include <queue>
 #include <thread>
 #include <memory>
-	
-
+			
+			
 // opencv
 #include <opencv2/opencv.hpp>
 
@@ -27,9 +27,6 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
-
-// cuda npp JPEG coder
-#include "NPPJpegCoder.h"
 
 namespace cam {
 
@@ -151,7 +148,8 @@ namespace cam {
 
 	enum class CameraModel {
 		XIMEA_xiC = 0,
-		PointGrey_u3 = 1
+		PointGrey_u3 = 1,
+		Network = 2
 	};
 
 	/**
@@ -206,19 +204,20 @@ namespace cam {
 	@brief buffer type
 	*/
 	enum class GenCamBufferType {
-		Raw,  // save raw images in buffer
+		Raw,  // save 8-bit raw images in buffer
 		JPEG, // save jpeg compressed images in buffer
 			  // usually need as power GPU to compress the raw images
-		RGB   // save demosaiced 3 channel RGB images in buffer 
+		RGB24,   // save demosaiced 3 channel RGB images in buffer 
+		Raw16 // save 16-bit raw images in buffer
 	};
 
 	
 	/**
 	@brief class to save JPEG data
 	*/
-	class JPEGdata {
-	public:
-		uchar* data; // jpeg data pointer
+	struct Imagedata {
+		char* data; // data pointer
+		GenCamBufferType type; // buffer data type
 		size_t maxLength; // max malloced memory size
 		size_t length; // jpeg data length
 	};
@@ -242,25 +241,12 @@ namespace cam {
 
 		// camera buffer
 		GenCamBufferType bufferType;
-		std::vector<std::vector<cv::Mat>> bufferImgs;
-		std::vector<std::vector<JPEGdata>> bufferJPEGImgs;
-		std::vector<uchar*> bufferImgs_cuda;
+		std::vector<std::vector<Imagedata>> bufferImgs;
 		int bufferSize;
 		size_t cameraNum;
 
 		// capture model
 		GenCamCaptureMode captureMode;
-
-		// threads to capture images
-		std::vector<std::thread> ths; 
-		// thread to compress raw image into jpeg
-		std::thread thJPEG;
-
-		// status of capturing threads
-		// 0: stop capturing images, exit
-		// 1: capturing images
-		// 2: compress images use jpeg
-		std::vector<int> thStatus; 
 
 		// frame indices in buffer
 		std::vector<int> thBufferInds; 
@@ -268,7 +254,6 @@ namespace cam {
 		// npp jpeg coder class
 		int JPEGQuality;
 		float sizeRatio;
-		std::vector<npp::NPPJpegCoder> coders;
 
 		// image mapping vector in capturing function
 		std::vector<size_t> mappingVector;
@@ -291,13 +276,13 @@ namespace cam {
 		virtual int init() = 0;
 
 		/**
-		@brief start capture images
+		@brief let cameras start capturing images
 		@return int
 		*/
 		virtual int startCapture() = 0;
 
 		/**
-		@brief stop capture images
+		@brief let cameras stop capturing images
 		@return int
 		*/
 		virtual int stopCapture() = 0;
@@ -406,15 +391,42 @@ namespace cam {
 		/*************************************************************/
 
 		/**
-		@brief capture single image of single camera in camera array
+		@brief capture single image of single camera
 		@param int camInd: input index of camera 
-		@param cv::Mat & img: output captured images 
+		@param Imagedata & img: output captured images 
 		@return int
 		*/
-		virtual int captureFrame(int camInd, cv::Mat & img) = 0;
+		virtual int captureFrame(int camInd, Imagedata & img) = 0;
+
+		/**
+        @brief init npp jpeg coder
+        @return int
+        */
+        virtual int initNPPJpegCoder() = 0;
+
+		/**
+		@brief wait for recording threads to finish
+		@return int
+		*/
+		virtual int waitForRecordFinish() = 0;
+
+		/**
+		@brief start capturing threads
+		capturing threads captures images from cameras, and buffer to
+		bufferImgs vector, if buffer type is jpeg, this function will start
+		a thread to compress captured images into buffer vector
+		@return int 
+		*/
+		virtual int startCaptureThreads() = 0;
+
+		/**
+		@brief stop capturing threads
+		@return int
+		*/
+		virtual int stopCaptureThreads() = 0;
 
 		/*************************************************************/
-		/*                   non-virtual function                    */
+		/*                   non-virtual setting function                    */
 		/*************************************************************/
 		/**
 		@brief set verbose 
@@ -442,42 +454,6 @@ namespace cam {
 		int setJPEGQuality(int quality, float sizeRatio = 0.2);
 
 		/**
-		@brief multi-thread capturing function (raw buffer)
-		used for continous mode
-		thread function to get images from camera and buffer to vector
-		and wait until the next frame (based on fps)
-		@param int camInd: index of camera
-		*/
-		void capture_thread_raw_(int camInd);
-
-		/**
-		@brief multi-thread captureing function
-		used for single mode
-		thread function to get images from camera and buffer to vector
-		@param int camInd: index of camera
-		@param cv::Mat & img: output captured image
-		*/
-		void capture_thread_single_(int camInd, cv::Mat & img);
-
-		/**
-		@brief multi-thread capturing function (jpeg buffer)
-		used for continous mode
-		thread function to get images from camera and wait for compresss
-		thread to compress the raw data into jpeg data
-		@param int camInd: index of camera
-		*/
-		void capture_thread_JPEG_(int camInd);
-
-		/**
-		@brief single-thread compressing function
-		because npp only support single thread, jpeg compress function is not 
-		thread safe
-		thread function to compress raw image into jpeg data
-		and wait until the next frame (based on fps)
-		*/
-		void compress_thread_JPEG_();
-
-		/**
 		@brief set capturing mode
 		@param GenCamCaptureMode captureMode: capture mode
 		@param int size: buffer size
@@ -492,33 +468,6 @@ namespace cam {
 		@return int
 		*/
 		int setCapturePurpose(GenCamCapturePurpose camPurpose);
-
-		/**
-		@brief wait for recording threads to finish
-		@return int
-		*/
-		int waitForRecordFinish();
-
-		/**
-		@brief start capture threads
-		@return int 
-		*/
-		int startCaptureThreads();
-
-		/**
-		@brief stop capture threads
-		@return int
-		*/
-		int stopCaptureThreads();
-
-		/**
-		@brief capture one frame
-		@param std::vector<cv::Mat> & imgs: output captured images
-		if in single mode, memory of image mats should be malloced 
-		before using this function
-		@return int
-		*/
-		int captureFrame(std::vector<cv::Mat> & imgs);
 
 		/*************************************************************/
 		/*        function to save capture images to files           */
@@ -548,13 +497,22 @@ namespace cam {
 		int setMappingVector(std::vector<size_t> mappingVector);
 
 		/**
+		@brief capture one frame
+		@param std::vector<Imagedata> & imgs: output captured images
+		if in single mode, memory of image mats should be malloced 
+		before using this function
+		@return int
+		*/
+		int captureFrame(std::vector<Imagedata> & imgs);
+
+		/**
 		@brief capture one frame with Mapping
-		@param std::vector<cv::Mat> & imgs: output captured images
+		@param std::vector<Imagedata> & imgs: output captured images
 		if in single mode, memory of image mats should be malloced
 		before using this function
 		@return int
 		*/
-		int captureFrameWithMapping(std::vector<cv::Mat> & imgs);
+		int captureFrameWithMapping(std::vector<Imagedata> & imgs);
 
 	};
 

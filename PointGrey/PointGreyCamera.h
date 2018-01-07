@@ -5,8 +5,8 @@ Implementation of PointGrey camera
 @date Dec 31, 2017
 */
 
-#ifndef __GENERIC_CAMERA_DRIVER_PTGREY_HPP__
-#define __GENERIC_CAMERA_DRIVER_PTGREY_HPP__
+#ifndef __GENERIC_CAMERA_DRIVER_PTGREY_H__
+#define __GENERIC_CAMERA_DRIVER_PTGREY_H__
 
 #include "GenCameraDriver.h"
 
