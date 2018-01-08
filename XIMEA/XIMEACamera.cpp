@@ -168,13 +168,18 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraXIMEA::setFPS(int camInd, float fps) {
+		// calculate max exposure time
+		float maxExposureTime = 1000000 / fps * 0.8;
 		if (camInd == -1) {
 			for (size_t i = 0; i < this->cameraNum; i++) {
+				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_AE_MAX_LIMIT, maxExposureTime));
 				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_FRAMERATE, fps));
 			}
 		}
-		else
+		else {
+			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_AE_MAX_LIMIT, maxExposureTime));
 			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_FRAMERATE, fps));
+		}
 		return 0;
 	}
 
@@ -264,7 +269,7 @@ namespace cam {
 				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_AEAG_LEVEL,
 					level));
 				char info[256];
-				sprintf(info, "XIMEA camera %d, exposure level set to %f%% ", camInd, level);
+				sprintf(info, "XIMEA camera %d, exposure level set to %f%% ", i, level);
 				SysUtil::infoOutput(info);
 			}
 		}
@@ -348,10 +353,10 @@ namespace cam {
 	/**
 	@brief capture single image of single camera in camera array
 	@param int camInd: input index of camera
-	@param cv::Mat & img: output captured images
+	@param Imagedata & img: output captured images
 	@return int
 	*/
-	int GenCameraXIMEA::captureFrame(int camInd, cv::Mat & img) {
+	int GenCameraXIMEA::captureFrame(int camInd, Imagedata & img) {
 		// capture images
 		checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
 		// copy to opencv mat

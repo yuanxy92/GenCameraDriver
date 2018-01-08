@@ -12,6 +12,9 @@
 #include <functional>   // std::minus
 #include <numeric>      // std::accumulate
 
+// include NPPJpegCoder
+#include "NPPJpegCoder.h"
+
 namespace cam {
 	/**
 	@breif function to init camera array
@@ -76,83 +79,6 @@ namespace cam {
 		return 0;
 	}
 
-	
-	/**
-	@brief set capturing mode
-	@param GenCamCaptureMode captureMode: capture mode
-	@param int size: buffer size
-	@return
-	*/
-	int GenCamera::setCaptureMode(GenCamCaptureMode captureMode,
-		int bufferSize) {
-		// get camera info
-		this->getCamInfos(camInfos);
-		// init capture buffer
-		this->captureMode = captureMode;
-		this->bufferSize = bufferSize;
-		if (captureMode == cam::GenCamCaptureMode::Continous ||
-			captureMode == cam::GenCamCaptureMode::ContinousTrigger) {
-			if (this->bufferType == GenCamBufferType::Raw) {
-				// resize vector
-				this->bufferImgs.resize(bufferSize);
-				for (size_t i = 0; i < bufferSize; i++) {
-					this->bufferImgs[i].resize(this->cameraNum);
-				}
-				// malloc mat memory
-				for (size_t i = 0; i < this->cameraNum; i++) {
-					int width, height;
-					width = camInfos[i].width;
-					height = camInfos[i].height;
-					for (size_t j = 0; j < bufferSize; j++) {
-						this->bufferImgs[j][i].create(height, width, CV_8U);
-					}
-				}
-			}
-			else if (this->bufferType == GenCamBufferType::JPEG) {
-				// resize vector
-				this->bufferImgs.resize(bufferSize);
-				for (size_t i = 0; i < bufferSize; i++) {
-					this->bufferImgs[i].resize(this->cameraNum);
-				}
-				// pre-malloc jpeg data
-				for (size_t i = 0; i < this->cameraNum; i++) {
-					// pre-calculate compressed jpeg data size
-					size_t maxLength = static_cast<size_t>(camInfos[i].width * camInfos[i].height * sizeRatio);
-					for (size_t j = 0; j < bufferSize; j++) {
-						this->bufferImgs[j][i].data = new uchar[maxLength];
-						this->bufferImgs[j][i].maxLength = maxLength;
-					}
-				}
-				// pre-malloc cuda memory for debayer and jpeg compression
-				this->bufferImgs_cuda.resize(this->cameraNum);
-				for (size_t i = 0; i < this->cameraNum; i++) {
-					cudaMalloc(&this->bufferImgs_cuda[i], sizeof(uchar)
-						* camInfos[i].width * camInfos[i].height);
-				}
-				// malloc one frame cv::Mat data
-				this->bufferImgs.resize(1);
-				this->bufferImgs[0].resize(this->cameraNum);
-				for (size_t i = 0; i < this->cameraNum; i++) {
-					this->bufferImgs[0][i].create(camInfos[i].height, camInfos[i].width, CV_8U);
-				}
-				// init npp jpeg coder
-				// this->coders.resize(this->cameraNum);
-				// for (size_t i = 0; i < this->cameraNum; i++) {
-				// 	coders[i].init(camInfos[i].width, camInfos[i].height, JPEGQuality);
-				// 	coders[i].setCfaBayerType(static_cast<int>(camInfos[i].bayerPattern));
-				// 	coders[i].setWBRawType(camInfos[i].isWBRaw);
-				// 	coders[i].setWhiteBalanceGain(camInfos[i].redGain, camInfos[i].greenGain, camInfos[i].blueGain);
-				// }
-				this->initNPPJpegCoder();
-			}
-		}
-		else if (captureMode == cam::GenCamCaptureMode::Single ||
-			captureMode == cam::GenCamCaptureMode::SingleTrigger) {
-			this->ths.resize(this->cameraNum);
-		}
-		return 0;
-	}
-
 	/**
 	@brief set capture purpose
 	@param GenCamCapturePurpose camPurpose: purpose, for streaming or recording
@@ -166,12 +92,12 @@ namespace cam {
 	
 	/**
 	@brief capture one frame
-	@param std::vector<cv::Mat> & imgs: output captured images
+	@param std::vector<Imagedata> & imgs: output captured images
 	if in single mode, memory of image mats should be malloced
 	before using this function
 	@return int
 	*/
-	int GenCamera::captureFrame(std::vector<cv::Mat> & imgs) {
+	int GenCamera::captureFrame(std::vector<Imagedata> & imgs) {
 		if (captureMode == GenCamCaptureMode::Continous ||
 			captureMode == GenCamCaptureMode::ContinousTrigger) {
 			// get images from buffer
@@ -183,14 +109,8 @@ namespace cam {
 		}
 		else if (captureMode == GenCamCaptureMode::Single ||
 			captureMode == GenCamCaptureMode::SingleTrigger) {
-			// get images from camera
-			for (size_t i = 0; i < this->cameraNum; i++) {
-				ths[i] = std::thread(&GenCamera::capture_thread_single_, this, i, std::ref(imgs[i]));
-			}
-			// wait for all the threads to exit
-			for (size_t i = 0; i < this->cameraNum; i++) {
-				ths[i].join();
-			}
+			SysUtil::errorOutput("Single mode is not implemented yet !");
+			exit(-1);
 		}
 		return 0;
 	}
@@ -232,19 +152,25 @@ namespace cam {
 		if (this->bufferType == GenCamBufferType::JPEG) {
 			SysUtil::mkdir(dir);
 			for (size_t i = 0; i < this->cameraNum; i++) {
+				// init npp jpeg coder
+				npp::NPPJpegCoder coder;
+				coder.init(camInfos[i].width, camInfos[i].height, JPEGQuality);
+				// init video parameter
 				std::string videoname = cv::format("%s/cam_%02d.avi", dir.c_str(), i);
 				cv::VideoWriter writer(videoname, cv::VideoWriter::fourcc('D', 'I', 'V', 'X'), 
 					camInfos[i].fps, cv::Size(camInfos[i].width, camInfos[i].height), true);
 				cv::cuda::GpuMat img_d(camInfos[i].height, camInfos[i].width, CV_8UC3);
 				cv::Mat img(camInfos[i].height, camInfos[i].width, CV_8UC3);
 				for (size_t j = 0; j < this->bufferSize; j++) {
-					coders[i].decode(this->bufferImgs[j][i].data, 
+					coder.decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data), 
 						this->bufferImgs[j][i].length,
 						img_d);
 					img_d.download(img);
 					writer << img;
 				}
 				writer.release();
+				// release npp jpeg coder
+				coder.release();
 			}
 		}
 		else {
@@ -269,12 +195,12 @@ namespace cam {
 
 	/**
 	@brief capture one frame with Mapping
-	@param std::vector<cv::Mat> & imgs: output captured images
+	@param std::vector<Imagedata> & imgs: output captured images
 	if in single mode, memory of image mats should be malloced
 	before using this function
 	@return int
 	*/
-	int GenCamera::captureFrameWithMapping(std::vector<cv::Mat> & imgs) {
+	int GenCamera::captureFrameWithMapping(std::vector<Imagedata> & imgs) {
 		size_t camInd;
 		if (captureMode == GenCamCaptureMode::Continous ||
 			captureMode == GenCamCaptureMode::ContinousTrigger) {
@@ -288,15 +214,8 @@ namespace cam {
 		}
 		else if (captureMode == GenCamCaptureMode::Single ||
 			captureMode == GenCamCaptureMode::SingleTrigger) {
-			// get images from camera
-			for (size_t i = 0; i < this->cameraNum; i++) {
-				camInd = mappingVector[i];
-				ths[i] = std::thread(&GenCamera::capture_thread_single_, this, camInd, std::ref(imgs[i]));
-			}
-			// wait for all the threads to exit
-			for (size_t i = 0; i < this->cameraNum; i++) {
-				ths[i].join();
-			}
+			SysUtil::errorOutput("Single mode is not implemented yet !");
+			exit(-1);
 		}
 		return 0;
 	}

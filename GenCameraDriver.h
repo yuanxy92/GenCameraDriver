@@ -389,20 +389,14 @@ namespace cam {
 		/*************************************************************/
 		/*                     capturing function                    */
 		/*************************************************************/
-
 		/**
-		@brief capture single image of single camera
-		@param int camInd: input index of camera 
-		@param Imagedata & img: output captured images 
+		@brief set capturing mode
+		@param GenCamCaptureMode captureMode: capture mode
+		@param int size: buffer size
 		@return int
 		*/
-		virtual int captureFrame(int camInd, Imagedata & img) = 0;
-
-		/**
-        @brief init npp jpeg coder
-        @return int
-        */
-        virtual int initNPPJpegCoder() = 0;
+		virtual int setCaptureMode(GenCamCaptureMode captureMode,
+			int bufferSize) = 0;
 
 		/**
 		@brief wait for recording threads to finish
@@ -452,15 +446,6 @@ namespace cam {
 		@return int
 		*/
 		int setJPEGQuality(int quality, float sizeRatio = 0.2);
-
-		/**
-		@brief set capturing mode
-		@param GenCamCaptureMode captureMode: capture mode
-		@param int size: buffer size
-		@return int
-		*/
-		int setCaptureMode(GenCamCaptureMode captureMode,
-			int bufferSize);
 
 		/**
 		@brief set capture purpose

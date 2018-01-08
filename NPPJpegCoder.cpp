@@ -23,7 +23,7 @@
 
 using namespace std;
 
-// #define MEASURE_KERNEL_TIME
+#define MEASURE_KERNEL_TIME
 
 namespace npp {
 

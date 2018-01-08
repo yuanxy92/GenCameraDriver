@@ -544,10 +544,10 @@ namespace cam {
 	/**
 	@brief capture single image of single camera in camera array
 	@param int camInd: input index of camera
-	@param cv::Mat & img: output captured images (pre-allocated memory)
+	@param Imagedata & img: output captured images (pre-allocated memory)
 	@return int
 	*/
-	int GenCameraPTGREY::captureFrame(int camInd, cv::Mat & img) {
+	int GenCameraPTGREY::captureFrame(int camInd, Imagedata & img) {
 		// capture images
 		try {
 			ptgreyImages[camInd] = camList.GetByIndex(camInd)->GetNextImage();

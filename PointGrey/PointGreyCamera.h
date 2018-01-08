@@ -8,8 +8,6 @@ Implementation of PointGrey camera
 #ifndef __GENERIC_CAMERA_DRIVER_PTGREY_H__
 #define __GENERIC_CAMERA_DRIVER_PTGREY_H__
 
-#include "GenCameraDriver.h"
-
 // pointgrey spinnaker sdk
 #include <Spinnaker.h>
 #include <SpinGenApi/SpinnakerGenApi.h>
@@ -18,6 +16,9 @@ Implementation of PointGrey camera
 #include <windows.h>
 #endif
 #include <memory.h>
+
+#include "GenCameraDriver.h"
+#include "RealCameraDriver.h"
 
 namespace cam {
 
@@ -163,10 +164,10 @@ namespace cam {
 		/**
 		@brief capture single image of single camera in camera array
 		@param int camInd: input index of camera
-		@param cv::Mat & img: output captured images (pre-allocated memory)
+		@param Imagedata & img: output captured images (pre-allocated memory)
 		@return int
 		*/
-		int captureFrame(int camInd, cv::Mat & img) override;
+		int captureFrame(int camInd, Imagedata & img) override;
 	};
 
 };

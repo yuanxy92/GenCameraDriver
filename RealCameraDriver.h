@@ -18,12 +18,15 @@ namespace cam {
     class RealCamera : public GenCamera {
         protected:
             // buffers to save cuda memory pointer
+			std::vector<Imagedata> bufferImgs_singleframe;
 		    std::vector<uchar*> bufferImgs_cuda;
 
             // threads to capture images
 		    std::vector<std::thread> ths; 
+			bool isCaptureThreadRunning;
 		    // thread to compress raw image into jpeg
             std::thread thJPEG;
+			bool isCompressThreadRunning;
 
             // status of capturing threads
             // 0: stop capturing images, exit
@@ -72,17 +75,31 @@ namespace cam {
             */
             void compress_thread_JPEG_();
 
+			/*************************************************************/
+			/*                virtual capturing function                 */
+			/*************************************************************/
+			/**
+			@brief capture single image of single camera
+			@param int camInd: input index of camera
+			@param Imagedata & img: output captured images
+			@return int
+			*/
+			virtual int captureFrame(int camInd, Imagedata & img) = 0;
+
         public:
             RealCamera();
             ~RealCamera(); 
 
-            /**
-            @brief init npp jpeg coder
-            @return int
-            */
-            int initNPPJpegCoder();
+			/**
+			@brief set capturing mode
+			@param GenCamCaptureMode captureMode: capture mode
+			@param int size: buffer size
+			@return int
+			*/
+			int setCaptureMode(GenCamCaptureMode captureMode,
+				int bufferSize);
 
-            /**
+		    /**
             @brief wait for recording threads to finish
             @return int
             */
