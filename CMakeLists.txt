@@ -46,6 +46,7 @@ set(MY_HEADER_FILES
     helper_string.h
     NPPJpegCoder.h
     GenCameraDriver.h
+    RealCameraDriver.h
     # point grey camera
     PointGrey/PointGreyCamera.h
     # XIMEA camera
@@ -61,6 +62,7 @@ set(MY_SOURCE_FILES
     NPPJpegCoder.cpp
     # generic camera driver
     GenCameraDriver.cpp
+    RealCameraDriver.cpp
     # main function
     main.cpp
 )
