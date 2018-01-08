@@ -165,20 +165,22 @@ namespace cam {
 	/**
 	@brief set frame rate
 	@param float fps: input fps
+	@param float exposureUpperLimitRatio: exposure upper limit time, make
+		exposure upper limit time = 1000000us / fps * 0.8
 	@return int
 	*/
-	int GenCameraXIMEA::setFPS(int camInd, float fps) {
+	int GenCameraXIMEA::setFPS(int camInd, float fps, float exposureUpperLimitRatio) {
 		// calculate max exposure time
-		float maxExposureTime = 1000000 / fps * 0.8;
+		float maxExposureTime = 1000000.0f / fps * exposureUpperLimitRatio;
 		if (camInd == -1) {
 			for (size_t i = 0; i < this->cameraNum; i++) {
-				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_AE_MAX_LIMIT, maxExposureTime));
 				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_FRAMERATE, fps));
+				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_AE_MAX_LIMIT, maxExposureTime));
 			}
 		}
 		else {
-			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_AE_MAX_LIMIT, maxExposureTime));
 			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_FRAMERATE, fps));
+			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_AE_MAX_LIMIT, maxExposureTime));
 		}
 		return 0;
 	}

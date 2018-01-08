@@ -117,7 +117,7 @@ namespace cam {
 		}
 		cudaStreamDestroy(stream);
 		char info[256];
-		sprintf(info, "Capture thread for camera %02d finish, exit successfully !", camInd);
+		sprintf(info, "Capturing thread for camera %02d finish, exit successfully !", camInd);
 		SysUtil::infoOutput(info);
 	}
 
@@ -159,8 +159,8 @@ namespace cam {
 				if (isVerbose) {
 					float costTime = static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
 					char info[256];
-					sprintf(info, "Camera %d compress one frame, buffer to index %d ...", camInd, 
-						thBufferInds[camInd]);
+					sprintf(info, "Camera %d compress one frame, buffer to index %d, cost %f miliseconds ...", camInd, 
+						thBufferInds[camInd], costTime);
 					SysUtil::infoOutput(info);
 				}
 				// increase index

@@ -263,9 +263,13 @@ namespace cam {
 	/**
 	@brief set frame rate
 	@param float fps: input fps
+	@param float exposureUpperLimitRatio: exposure upper limit time, make
+		exposure upper limit time = 1000000us / fps * 0.8
 	@return int
 	*/
-	int GenCameraPTGREY::setFPS(int camInd, float fps) {
+	int GenCameraPTGREY::setFPS(int camInd, float fps, float exposureUpperLimitRatio) {
+		// calculate max exposure time
+		float maxExposureTime = 1000000.0f / fps * exposureUpperLimitRatio;
 		try {
 			size_t beginInd, endInd;
 			if (camInd == -1) {
@@ -286,6 +290,9 @@ namespace cam {
 				// set fps
 				Spinnaker::GenApi::CFloatPtr fpsPtr = nodeMap.GetNode("AcquisitionFrameRate");
 				fpsPtr->SetValue(fps);	
+				// set auto exposure upper limit
+				Spinnaker::GenApi::CFloatPtr exposureUpperLimitPtr = nodeMap.GetNode("AutoExposureTimeUpperLimit");
+				exposureUpperLimitPtr->SetValue(maxExposureTime);
 			}
 		}
 		catch (Spinnaker::Exception &e) {

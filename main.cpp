@@ -62,11 +62,11 @@ int preview(int argc, char* argv[]) {
 int record(int argc, char* argv[]) {
 	std::vector<cam::GenCamInfo> camInfos;
 	std::shared_ptr<cam::GenCamera> cameraPtr
-		= cam::createCamera(cam::CameraModel::XIMEA_xiC);
+		= cam::createCamera(cam::CameraModel::PointGrey_u3);
 	cameraPtr->init();
 	// set camera setting
 	cameraPtr->startCapture();
-	cameraPtr->setFPS(-1, 20);
+	cameraPtr->setFPS(-1, 12);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);
 	cameraPtr->setAutoExposureLevel(-1, 25);
 	cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, 0);

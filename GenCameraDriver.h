@@ -312,9 +312,11 @@ namespace cam {
 		/**
 		@brief set frame rate
 		@param float fps: input fps
+		@param float exposureUpperLimitRatio: exposure upper limit time, make
+			exposure upper limit time = 1000000us / fps * 0.8
 		@return int
 		*/
-		virtual int setFPS(int camInd, float fps) = 0;
+		virtual int setFPS(int camInd, float fps, float exposureUpperLimitRatio = 0.8) = 0;
 
 		/**
 		@brief set auto white balance
