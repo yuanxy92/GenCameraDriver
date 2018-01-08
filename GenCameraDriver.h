@@ -300,12 +300,6 @@ namespace cam {
 		*/
 		virtual int getCamInfos(std::vector<GenCamInfo> & camInfos) = 0;
 
-		/**
-		@brief get camera model
-		@return 
-		*/
-		CameraModel getCamModel();
-
 		/*************************************************************/
 		/*                  camera setting function                  */
 		/*************************************************************/

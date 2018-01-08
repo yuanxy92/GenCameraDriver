@@ -5,8 +5,6 @@
 */
 
 #include "GenCameraDriver.h"
-#include "XIMEA/XIMEACamera.h"
-#include "PointGrey/PointGreyCamera.h"
 #include <time.h>
 #include <algorithm>
 #include <functional>   // std::minus
@@ -22,14 +20,6 @@ namespace cam {
 		camPurpose(GenCamCapturePurpose::Streaming),
 		JPEGQuality(75), sizeRatio(0.12) {}
 	GenCamera::~GenCamera() {}
-
-	/**
-	@brief get camera model
-	@return
-	*/
-	CameraModel GenCamera::getCamModel() {
-		return camModel;
-	}
 
 	/**
 	@brief set verbose

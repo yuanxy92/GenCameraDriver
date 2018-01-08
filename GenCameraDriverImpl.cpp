@@ -7,10 +7,6 @@
 #include "GenCameraDriver.h"
 #include "XIMEA/XIMEACamera.h"
 #include "PointGrey/PointGreyCamera.h"
-#include <time.h>
-#include <algorithm>
-#include <functional>   // std::minus
-#include <numeric>      // std::accumulate
 
 namespace cam {
 	/**
