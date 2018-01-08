@@ -71,7 +71,7 @@ namespace cam {
 		}
 		// set camera inside buffers to 1 (can get the newest image)
 		for (size_t i = 0; i < this->cameraNum; i++) {
-			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_BUFFERS_QUEUE_SIZE, 1));
+			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_BUFFERS_QUEUE_SIZE, 2));
 		}
 		// enable lut
 		for (size_t i = 0; i < this->cameraNum; i++) {
