@@ -16,20 +16,6 @@
 #include "NPPJpegCoder.h"
 
 namespace cam {
-	/**
-	@breif function to init camera array
-	@return
-	*/
-	std::shared_ptr<GenCamera> createCamera(CameraModel camModel) {
-		if (camModel == CameraModel::XIMEA_xiC) {
-			std::shared_ptr<GenCameraXIMEA> cameraPtr = std::make_shared<GenCameraXIMEA>();
-			return std::static_pointer_cast<GenCamera>(cameraPtr);
-		}
-		else if (camModel == CameraModel::PointGrey_u3) {
-			std::shared_ptr<GenCameraPTGREY> cameraPtr = std::make_shared<GenCameraPTGREY>();
-			return std::static_pointer_cast<GenCamera>(cameraPtr);
-		}
-	}
 
 	GenCamera::GenCamera() : isInit(false), isCapture(false),
 		isVerbose(false), bufferType(GenCamBufferType::Raw),
