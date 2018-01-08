@@ -62,6 +62,7 @@ set(MY_SOURCE_FILES
     NPPJpegCoder.cpp
     # generic camera driver
     GenCameraDriver.cpp
+	GenCameraDriverImpl.cpp
     RealCameraDriver.cpp
     # main function
     main.cpp
