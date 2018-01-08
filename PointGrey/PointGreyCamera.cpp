@@ -78,9 +78,9 @@ namespace cam {
 				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);	
 				Spinnaker::GenApi::INodeMap & sNodeMap = pCam->GetTLStreamNodeMap();
 				Spinnaker::GenApi::CIntegerPtr StreamNode = sNodeMap.GetNode("StreamDefaultBufferCount");
-				StreamNode->SetValue(10);
+				StreamNode->SetValue(3);
 				Spinnaker::GenApi::CEnumerationPtr StreamModeNode = sNodeMap.GetNode("StreamBufferHandlingMode");
-				StreamModeNode->SetIntValue(StreamModeNode->GetEntryByName("NewestFirst")->GetValue());
+				StreamModeNode->SetIntValue(StreamModeNode->GetEntryByName("OldestFirst")->GetValue());
 
 				// set pixel format to bayer 8
 				// get pixel format
