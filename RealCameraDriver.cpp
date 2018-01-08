@@ -91,7 +91,7 @@ namespace cam {
 				std::this_thread::sleep_for(std::chrono::milliseconds(5));
 				if (isVerbose) {
 					SysUtil::warningOutput("Compress thread still not finish compress image yet !" \
-						" Please set lower framerate! ");
+						" Please set lower framerate or lower exposure time ! ");
 				}
 			}
 			// capture image
