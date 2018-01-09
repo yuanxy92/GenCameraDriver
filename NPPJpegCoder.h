@@ -301,10 +301,13 @@ namespace npp {
 		@param unsigned char* jpegdata: input jpeg data
 		@param size_t input_datalength: input jpeg data length
 		@param cv::cuda::GpuMat: output gpu mat image
+		@param int type: output pixel format type:
+			0£º BGR
+			1:  RGB (default)
 		@return int
 		*/
 		int decode(unsigned char* jpegdata, size_t input_datalength,
-			cv::cuda::GpuMat & outimg);
+			cv::cuda::GpuMat & outimg, int type = 1);
 	};
 
 };
