@@ -26,14 +26,18 @@ namespace cam {
 			bool isCaptureThreadRunning;
 		    // thread to compress raw image into jpeg
             std::thread thJPEG;
-			int thJPEGStatus;
 			bool isCompressThreadRunning;
 
             // status of capturing threads
-            // 0: stop capturing images, exit
+            // 0: stop capturing images
             // 1: capturing images
             // 2: compress images use jpeg
             std::vector<int> thStatus; 
+
+			// variable to exit all the threads (used for streaming mode)
+			// thexit == 1, exit thread
+			// thexit == 0, keep running
+			int thexit;
 
             // NPP JPEG coders
 		    std::vector<npp::NPPJpegCoder> coders;

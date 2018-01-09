@@ -28,6 +28,8 @@ namespace cam {
 		for (;;) {
 			begin_time = clock();
 			// check status
+			if (thexit == 1)
+				break;
 			if (thStatus[camInd] == 0)
 				break;
 			// capture image
@@ -84,6 +86,8 @@ namespace cam {
 			// begin time
 			begin_time = clock();
 			// check status
+			if (thexit == 1)
+				break;
 			if (thStatus[camInd] == 0)
 				break;
 			while (thStatus[camInd] == 2) {
@@ -133,12 +137,11 @@ namespace cam {
 		cudaStream_t stream;
 		cudaStreamCreate(&stream);
 		bool hasFrame;
-		thJPEGStatus = 1;
 		for (;;) {
 			hasFrame = false;
 			// check if threads are need to exit
 			int sum = std::accumulate(thBufferInds.begin(), thBufferInds.end(), 0);
-			if (thJPEGStatus == 0)
+			if (thexit == 1)
 				break;
 			if (sum == bufferSize * this->cameraNum)
 				break;
@@ -296,6 +299,7 @@ namespace cam {
 			}
 		}
 		// wait thread to exit
+		thexit = 1;
 		char info[256];
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			ths[i].join();
@@ -323,7 +327,7 @@ namespace cam {
 			ths.resize(this->cameraNum);
 			thStatus.resize(this->cameraNum);
 			thBufferInds.resize(this->cameraNum);
-			thJPEGStatus = 0;
+			thexit = 0;
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				thStatus[i] = 0;
 				thBufferInds[i] = 0;
@@ -368,7 +372,7 @@ namespace cam {
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			thStatus[i] = 0;
 		}
-		thJPEGStatus = 0;
+		thexit = 1;
 		// make sure all the threads have exited
 		if (this->camPurpose == cam::GenCamCapturePurpose::Streaming) {
 			if (isCompressThreadRunning == true) {
