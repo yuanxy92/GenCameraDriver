@@ -114,7 +114,7 @@ namespace cam {
 				for (size_t j = 0; j < this->bufferSize; j++) {
 					coder.decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data), 
 						this->bufferImgs[j][i].length,
-						img_d);
+						img_d, 0);
 					img_d.download(img);
 					writer << img;
 				}

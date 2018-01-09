@@ -101,10 +101,10 @@ namespace cam {
 			// capture image
 			this->captureFrame(camInd, bufferImgs_singleframe[camInd]);
 			// copy data to GPU
-			cudaMemcpyAsync(this->bufferImgs_cuda[camInd], bufferImgs_singleframe[camInd].data,
+			cudaMemcpy(this->bufferImgs_cuda[camInd], bufferImgs_singleframe[camInd].data,
 				sizeof(uchar) * camInfos[camInd].width * camInfos[camInd].height,
-				cudaMemcpyHostToDevice, stream);
-			cudaStreamSynchronize(stream);
+				cudaMemcpyHostToDevice);
+			//cudaStreamSynchronize(stream);
 			// end time
 			end_time = clock();
 			float waitTime = time - static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
@@ -116,7 +116,7 @@ namespace cam {
 					camInd, static_cast<long long>(waitTime));
 			}
 			if (waitTime > 0) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<long long>(waitTime)));
+				SysUtil::sleep(waitTime);
 			}
 		}
 		cudaStreamDestroy(stream);
