@@ -373,6 +373,7 @@ namespace cam {
 		if (this->camPurpose == cam::GenCamCapturePurpose::Streaming) {
 			if (isCompressThreadRunning == true) {
 				thJPEG.join();
+				isCompressThreadRunning = false;
 				sprintf(info, "Compression thread exit successfully !");
 				SysUtil::infoOutput(std::string(info));
 			}
@@ -382,6 +383,7 @@ namespace cam {
 					sprintf(info, "Capturing thread %d exit successfully !", i);
 					SysUtil::infoOutput(std::string(info));
 				}
+				isCaptureThreadRunning = false;
 			}
 		}
 		// release memory
