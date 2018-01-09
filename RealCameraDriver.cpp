@@ -133,10 +133,13 @@ namespace cam {
 		cudaStream_t stream;
 		cudaStreamCreate(&stream);
 		bool hasFrame;
+		thJPEGStatus = 1;
 		for (;;) {
 			hasFrame = false;
 			// check if threads are need to exit
 			int sum = std::accumulate(thBufferInds.begin(), thBufferInds.end(), 0);
+			if (thJPEGStatus == 0)
+				break;
 			if (sum == bufferSize * this->cameraNum)
 				break;
 			// compress images
@@ -320,6 +323,7 @@ namespace cam {
 			ths.resize(this->cameraNum);
 			thStatus.resize(this->cameraNum);
 			thBufferInds.resize(this->cameraNum);
+			thJPEGStatus = 0;
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				thStatus[i] = 0;
 				thBufferInds[i] = 0;
@@ -364,6 +368,7 @@ namespace cam {
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			thStatus[i] = 0;
 		}
+		thJPEGStatus = 0;
 		// make sure all the threads have exited
 		if (this->camPurpose == cam::GenCamCapturePurpose::Streaming) {
 			if (isCompressThreadRunning == true) {

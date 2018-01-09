@@ -26,6 +26,7 @@ namespace cam {
 			bool isCaptureThreadRunning;
 		    // thread to compress raw image into jpeg
             std::thread thJPEG;
+			int thJPEGStatus;
 			bool isCompressThreadRunning;
 
             // status of capturing threads
