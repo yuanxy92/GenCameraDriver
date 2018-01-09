@@ -799,6 +799,20 @@ namespace npp {
 			}
 			nMarker = nextMarker(jpegdata, nPos, input_datalength);
 		}
+
+#ifdef MEASURE_KERNEL_TIME
+		cudaEventCreate(&stop);
+		cudaEventRecord(stop, 0);
+		cudaEventSynchronize(stop);
+		cudaEventElapsedTime(&elapsedTime, start, stop);
+		printf("JPEG decode CPU step: (file:%s, line:%d) elapsed time : %f ms\n", __FILE__, __LINE__, elapsedTime);
+#endif
+
+#ifdef MEASURE_KERNEL_TIME
+		cudaEventCreate(&start);
+		cudaEventRecord(start, 0);
+#endif
+
 		// Copy DCT coefficients and Quantization Tables from host to device
 		for (int i = 0; i < 4; ++i) {
 			NPP_CHECK_CUDA(cudaMemcpyAsync(pdQuantizationTables + i * 64, aQuantizationTables[i].aTable, 64, cudaMemcpyHostToDevice));
@@ -834,7 +848,7 @@ namespace npp {
 		cudaEventRecord(stop, 0);
 		cudaEventSynchronize(stop);
 		cudaEventElapsedTime(&elapsedTime, start, stop);
-		printf("JPEG decode: (file:%s, line:%d) elapsed time : %f ms\n", __FILE__, __LINE__, elapsedTime);
+		printf("JPEG decode GPU step: (file:%s, line:%d) elapsed time : %f ms\n", __FILE__, __LINE__, elapsedTime);
 #endif
 		// release gpu memory
 		nppiDCTFree(pDCTState);
