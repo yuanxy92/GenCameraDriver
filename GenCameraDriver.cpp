@@ -65,32 +65,6 @@ namespace cam {
 		return 0;
 	}
 
-	
-	/**
-	@brief capture one frame
-	@param std::vector<Imagedata> & imgs: output captured images
-	if in single mode, memory of image mats should be malloced
-	before using this function
-	@return int
-	*/
-	int GenCamera::captureFrame(std::vector<Imagedata> & imgs) {
-		if (captureMode == GenCamCaptureMode::Continous ||
-			captureMode == GenCamCaptureMode::ContinousTrigger) {
-			// get images from buffer
-			for (size_t camInd = 0; camInd < this->cameraNum; camInd++) {
-				int index = (thBufferInds[camInd] - 1 + bufferSize) % bufferSize;
-				imgs[camInd] = bufferImgs[index][camInd];
-			}
-
-		}
-		else if (captureMode == GenCamCaptureMode::Single ||
-			captureMode == GenCamCaptureMode::SingleTrigger) {
-			SysUtil::errorOutput("Single mode is not implemented yet !");
-			exit(-1);
-		}
-		return 0;
-	}
-
 	/*************************************************************/
 	/*        function to save capture images to files           */
 	/*************************************************************/
@@ -170,6 +144,31 @@ namespace cam {
 	}
 
 	/**
+	@brief capture one frame
+	@param std::vector<Imagedata> & imgs: output captured images
+	if in single mode, memory of image mats should be malloced
+	before using this function
+	@return int
+	*/
+	int GenCamera::captureFrame(std::vector<Imagedata> & imgs) {
+		if (captureMode == GenCamCaptureMode::Continous ||
+			captureMode == GenCamCaptureMode::ContinousTrigger) {
+			// get images from buffer
+			for (size_t camInd = 0; camInd < this->cameraNum; camInd++) {
+				int index = (thBufferInds[camInd] - 1 + bufferSize) % bufferSize;
+				imgs[camInd] = bufferImgs[index][camInd];
+			}
+
+		}
+		else if (captureMode == GenCamCaptureMode::Single ||
+			captureMode == GenCamCaptureMode::SingleTrigger) {
+			SysUtil::errorOutput("Single mode is not implemented yet !");
+			exit(-1);
+		}
+		return 0;
+	}
+
+	/**
 	@brief capture one frame with Mapping
 	@param std::vector<Imagedata> & imgs: output captured images
 	if in single mode, memory of image mats should be malloced
@@ -184,8 +183,7 @@ namespace cam {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				camInd = mappingVector[i];
 				int index = (thBufferInds[camInd] - 1 + bufferSize) % bufferSize;
-				imgs[i].data = bufferImgs[index][camInd].data;
-				imgs[i].length = bufferImgs[index][camInd].length;
+				imgs[i] = bufferImgs[index][camInd];
 			}
 
 		}
