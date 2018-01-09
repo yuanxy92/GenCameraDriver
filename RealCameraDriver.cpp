@@ -299,7 +299,6 @@ namespace cam {
 			}
 		}
 		// wait thread to exit
-		thexit = 1;
 		char info[256];
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			ths[i].join();

@@ -75,7 +75,7 @@ int record(int argc, char* argv[]) {
 	// set capturing setting
 	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
 	cameraPtr->setJPEGQuality(85, 0.15);
-	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 1000);
+	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 100);
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
 	cameraPtr->setVerbose(true);
 	cameraPtr->startCaptureThreads();
