@@ -302,7 +302,7 @@ namespace npp {
 		@param size_t input_datalength: input jpeg data length
 		@param cv::cuda::GpuMat: output gpu mat image
 		@param int type: output pixel format type:
-			0£º BGR
+			0: BGR
 			1:  RGB (default)
 		@return int
 		*/
