@@ -149,7 +149,8 @@ namespace cam {
 	enum class CameraModel {
 		XIMEA_xiC = 0,
 		PointGrey_u3 = 1,
-		Network = 2
+		Network = 2,
+		File = 3
 	};
 
 	/**

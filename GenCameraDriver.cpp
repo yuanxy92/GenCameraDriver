@@ -184,7 +184,8 @@ namespace cam {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				camInd = mappingVector[i];
 				int index = (thBufferInds[camInd] - 1 + bufferSize) % bufferSize;
-				imgs[i] = bufferImgs[index][camInd];
+				imgs[i].data = bufferImgs[index][camInd].data;
+				imgs[i].length = bufferImgs[index][camInd].length;
 			}
 
 		}
