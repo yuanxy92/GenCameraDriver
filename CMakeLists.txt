@@ -100,7 +100,8 @@ target_link_libraries(${name}
     ${CUDA_LIBRARY} 	
 	${CUDA_npp_LIBRARY} 
 	${CUDA_nppc_LIBRARY} 
-	${CUDA_nppicc_LIBRARY}
+    ${CUDA_nppicc_LIBRARY}
+    ${CUDA_nppicom_LIBRARY}
 	${CUDA_nppidei_LIBRARY}
 	${CUDA_nppif_LIBRARY}
 	${CUDA_nppig_LIBRARY}
