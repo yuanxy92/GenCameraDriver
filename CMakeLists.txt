@@ -97,8 +97,18 @@ cuda_add_executable(${name}
 
 target_link_libraries(${name}
     ${OpenCV_LIBS}
-    ${CUDA_npp_LIBRARY}
-    ${CUDA_nppc_LIBRARY}
+    ${CUDA_LIBRARY} 	
+	${CUDA_npp_LIBRARY} 
+	${CUDA_nppc_LIBRARY} 
+	${CUDA_nppicc_LIBRARY}
+	${CUDA_nppidei_LIBRARY}
+	${CUDA_nppif_LIBRARY}
+	${CUDA_nppig_LIBRARY}
+	${CUDA_nppim_LIBRARY}
+	${CUDA_nppist_LIBRARY}
+	${CUDA_nppisu_LIBRARY}
+	${CUDA_nppitc_LIBRARY}
+	${CUDA_npps_LIBRARY} 
     debug ${PTGREY_SDK_LIBRARY_DEBUG} ${XIMEA_SDK_LIBRARY_DEBUG}
     optimized ${PTGREY_SDK_LIBRARY_RELEASE} ${XIMEA_SDK_LIBRARY_RELEASE}
 )
