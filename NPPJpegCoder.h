@@ -102,7 +102,7 @@ namespace npp {
 		Npp8u *pJpegEncoderTemp;
 
 		Npp32s nScanLength;
-		Npp32s nTempSize;
+		size_t nTempSize;
 
 		NppiEncodeHuffmanSpec *apHuffmanDCTable[3];
 		NppiEncodeHuffmanSpec *apHuffmanACTable[3];
