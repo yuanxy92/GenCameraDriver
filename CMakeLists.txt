@@ -3,7 +3,7 @@
 # date: Dec 29, 2017
 #
 
-cmake_minimum_required (VERSION 3.1)
+cmake_minimum_required (VERSION 3.10)
 set(name "GenCameraDriver")
 project ( ${name} )
 
