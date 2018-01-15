@@ -113,12 +113,12 @@ namespace npp
     /// \param rOutputStream The stream the exception information is written to.
     /// \param rException The exception that's being written.
     /// \return Reference to the output stream being used.
-    std::ostream &
-    operator << (std::ostream &rOutputStream, const Exception &rException)
-    {
-        rOutputStream << rException.toString();
-        return rOutputStream;
-    }
+    //std::ostream &
+    //operator << (std::ostream &rOutputStream, const Exception &rException)
+    //{
+    //    rOutputStream << rException.toString();
+    //    return rOutputStream;
+    //}
 
     /// Basic assert macro.
     ///     This macro should be used to enforce any kind of pre or post conditions.
