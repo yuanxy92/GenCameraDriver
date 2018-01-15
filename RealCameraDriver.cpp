@@ -337,6 +337,7 @@ namespace cam {
 				for (size_t i = 0; i < this->cameraNum; i++) {
 					ths[i] = std::thread(&RealCamera::capture_thread_raw_, this, i);
 				}
+				isCaptureThreadRunning = true;
 			}
 			else if (this->bufferType == GenCamBufferType::JPEG) {
 				// start compress theads
