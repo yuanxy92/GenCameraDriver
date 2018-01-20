@@ -66,23 +66,25 @@ int record(int argc, char* argv[]) {
 	cameraPtr->init();
 	// set camera setting
 	cameraPtr->startCapture();
-	cameraPtr->setFPS(-1, 12);
+	cameraPtr->setFPS(-1, 10);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);
 	cameraPtr->setAutoExposureLevel(-1, 25);
-	cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, 0);
+	cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.2);
 	cameraPtr->setAutoWhiteBalance(-1);
 	cameraPtr->makeSetEffective();
 	// set capturing setting
 	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
 	cameraPtr->setJPEGQuality(85, 0.15);
-	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 50);
+	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 2000);
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
 	cameraPtr->setVerbose(true);
+	cameraPtr->makeSetEffective();
+	cam::SysUtil::sleep(1000);
 	cameraPtr->startCaptureThreads();
 	// wait for recoding to finish
 	cameraPtr->waitForRecordFinish();
 	//cameraPtr->saveImages("test");
-	cameraPtr->saveVideos("test");
+	cameraPtr->saveVideos("saved");
 	cameraPtr->stopCaptureThreads();
 	cameraPtr->release();
 	return 0;
