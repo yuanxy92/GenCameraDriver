@@ -177,6 +177,11 @@ namespace cam {
 				else if (bayerPattern.compare("EnumEntry_PixelColorFilter_BayerGR") == 0) {
 					camInfos[i].bayerPattern = GenCamBayerPattern::BayerGBRG;
 				}
+				// disable white balance auto
+				Spinnaker::GenApi::CEnumerationPtr whiteBalanceAutoPtr = nodeMap.GetNode("BalanceWhiteAuto");
+				if (Spinnaker::GenApi::IsWritable(whiteBalanceAutoPtr)) {
+					whiteBalanceAutoPtr->SetIntValue(whiteBalanceAutoPtr->GetEntryByName("Off")->GetValue());
+				}
 				// get white balance gain
 				Spinnaker::GenApi::CFloatPtr balanceRatioPtr = nodeMap.GetNode("BalanceRatio");
 				Spinnaker::GenApi::CEnumerationPtr balanceRatioSelectorPtr = nodeMap.GetNode("BalanceRatioSelector");

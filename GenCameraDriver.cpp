@@ -194,5 +194,26 @@ namespace cam {
 		}
 		return 0;
 	}
+
+	/**
+	@brief get camera infos list with mapping
+	@param std::vector<cam::GenCamInfo> & camInfos: output camera info list
+	@return int
+	*/
+	int GenCamera::getCameraInfoListsWithMapping(std::vector<cam::GenCamInfo> & camInfos) {
+		size_t camInd;
+		// get camera infos without mapping
+		std::vector<cam::GenCamInfo> camInfosWoMapping;
+		this->getCamInfos(camInfosWoMapping);
+		camInfos.clear();
+		camInfos.resize(this->cameraNum);
+		for (size_t i = 0; i < this->cameraNum; i++) {
+			camInd = mappingVector[i];
+			camInfos[i] = camInfosWoMapping[camInd];
+		}
+		return 0;
+	}
 }
+
+
 

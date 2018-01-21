@@ -488,13 +488,20 @@ namespace cam {
 		int captureFrame(std::vector<Imagedata> & imgs);
 
 		/**
-		@brief capture one frame with Mapping
+		@brief capture one frame with mapping
 		@param std::vector<Imagedata> & imgs: output captured images
 		if in single mode, memory of image mats should be malloced
 		before using this function
 		@return int
 		*/
 		int captureFrameWithMapping(std::vector<Imagedata> & imgs);
+
+		/**
+		@brief get camera infos list with mapping
+		@param std::vector<cam::GenCamInfo> & camInfos: output camera info list
+		@return int
+		*/
+		int getCameraInfoListsWithMapping(std::vector<cam::GenCamInfo> & camInfos);
 
 	};
 
