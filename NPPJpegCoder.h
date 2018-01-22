@@ -13,7 +13,7 @@
 #include <nppi_compression_functions.h>
 #include <cuda_runtime.h>
 
-#include <opencv2/cudaimageproc.hpp>
+#include <opencv2/cudaimgproc.hpp>
 
 namespace npp {
 	// definition
@@ -72,6 +72,25 @@ namespace npp {
 	void writeHuffmanTable(const HuffmanTable &table, unsigned char *&pData);
 	void readRestartInterval(const unsigned char *pData, int &nRestartInterval);
 	bool printfNPPinfo(int cudaVerMajor, int cudaVerMinor);
+
+	/**
+	@brief convert NppiBayerGridPosition code to OpenCV color conversion code
+	@param NppiBayerGridPosition bayerPattern: input bayer pattern code
+	@return int: output opencv color conversion code
+	*/
+	int bayerPatternNPP2CVRGB(NppiBayerGridPosition bayerPattern) {
+		int code;
+		switch (bayerPattern)
+		{
+		case NPPI_BAYER_BGGR:
+			code = cv::COLOR_BayerBG2RGB;
+			break;
+		default:
+			break;
+		}
+		return code;
+	}
+
 
 	class NPPJpegCoder {
 	private:

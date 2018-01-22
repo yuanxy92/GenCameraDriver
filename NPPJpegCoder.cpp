@@ -677,7 +677,7 @@ namespace npp {
 	@param cudaStream_t stream: cudastream
 	@return int
 	*/
-	int encode(cv::cuda::GpuMat bayer_img_d, unsigned char* jpegdata, 
+	int NPPJpegCoder::encode(cv::cuda::GpuMat bayer_img_d, unsigned char* jpegdata,
 		size_t* datalength, size_t maxlength, cudaStream_t stream) {
 		nppSetStream(stream);
 		NppiDCTState *pDCTState;
