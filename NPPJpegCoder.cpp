@@ -294,6 +294,34 @@ namespace npp {
 	}
 
 	/**
+	@brief convert NppiBayerGridPosition code to OpenCV color conversion code
+	@param NppiBayerGridPosition bayerPattern: input bayer pattern code
+	@return int: output opencv color conversion code
+	*/
+	int NPPJpegCoder::bayerPatternNPP2CVRGB(NppiBayerGridPosition bayerPattern) {
+		int code;
+		switch (bayerPattern)
+		{
+		case NPPI_BAYER_BGGR:
+			code = cv::COLOR_BayerBG2RGB;
+			break;
+		case NPPI_BAYER_RGGB:
+			code = cv::COLOR_BayerRG2RGB;
+			break;
+		case NPPI_BAYER_GBRG:
+			code = cv::COLOR_BayerGB2RGB;
+			break;
+		case NPPI_BAYER_GRBG:
+			code = cv::COLOR_BayerGR2RGB;
+			break;
+		default:
+			SysUtil::errorOutput("Function bayerPatternNPP2CVRGB, wrong bayer pattern is inputed.");	
+			break;
+		}
+		return code;
+	}
+
+	/**
 	@brief constructor
 	*/
 	NPPJpegCoder::NPPJpegCoder(): isWBRaw(false) {}
@@ -706,11 +734,12 @@ namespace npp {
 		//	apDstImage[2], luminPitch, chromaPitchU, chromaPitchV);
 
 		// bayer to rgb
-		
-		NPP_CHECK_NPP(nppiCFAToRGB_8u_C1C3R(bayer_img_d, this->width, osize,
+#ifdef USE_NPP_DEBAYER
+		NPP_CHECK_NPP(nppiCFAToRGB_8u_C1C3R(bayer_img_d.data, bayer_img_d.step, osize,
 			orect, rgb_img_d, step_rgb, cfaBayerType, NPPI_INTER_UNDEFINED));
-
-		
+#else
+		cv::cuda::cvtColor(bayer_img_d, rgb_img_d, npp::bayerPatternNPP2CVRGB(cfaBayerType));
+#endif	
 		
 		if (isWBRaw == false) {
 			// apply white balance
