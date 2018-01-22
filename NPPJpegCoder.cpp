@@ -669,6 +669,129 @@ namespace npp {
 	}
 
 	/**
+	@brief encode raw image data to jpeg
+	@param cv::cuda::GpuMat bayer_img_d: input bayer image 
+	@param unsigned char* jpegdata: output jpeg data
+	@param size_t* datalength: output data length
+	@param size_t maxlength: max length (bytes) could be copied to in jpeg data
+	@param cudaStream_t stream: cudastream
+	@return int
+	*/
+	int encode(cv::cuda::GpuMat bayer_img_d, unsigned char* jpegdata, 
+		size_t* datalength, size_t maxlength, cudaStream_t stream) {
+		nppSetStream(stream);
+		NppiDCTState *pDCTState;
+
+#ifdef MEASURE_KERNEL_TIME
+		cudaEvent_t start, stop;
+		float elapsedTime;
+		cudaEventCreate(&start);
+		cudaEventRecord(start, 0);
+#endif
+
+		// debayer
+		NppiSize osize;
+		osize.width = this->width;
+		osize.height = this->height;
+		NppiRect orect;
+		orect.x = 0;
+		orect.y = 0;
+		orect.width = this->width;
+		orect.height = this->height;
+
+		//luminPitch = pitch[0];
+		//chromaPitchU = pitch[1];
+		//chromaPitchV = pitch[2];
+		//NPPJpegCoderKernel::bayerRG2patchYUV(bayerRGImg, apDstImage[0], apDstImage[1],
+		//	apDstImage[2], luminPitch, chromaPitchU, chromaPitchV);
+
+		// bayer to rgb
+		
+		NPP_CHECK_NPP(nppiCFAToRGB_8u_C1C3R(bayer_img_d, this->width, osize,
+			orect, rgb_img_d, step_rgb, cfaBayerType, NPPI_INTER_UNDEFINED));
+
+		
+		
+		if (isWBRaw == false) {
+			// apply white balance
+			NPP_CHECK_NPP(nppiColorTwist32f_8u_C3IR(rgb_img_d, step_rgb, osize, wbTwist));
+		}
+
+		// rgb to yuv420
+		NPP_CHECK_NPP(nppiRGBToYUV420_8u_C3P3R(rgb_img_d, step_rgb, apDstImage, aDstImageStep,
+			osize));
+
+		NPP_CHECK_NPP(nppiDCTInitAlloc(&pDCTState));
+		// Forward DCT
+		for (int i = 0; i < 3; ++i) {
+			NPP_CHECK_NPP(nppiDCTQuantFwd8x8LS_JPEG_8u16s_C1R_NEW(apDstImage[i], aDstImageStep[i],
+				apdDCT[i], aDCTStep[i],
+				pdQuantizationTables + oFrameHeader.aQuantizationTableSelector[i] * 64,
+				aDstSize[i],
+				pDCTState));
+		}
+
+		NPP_CHECK_NPP(nppiEncodeHuffmanScan_JPEG_8u16s_P3R(apdDCT, aDCTStep,
+			0, oScanHeader.nSs, oScanHeader.nSe, oScanHeader.nA >> 4, oScanHeader.nA & 0x0f,
+			pdScan, &nScanLength,
+			apHuffmanDCTable,
+			apHuffmanACTable,
+			aDstSize,
+			pJpegEncoderTemp));
+
+#ifdef MEASURE_KERNEL_TIME
+		cudaEventCreate(&stop);
+		cudaEventRecord(stop, 0);
+		cudaEventSynchronize(stop);
+		cudaEventElapsedTime(&elapsedTime, start, stop);
+		printf("JPEG encode step1: (file:%s, line:%d) elapsed time : %f ms\n", __FILE__, __LINE__, elapsedTime);
+#endif
+
+#ifdef MEASURE_KERNEL_TIME
+		cudaEventCreate(&start);
+		cudaEventRecord(start, 0);
+#endif
+		
+		// Write JPEG
+		unsigned char *pDstOutput = jpegdata;
+
+		writeMarker(0x0D8, pDstOutput);
+		writeJFIFTag(pDstOutput);
+		writeQuantizationTable(aQuantizationTables[0], pDstOutput);
+		writeQuantizationTable(aQuantizationTables[1], pDstOutput);
+		writeFrameHeader(oFrameHeader, pDstOutput);
+		writeHuffmanTable(pHuffmanDCTables[0], pDstOutput);
+		writeHuffmanTable(pHuffmanACTables[0], pDstOutput);
+		writeHuffmanTable(pHuffmanDCTables[1], pDstOutput);
+		writeHuffmanTable(pHuffmanACTables[1], pDstOutput);
+		writeScanHeader(oScanHeader, pDstOutput);
+
+		NPP_CHECK_CUDA(cudaMemcpyAsync(pDstOutput, pdScan, nScanLength, cudaMemcpyDeviceToHost, stream));
+
+		if (static_cast<size_t>(pDstOutput + nScanLength + 2 - jpegdata) > maxlength) {
+			std::cerr << "FATAL ERROR: Pre-malloced jpeg data size is too small ! " << std::endl;
+			exit(-1);
+		}
+
+		pDstOutput += nScanLength;
+		writeMarker(0x0D9, pDstOutput);
+
+#ifdef MEASURE_KERNEL_TIME
+		cudaEventCreate(&stop);
+		cudaEventRecord(stop, 0);
+		cudaEventSynchronize(stop);
+		cudaEventElapsedTime(&elapsedTime, start, stop);
+		printf("JPEG encode step2: (file:%s, line:%d) elapsed time : %f ms\n", __FILE__, __LINE__, elapsedTime);
+#endif
+
+		// calculate compressed jpeg data length
+		*datalength = static_cast<size_t>(pDstOutput - jpegdata);
+		// release gpu memory
+		nppiDCTFree(pDCTState);	
+		return 0;
+	}
+
+	/**
 	@brief decode jpeg image to raw image data (full)
 	@param unsigned char* jpegdata: input jpeg data
 	@param size_t input_datalength: input jpeg data length
