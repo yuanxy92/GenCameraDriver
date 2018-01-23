@@ -9,6 +9,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/cudaimgproc.hpp>
+#include <opencv2/core/cuda_stream_accessor.hpp>
 
 #include <cmath>
 #include <string>
@@ -544,7 +545,7 @@ namespace npp {
 		NPP_CHECK_CUDA(cudaMalloc(&pJpegEncoderTemp, nTempSize));
 
 		// malloc rgb image buffer
-		rgb_img_mat_d.create(height, width, CV_8U);
+		rgb_img_mat_d.create(height, width, CV_8UC3);
 		rgb_img_d = rgb_img_mat_d.data;
 		step_rgb = rgb_img_mat_d.step;
 		// set defaut cfa bayer pattern
@@ -740,8 +741,12 @@ namespace npp {
 		NPP_CHECK_NPP(nppiCFAToRGB_8u_C1C3R(bayer_img_d.data, bayer_img_d.step, osize,
 			orect, rgb_img_d, step_rgb, cfaBayerType, NPPI_INTER_UNDEFINED));
 #else
-		cv::cuda::cvtColor(bayer_img_d, rgb_img_mat_d, npp::bayerPatternNPP2CVRGB(cfaBayerType));
+		cv::cuda::demosaicing(bayer_img_d, rgb_img_mat_d, npp::bayerPatternNPP2CVRGB(cfaBayerType), -1, 
+			cv::cuda::StreamAccessor::wrapStream(stream));
 #endif	
+		//cudaStreamSynchronize(stream);
+		//cv::Mat img;
+		//rgb_img_mat_d.download(img);
 		
 		if (isWBRaw == false) {
 			// apply white balance
