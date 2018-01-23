@@ -9,7 +9,7 @@ Implementation of PointGrey camera
 
 namespace cam {
 	// function to check XIMEA function error
-	void cam::checkPTGREYInternal(int result, char const *const func,
+	void checkPTGREYInternal(int result, char const *const func,
 		const char *const file, int const line) {
 		if (result != 0) {
 			char info[256];
