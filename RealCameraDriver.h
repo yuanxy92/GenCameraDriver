@@ -18,8 +18,9 @@ namespace cam {
     class RealCamera : public GenCamera {
         protected:
             // buffers to save cuda memory pointer
-			std::vector<Imagedata> bufferImgs_singleframe;
-		    std::vector<uchar*> bufferImgs_cuda;
+			std::vector<Imagedata> bufferImgs_data_ptr;
+			std::vector<cv::Mat> bufferImgs_host;
+		    std::vector<cv::cuda::GpuMat> bufferImgs_cuda;
 
             // threads to capture images
 		    std::vector<std::thread> ths; 
