@@ -106,8 +106,12 @@ namespace cam {
 			//	sizeof(uchar) * camInfos[camInd].width * camInfos[camInd].height,
 			//	cudaMemcpyHostToDevice);
 			this->bufferImgs_host[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data),
-			this->bufferImgs_cuda[camInd].upload(this->bufferImgs_host[camInd],
-				cv::cuda::StreamAccessor::wrapStream(stream));
+			this->bufferImgs_cuda[camInd].upload(this->bufferImgs_host[camInd]
+#ifdef WIN32
+			,cv::cuda::StreamAccessor::wrapStream(stream));
+#else
+			);
+#endif
 			cudaStreamSynchronize(stream);
 			// end time
 			end_time = clock();
