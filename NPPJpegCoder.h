@@ -126,6 +126,7 @@ namespace npp {
 		Npp8u *apSrcImage[3];
 
 		Npp8u* rgb_img_d;
+		cv::cuda::GpuMat rgb_img_mat_d;
 		int step_rgb;
 		int luminPitch;
 		int chromaPitchU;

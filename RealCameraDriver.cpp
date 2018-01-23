@@ -6,8 +6,9 @@ directly
 @date Jan 8, 2018
 */
 
-#include "RealCameraDriver.h"
 #include <numeric>
+#include "RealCameraDriver.h"
+#include <opencv2/core/cuda_stream_accessor.hpp>
 
 namespace cam {
     RealCamera::RealCamera():isCaptureThreadRunning(false),
@@ -99,12 +100,13 @@ namespace cam {
 				}
 			}
 			// capture image
-			this->captureFrame(camInd, bufferImgs_singleframe[camInd]);
+			this->captureFrame(camInd, bufferImgs_data_ptr[camInd]);
 			// copy data to GPU
 			//cudaMemcpy(this->bufferImgs_cuda[camInd], bufferImgs_singleframe[camInd].data,
 			//	sizeof(uchar) * camInfos[camInd].width * camInfos[camInd].height,
 			//	cudaMemcpyHostToDevice);
-			this->bufferImgs_cuda[camInd].upload(bufferImgs_singleframe[camInd], 
+			this->bufferImgs_host[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data),
+			this->bufferImgs_cuda[camInd].upload(this->bufferImgs_host[camInd],
 				cv::cuda::StreamAccessor::wrapStream(stream));
 			cudaStreamSynchronize(stream);
 			// end time
@@ -252,15 +254,18 @@ namespace cam {
 				}
 				// pre-malloc cuda memory for debayer and jpeg compression
 				this->bufferImgs_cuda.resize(this->cameraNum);
-				this->bufferImgs_singleframe.resize(this->cameraNum);
+				this->bufferImgs_host.resize(this->cameraNum);
+				this->bufferImgs_data_ptr.resize(this->cameraNum);
 				for (size_t i = 0; i < this->cameraNum; i++) {
 					//cudaMalloc(&this->bufferImgs_cuda[i], sizeof(uchar)
 					//	* camInfos[i].width * camInfos[i].height);
-					this->bufferImgs_cuda.create(camInfos[i].height, camInfos[i].width, CV_8U);
+					this->bufferImgs_cuda[i].create(camInfos[i].height, camInfos[i].width, CV_8U);
 					size_t length = sizeof(uchar) * camInfos[i].width * camInfos[i].height;
-					this->bufferImgs_singleframe[i].data = new char[length];
-					this->bufferImgs_singleframe[i].length = length;
-					this->bufferImgs_singleframe[i].maxLength = length;
+					this->bufferImgs_data_ptr[i].data = new char[length];
+					this->bufferImgs_data_ptr[i].length = length;
+					this->bufferImgs_data_ptr[i].maxLength = length;
+					this->bufferImgs_host[i] = cv::Mat(camInfos[i].height, camInfos[i].width, CV_8U, 
+						reinterpret_cast<uchar*>(this->bufferImgs_data_ptr[i].data));
 				}
 				// init NPP jpeg coder	
 				this->coders.resize(this->cameraNum);
@@ -397,7 +402,7 @@ namespace cam {
 		if (this->bufferType == GenCamBufferType::JPEG) {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				this->bufferImgs_cuda[i].release();
-				delete[] this->bufferImgs_singleframe[i].data;
+				delete[] this->bufferImgs_data_ptr[i].data;
 				coders[i].release();
 				for (size_t j = 0; j < this->cameraNum; j++) {
 					delete bufferImgs[j][i].data;
