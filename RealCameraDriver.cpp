@@ -83,6 +83,7 @@ namespace cam {
 		thStatus[camInd] = 1;
 		cudaStream_t stream;
 		cudaStreamCreate(&stream);
+		cv::cuda::Stream cvstream = cv::cuda::StreamAccessor::wrapStream(stream);
 		for (;;) {
 			// begin time
 			begin_time = clock();
@@ -107,11 +108,7 @@ namespace cam {
 			//	cudaMemcpyHostToDevice);
 			this->bufferImgs_host[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data),
 			this->bufferImgs_cuda[camInd].upload(this->bufferImgs_host[camInd]
-#ifdef WIN32
-			,cv::cuda::StreamAccessor::wrapStream(stream));
-#else
-			);
-#endif
+				,std::ref(cvstream));
 			cudaStreamSynchronize(stream);
 			// end time
 			end_time = clock();

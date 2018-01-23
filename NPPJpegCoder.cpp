@@ -737,16 +737,13 @@ namespace npp {
 		//	apDstImage[2], luminPitch, chromaPitchU, chromaPitchV);
 
 		// bayer to rgb
+		cv::cuda::Stream cvstream = cv::cuda::StreamAccessor::wrapStream(stream);
 #ifdef USE_NPP_DEBAYER
 		NPP_CHECK_NPP(nppiCFAToRGB_8u_C1C3R(bayer_img_d.data, bayer_img_d.step, osize,
 			orect, rgb_img_d, step_rgb, cfaBayerType, NPPI_INTER_UNDEFINED));
 #else
 		cv::cuda::demosaicing(bayer_img_d, rgb_img_mat_d, npp::bayerPatternNPP2CVRGB(cfaBayerType), -1
-#ifdef WIN32
-			,cv::cuda::StreamAccessor::wrapStream(stream));
-#else
-		);
-#endif
+			,std::ref(cvstream));
 #endif	
 		//cudaStreamSynchronize(stream);
 		//cv::Mat img;
