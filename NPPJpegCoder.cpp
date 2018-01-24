@@ -677,7 +677,9 @@ namespace npp {
 		NPP_CHECK_CUDA(cudaMemcpyAsync(pDstOutput, pdScan, nScanLength, cudaMemcpyDeviceToHost, stream));
 
 		if (static_cast<size_t>(pDstOutput + nScanLength + 2 - jpegdata) > maxlength) {
-			std::cerr << "FATAL ERROR: Pre-malloced jpeg data size is too small ! " << std::endl;
+			char info[256];
+			sprintf(info, "FATAL ERROR: Pre-malloced jpeg data size is too small ! nScanLength = %d, maxlength = %d", nScanLength, maxlength);
+			std::cout << info << std::endl;
 			exit(-1);
 		}
 
@@ -806,7 +808,9 @@ namespace npp {
 		NPP_CHECK_CUDA(cudaMemcpyAsync(pDstOutput, pdScan, nScanLength, cudaMemcpyDeviceToHost, stream));
 
 		if (static_cast<size_t>(pDstOutput + nScanLength + 2 - jpegdata) > maxlength) {
-			std::cerr << "FATAL ERROR: Pre-malloced jpeg data size is too small ! " << std::endl;
+			char info[256];
+			sprintf(info, "FATAL ERROR: Pre-malloced jpeg data size is too small ! nScanLength = %d, maxlength = %d", nScanLength, maxlength);
+			std::cout << info << std::endl;
 			exit(-1);
 		}
 
