@@ -187,29 +187,29 @@ namespace cam {
 	@brief capture mode 
 	*/
 	enum class GenCamCaptureMode {
-		Single, // capture one by one without buffer
-		Continous, // capture and buffer images
-		SingleTrigger,
-		ContinousTrigger
+		Single = 0, // capture one by one without buffer
+		Continous = 1, // capture and buffer images
+		SingleTrigger = 2,
+		ContinousTrigger = 3
 	};
 
 	/**
 	@brief capture purpose
 	*/
 	enum class GenCamCapturePurpose {
-		Streaming, // capture images to buffers circularly  
-		Recording // capture images to fill the buffer once
+		Streaming = 0, // capture images to buffers circularly  
+		Recording = 1 // capture images to fill the buffer once
 	};
 
 	/**
 	@brief buffer type
 	*/
 	enum class GenCamBufferType {
-		Raw,  // save 8-bit raw images in buffer
-		JPEG, // save jpeg compressed images in buffer
+		Raw = 0,  // save 8-bit raw images in buffer
+		JPEG = 1, // save jpeg compressed images in buffer
 			  // usually need as power GPU to compress the raw images
-		RGB24,   // save demosaiced 3 channel RGB images in buffer 
-		Raw16 // save 16-bit raw images in buffer
+		RGB24 = 2,   // save demosaiced 3 channel RGB images in buffer 
+		Raw16 = 3 // save 16-bit raw images in buffer
 	};
 
 	
