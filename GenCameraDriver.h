@@ -110,7 +110,7 @@ namespace cam {
 			std::cerr << "WARNING: " << info.c_str() << std::endl;
 			SysUtil::setConsoleColor(ConsoleColor::white);
 #else
-			std::cerr << YELLOW_TEXT("WARNING: ") << RED_TEXT(info.c_str())
+			std::cerr << YELLOW_TEXT("WARNING: ") << YELLOW_TEXT(info.c_str())
 				<< std::endl;
 #endif
 			return 0;
@@ -122,7 +122,7 @@ namespace cam {
 			std::cerr << "INFO: " << info.c_str() << std::endl;
 			SysUtil::setConsoleColor(ConsoleColor::white);
 #else
-			std::cerr << GREEN_TEXT("INFO: ") << RED_TEXT(info.c_str())
+			std::cerr << GREEN_TEXT("INFO: ") << GREEN_TEXT(info.c_str())
 				<< std::endl;
 #endif
 			return 0;
@@ -134,7 +134,7 @@ namespace cam {
 			std::cerr << "DEBUG INFO: " << info.c_str() << std::endl;
 			SysUtil::setConsoleColor(ConsoleColor::white);
 #else
-			std::cerr << MAGENTA_TEXT("DEBUG INFO: ") << RED_TEXT(info.c_str())
+			std::cerr << MAGENTA_TEXT("DEBUG INFO: ") << MAGENTA_TEXT(info.c_str())
 				<< std::endl;
 #endif
 			return 0;
