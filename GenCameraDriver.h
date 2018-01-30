@@ -122,7 +122,7 @@ namespace cam {
 			std::cerr << "INFO: " << info.c_str() << std::endl;
 			SysUtil::setConsoleColor(ConsoleColor::white);
 #else
-			std::cerr << GREEN_TEXT("ERRINFOOR: ") << RED_TEXT(info.c_str())
+			std::cerr << GREEN_TEXT("INFO: ") << RED_TEXT(info.c_str())
 				<< std::endl;
 #endif
 			return 0;
