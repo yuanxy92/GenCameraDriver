@@ -53,6 +53,11 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraXIMEA::init() {
+		// check 
+		if (this->isInit == true) {
+			SysUtil::warningOutput("GenCameraXIMEA is already initialized. Please do not init twice !");
+			return -1;
+		}
 		// get camera numbers
 		PDWORD num = new DWORD;
 		checkXIMEAErrors(xiGetNumberDevices(num));
