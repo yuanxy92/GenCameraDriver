@@ -81,9 +81,7 @@ namespace cam {
 		clock_t begin_time, end_time;
 		double time = 1000.0 / static_cast<double>(camInfos[camInd].fps);
 		thStatus[camInd] = 1;
-		cudaStream_t stream;
-		cudaStreamCreate(&stream);
-		cv::cuda::Stream cvstream = cv::cuda::StreamAccessor::wrapStream(stream);
+		cv::cuda::Stream cvstream; 
 		for (;;) {
 			// begin time
 			begin_time = clock();
@@ -93,6 +91,8 @@ namespace cam {
 			if (thStatus[camInd] == 0)
 				break;
 			while (thStatus[camInd] == 2) {
+				if (thexit == 1)
+					break;
 				// still in jpeg compression wait for some time
 				std::this_thread::sleep_for(std::chrono::milliseconds(5));
 				if (isVerbose) {
@@ -109,11 +109,13 @@ namespace cam {
 			this->bufferImgs_host[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data),
 			this->bufferImgs_cuda[camInd].upload(this->bufferImgs_host[camInd]
 				,std::ref(cvstream));
-			cudaStreamSynchronize(stream);
+			cvstream.waitForCompletion();
 			// end time
 			end_time = clock();
 			float waitTime = time - static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
 			// set status to 2, wait for compress
+			if (thexit == 1)
+				break;
 			thStatus[camInd] = 2;
 			// wait for some time
 			if (isVerbose) {
@@ -124,7 +126,6 @@ namespace cam {
 				SysUtil::sleep(waitTime);
 			}
 		}
-		cudaStreamDestroy(stream);
 		char info[256];
 		sprintf(info, "Capturing thread for camera %02d finish, exit successfully !", camInd);
 		SysUtil::infoOutput(info);
@@ -139,8 +140,7 @@ namespace cam {
 	*/
 	void RealCamera::compress_thread_JPEG_() {
 		clock_t begin_time, end_time;
-		cudaStream_t stream;
-		cudaStreamCreate(&stream);
+		cv::cuda::Stream stream;
 		bool hasFrame;
 		for (;;) {
 			hasFrame = false;
@@ -153,9 +153,21 @@ namespace cam {
 			// compress images
 			for (size_t camInd = 0; camInd < this->cameraNum; camInd ++) {
 				// check if all the images are captured
-				if (thStatus[camInd] != 2 || thBufferInds[camInd] == bufferSize)
+				if (thStatus[camInd] != 2 || thBufferInds[camInd] == bufferSize) {
+					// if no image is compressed in this for loop, wait 5ms
+					if (camInd == this->cameraNum - 1) {
+						if (hasFrame == false) {
+							SysUtil::sleep(10);
+						}
+						else {
+							hasFrame = false;
+						}
+					}
 					continue;
+				}
 				else hasFrame = true;
+				if (thexit == 1)
+					break;
 				// begin time
 				begin_time = clock();
 				// compress
@@ -164,7 +176,8 @@ namespace cam {
 					&bufferImgs[thBufferInds[camInd]][camInd].length,
 					bufferImgs[thBufferInds[camInd]][camInd].maxLength,
 					stream);
-				cudaStreamSynchronize(stream);
+				//cudaStreamSynchronize(stream);
+				stream.waitForCompletion();
 				// end time
 				end_time = clock();
 				if (isVerbose) {
@@ -185,18 +198,11 @@ namespace cam {
 					}
 				}
 				// set thread status to 1
+				if (thexit == 1)
+					break;
 				thStatus[camInd] = 1;
-				// if no image is compressed in this for loop, wait 5ms
-				if (camInd == this->cameraNum - 1) {
-					if (hasFrame == false) {
-						SysUtil::sleep(5);
-					}
-					else
-						hasFrame = true;
-				}
 			}
 		}
-		cudaStreamDestroy(stream);
 		SysUtil::infoOutput("JPEG compress thread exit successfully !");
 	}
 
@@ -382,6 +388,7 @@ namespace cam {
 			thStatus[i] = 0;
 		}
 		thexit = 1;
+		SysUtil::sleep(200);
 		// make sure all the threads have exited
 		if (this->camPurpose == cam::GenCamCapturePurpose::Streaming) {
 			if (isCompressThreadRunning == true) {
@@ -392,6 +399,8 @@ namespace cam {
 			}
 			if (isCaptureThreadRunning == true) {
 				for (size_t i = 0; i < this->cameraNum; i++) {
+					sprintf(info, "Try to stop capturing thread %d ...", i);
+					SysUtil::infoOutput(std::string(info));
 					ths[i].join();
 					sprintf(info, "Capturing thread %d exit successfully !", i);
 					SysUtil::infoOutput(std::string(info));
@@ -406,7 +415,7 @@ namespace cam {
 				delete[] this->bufferImgs_data_ptr[i].data;
 				coders[i].release();
 				for (size_t j = 0; j < this->cameraNum; j++) {
-					delete bufferImgs[j][i].data;
+					delete[] bufferImgs[j][i].data;
 					bufferImgs[j][i].maxLength = 0;
 				}
 			}

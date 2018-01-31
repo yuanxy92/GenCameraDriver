@@ -711,7 +711,9 @@ namespace npp {
 	@return int
 	*/
 	int NPPJpegCoder::encode(cv::cuda::GpuMat bayer_img_d, unsigned char* jpegdata,
-		size_t* datalength, size_t maxlength, cudaStream_t stream) {
+		size_t* datalength, size_t maxlength, cv::cuda::Stream & cvstream) {
+		
+		cudaStream_t stream = cv::cuda::StreamAccessor::getStream(cvstream);
 		nppSetStream(stream);
 		NppiDCTState *pDCTState;
 
@@ -739,7 +741,7 @@ namespace npp {
 		//	apDstImage[2], luminPitch, chromaPitchU, chromaPitchV);
 
 		// bayer to rgb
-		cv::cuda::Stream cvstream = cv::cuda::StreamAccessor::wrapStream(stream);
+		//cv::cuda::Stream cvstream = cv::cuda::StreamAccessor::wrapStream(stream);
 #ifdef USE_NPP_DEBAYER
 		NPP_CHECK_NPP(nppiCFAToRGB_8u_C1C3R(bayer_img_d.data, bayer_img_d.step, osize,
 			orect, rgb_img_d, step_rgb, cfaBayerType, NPPI_INTER_UNDEFINED));

@@ -259,6 +259,8 @@ namespace cam {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
 			exit(-1);
 		}
+		this->isInit = false;
+		SysUtil::infoOutput("Pointgrey camera driver exit successfully!");
 		return 0;
 	}
 
