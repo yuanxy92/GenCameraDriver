@@ -229,8 +229,8 @@ namespace cam {
 				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_WB_KR, redGain));
 				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_WB_KG, greenGain));
 				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_WB_KB, blueGain));
-				checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
-				checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
+				checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
+				checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
 			}
 		}
 		else {
