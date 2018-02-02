@@ -70,6 +70,10 @@ namespace cam {
 		sysPtr = Spinnaker::System::GetInstance();
 		camList = sysPtr->GetCameras();
 		this->cameraNum = camList.GetSize();
+		if (cameraNum < 1) {
+			SysUtil::errorOutput("No pointgrey cameras detected !");
+			return -1;	
+		}
 		// init cameras
 		try {
 			// init camera
