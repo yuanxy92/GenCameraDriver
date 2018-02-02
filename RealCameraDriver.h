@@ -42,6 +42,9 @@ namespace cam {
 
             // NPP JPEG coders
 		    std::vector<npp::NPPJpegCoder> coders;
+
+            // memory status 
+            int isCaptureModeSet;
         public:
 
         protected:

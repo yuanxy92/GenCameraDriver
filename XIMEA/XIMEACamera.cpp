@@ -56,7 +56,7 @@ namespace cam {
 		// check 
 		if (this->isInit == true) {
 			SysUtil::warningOutput("GenCameraXIMEA is already initialized. Please do not init twice !");
-			return -1;
+			return 0;
 		}
 		// get camera numbers
 		PDWORD num = new DWORD;

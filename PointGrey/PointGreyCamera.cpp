@@ -64,7 +64,7 @@ namespace cam {
 		// check 
 		if (this->isInit == true) {
 			SysUtil::warningOutput("GenCameraPTGREY is already initialized. Please do not init twice !");
-			return -1;
+			return 0;
 		}
 		// get camera lists
 		sysPtr = Spinnaker::System::GetInstance();

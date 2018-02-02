@@ -12,7 +12,7 @@ directly
 
 namespace cam {
     RealCamera::RealCamera():isCaptureThreadRunning(false),
-		isCompressThreadRunning(false) {}
+		isCompressThreadRunning(false), isCaptureModeSet(false) {}
     RealCamera::~RealCamera() {}
 
     /**
@@ -214,6 +214,10 @@ namespace cam {
 	*/
 	int RealCamera::setCaptureMode(GenCamCaptureMode captureMode,
 		int bufferSize) {
+		if (isCaptureModeSet == true) {
+			SysUtil::warningOutput("Capture mode is already set! Please do not set twice!");
+			return 0;
+		}
 		// get camera info
 		this->getCamInfos(camInfos);
 		// init capture buffer
@@ -289,6 +293,7 @@ namespace cam {
 			SysUtil::errorOutput("Single mode is not implemented yet !");
 			exit(-1);
 		}
+		this->isCaptureModeSet = true;
 		return 0;
 	}
 
@@ -335,6 +340,10 @@ namespace cam {
 	@return int
 	*/
 	int RealCamera::startCaptureThreads() {
+		if (isCaptureThreadRunning == true) {
+			SysUtil::warningOutput("Capturing/compression thread is already running! Please do not start twice!");
+			return 0;
+		}
 		if (captureMode == cam::GenCamCaptureMode::Continous ||
 			captureMode == cam::GenCamCaptureMode::ContinousTrigger) {
 			// prepare thread buffers
@@ -420,6 +429,7 @@ namespace cam {
 				}
 			}
 		}
+		this->isCaptureModeSet = false;
 		SysUtil::infoOutput("Real camera driver released successfully !");
 		return 0;
 	}
