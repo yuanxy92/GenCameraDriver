@@ -310,7 +310,7 @@ namespace cam {
 				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
 				// turn of FPS auto to off
 				Spinnaker::GenApi::CEnumerationPtr fpsAutoPtr = nodeMap.GetNode("AcquisitionFrameRateAuto");
-				if (fpsAutoPtr != NULL) { // there is setting Enumeration called AcquisitionFrameRateAuto, usually Grasshopper or flea camera
+				if (fpsAutoPtr) { // there is setting Enumeration called AcquisitionFrameRateAuto, usually Grasshopper or flea camera
 					fpsAutoPtr->SetIntValue(fpsAutoPtr->GetEntryByName("Off")->GetValue());
 					// set fps
 					Spinnaker::GenApi::CFloatPtr fpsPtr = nodeMap.GetNode("AcquisitionFrameRate");
@@ -481,7 +481,7 @@ namespace cam {
 				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
 				// set auto exposure and auto gain status
 				Spinnaker::GenApi::CEnumerationPtr evAuto = nodeMap.GetNode("pgrExposureCompensationAuto");
-				if (evAuto == NULL) {
+				if (!evAuto) {
 					SysUtil::warningOutput("setAutoExposureLevel function is not "\
 						"support for this pointgrey camera (usually BlackFly S). \n"\
 						"Please set the EV value by hand!");

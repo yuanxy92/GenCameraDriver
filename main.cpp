@@ -66,7 +66,7 @@ int record(int argc, char* argv[]) {
 	cameraPtr->init();
 	// set camera setting
 	cameraPtr->startCapture();
-	cameraPtr->setFPS(-1, 10);
+	cameraPtr->setFPS(-1, 100);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);
 	cameraPtr->setAutoExposureLevel(-1, 25);
 	cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.2);
