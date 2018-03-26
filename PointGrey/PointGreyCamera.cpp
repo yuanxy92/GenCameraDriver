@@ -85,6 +85,7 @@ namespace cam {
 
 				// set camera inside buffers strategy
 				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);	
+				//pCam->EndAcquisition();
 				Spinnaker::GenApi::INodeMap & sNodeMap = pCam->GetTLStreamNodeMap();
 				Spinnaker::GenApi::CIntegerPtr StreamNode = sNodeMap.GetNode("StreamDefaultBufferCount");
 				StreamNode->SetValue(3);
@@ -111,8 +112,15 @@ namespace cam {
 				else if (bayerPattern.compare("EnumEntry_PixelColorFilter_BayerGR") == 0) {
 					dstPixelFormat = "BayerGR8";
 				}
-				pixelFormatPtr->SetIntValue(pixelFormatPtr->
-					GetEntryByName(Spinnaker::GenICam::gcstring(dstPixelFormat.c_str()))->GetValue());
+				int setVal = pixelFormatPtr->
+					GetEntryByName(Spinnaker::GenICam::gcstring(dstPixelFormat.c_str()))->GetValue();
+				if (Spinnaker::GenApi::IsWritable(pixelFormatPtr)) {
+					pixelFormatPtr->SetIntValue(setVal);
+				}
+				else {
+					SysUtil::warningOutput("PixelFormat is not writable !");
+					SysUtil::warningOutput("Current PixelFormat is " + dstPixelFormat);
+				}
 
 				// Set acquisition mode to continuous
 				Spinnaker::GenApi::CEnumerationPtr acquisitionModePtr = nodeMap.GetNode("AcquisitionMode");
@@ -302,13 +310,26 @@ namespace cam {
 				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
 				// turn of FPS auto to off
 				Spinnaker::GenApi::CEnumerationPtr fpsAutoPtr = nodeMap.GetNode("AcquisitionFrameRateAuto");
-				fpsAutoPtr->SetIntValue(fpsAutoPtr->GetEntryByName("Off")->GetValue());
-				// set fps
-				Spinnaker::GenApi::CFloatPtr fpsPtr = nodeMap.GetNode("AcquisitionFrameRate");
-				fpsPtr->SetValue(fps);	
-				// set auto exposure upper limit
-				Spinnaker::GenApi::CFloatPtr exposureUpperLimitPtr = nodeMap.GetNode("AutoExposureTimeUpperLimit");
-				exposureUpperLimitPtr->SetValue(maxExposureTime);
+				if (fpsAutoPtr != NULL) { // there is setting Enumeration called AcquisitionFrameRateAuto, usually Grasshopper or flea camera
+					fpsAutoPtr->SetIntValue(fpsAutoPtr->GetEntryByName("Off")->GetValue());
+					// set fps
+					Spinnaker::GenApi::CFloatPtr fpsPtr = nodeMap.GetNode("AcquisitionFrameRate");
+					fpsPtr->SetValue(fps);
+					// set auto exposure upper limit
+					Spinnaker::GenApi::CFloatPtr exposureUpperLimitPtr = nodeMap.GetNode("AutoExposureTimeUpperLimit");
+					exposureUpperLimitPtr->SetValue(maxExposureTime);
+				}
+				else { // there is no setting Enumeration called AcquisitionFrameRateAuto, usually blackfly S camera
+					   // here we need to use setting Enumeration called Acquisition Frame Rate Enable
+					Spinnaker::GenApi::CBooleanPtr fpsEnablePtr = nodeMap.GetNode("AcquisitionFrameRateEnable");
+					fpsEnablePtr->SetValue(true);
+					// set fps
+					Spinnaker::GenApi::CFloatPtr fpsPtr = nodeMap.GetNode("AcquisitionFrameRate");
+					fpsPtr->SetValue(fps);
+					// set auto exposure upper limit
+					Spinnaker::GenApi::CFloatPtr exposureUpperLimitPtr = nodeMap.GetNode("AutoExposureExposureTimeUpperLimit");
+					exposureUpperLimitPtr->SetValue(maxExposureTime);
+				}
 			}
 		}
 		catch (Spinnaker::Exception &e) {
@@ -460,6 +481,12 @@ namespace cam {
 				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
 				// set auto exposure and auto gain status
 				Spinnaker::GenApi::CEnumerationPtr evAuto = nodeMap.GetNode("pgrExposureCompensationAuto");
+				if (evAuto == NULL) {
+					SysUtil::warningOutput("setAutoExposureLevel function is not "\
+						"support for this pointgrey camera (usually BlackFly S). \n"\
+						"Please set the EV value by hand!");
+					return 0;
+				}
 				evAuto->SetIntValue(evAuto->GetEntryByName("Continuous")->GetValue());
 				image = camList.GetByIndex(camInd)->GetNextImage();
 				SysUtil::sleep(500);

@@ -30,13 +30,13 @@ set(CUDA_NVCC_FLAGS
 
 # pointgrey camera sdk
 if ( WIN32 )
-    set(PTGREY_SDK_INCLUDE_DIR "~/zhu-ty/spinnaker/include")
-	set(PTGREY_SDK_LIBRARY_DEBUG "~/zhu-ty/spinnaker/lib/libSpinnaker.so")
-	set(PTGREY_SDK_LIBRARY_RELEASE "~/zhu-ty/spinnaker/lib/libSpinnaker.so")
+    set(PTGREY_SDK_INCLUDE_DIR "C:/Program Files/Point Grey Research/Spinnaker/include")
+	set(PTGREY_SDK_LIBRARY_DEBUG debug "C:/Program Files/Point Grey Research/Spinnaker/lib64/vs2015/Spinnakerd_v140.lib")
+	set(PTGREY_SDK_LIBRARY_RELEASE  optimized "C:/Program Files/Point Grey Research/Spinnaker/lib64/vs2015/Spinnaker_v140.lib")
 else()
     set(PTGREY_SDK_INCLUDE_DIR "~/zhu-ty/spinnaker/include")
-    set(PTGREY_SDK_LIBRARY_DEBUG "~/zhu-ty/spinnaker/lib/libSpinnaker.so")
-    set(PTGREY_SDK_LIBRARY_RELEASE "~/zhu-ty/spinnaker/lib/libSpinnaker.so")
+    set(PTGREY_SDK_LIBRARY_DEBUG debug "~/zhu-ty/spinnaker/lib/libSpinnaker.so")
+    set(PTGREY_SDK_LIBRARY_RELEASE optimized "~/zhu-ty/spinnaker/lib/libSpinnaker.so")
 endif()
 include_directories(${PTGREY_SDK_INCLUDE_DIR})
 
