@@ -15,7 +15,6 @@
 #include <thread>
 #include <memory>
 			
-			
 // opencv
 #include <opencv2/opencv.hpp>
 
@@ -417,7 +416,7 @@ namespace cam {
 		virtual int stopCaptureThreads() = 0;
 
 		/*************************************************************/
-		/*                   non-virtual setting function                    */
+		/*              non-virtual setting function                 */
 		/*************************************************************/
 		/**
 		@brief set verbose 
@@ -509,7 +508,8 @@ namespace cam {
 	@breif function to init camera array
 	@return 
 	*/
-	std::shared_ptr<GenCamera> createCamera(CameraModel camModel);
+	std::shared_ptr<GenCamera> createCamera(CameraModel camModel,
+		std::string dir = "");
 };
 
 

@@ -27,7 +27,7 @@
 ##               Buddha Bless No Bug
 ##
 
-message( 
+message(
 "##\n
 ##                     _oo0oo_\n
 ##                    o8888888o\n
