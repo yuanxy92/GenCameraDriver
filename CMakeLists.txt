@@ -114,6 +114,8 @@ set(MY_HEADER_FILES
     PointGrey/PointGreyCamera.h
     # XIMEA camera
     XIMEA/XIMEACamera.h
+    # File camera
+    FileCamera/FileCamera.h
 )
 
 set(MY_SOURCE_FILES 
@@ -121,6 +123,8 @@ set(MY_SOURCE_FILES
     PointGrey/PointGreyCamera.cpp
     # XIMEA camera
     XIMEA/XIMEACamera.cpp
+    # File camera
+    FileCamera/FileCamera.cpp
     # C++ source file
     NPPJpegCoder.cpp
     # generic camera driver
@@ -141,6 +145,11 @@ source_group("XIMEA" FILES
     XIMEA/XIMEACamera.cpp
 )
 
+source_group("FileCamera" FILES
+    FileCamera/FileCamera.h
+    FileCamera/FileCamera.cpp
+)
+
 source_group("cuda" FILES
     cuda/NPPJpegCoderKernel.h
     cuda/NPPJpegCoderKernel.cu
@@ -151,6 +160,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/cuda	
 	${PROJECT_SOURCE_DIR}/XIMEA	
 	${PROJECT_SOURCE_DIR}/PointGrey	
+	${PROJECT_SOURCE_DIR}/FileCamera	
 )
 
 cuda_add_executable(${name}
