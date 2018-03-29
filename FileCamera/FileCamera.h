@@ -18,15 +18,22 @@ namespace cam {
 	private:
 		// config information
 		std::string dir;
-		size_t camNum;
 		float bufferScale;
 		std::vector<std::string> filenames;
+		std::vector<size_t> frameCounts;
 		// pre-define bayer pattern
 		GenCamBayerPattern bayerPattern;
 
 	public:
 
 	private:
+		/**
+		@brief convert rgb image to bayer image
+		@param cv::Mat img: input image CV_8UC3 Color_BGR
+		@return cv::Mat out: output bayer image 
+		*/
+		static cv::Mat colorBGR2BayerRG(cv::Mat img);
+
 		/**
 		@brief load file information from config file
 		@return int
@@ -48,21 +55,22 @@ namespace cam {
 		/*************************************************************/
 		/*          list of not used function in FileCamera          */
 		/*************************************************************/
-		int startCapture() {}
-		int stopCapture() {}
-		int setFPS(int camInd, float fps, float exposureUpperLimitRatio) {}
-		int setAutoWhiteBalance(int camInd) {}
+		int startCapture() { return 0; }
+		int stopCapture() { return 0; }
+		int setFPS(int camInd, float fps, 
+			float exposureUpperLimitRatio) { return 0; }
+		int setAutoWhiteBalance(int camInd) { return 0; }
 		int setWhiteBalance(int camInd, float redGain,
-			float greenGain, float blueGain) {}
-		int setAutoExposure(int camInd, Status autoExposure) {}
-		int setAutoExposureLevel(int camInd, float level) {}
+			float greenGain, float blueGain) { return 0; }
+		int setAutoExposure(int camInd, Status autoExposure) { return 0; }
+		int setAutoExposureLevel(int camInd, float level) { return 0; }
 		int setAutoExposureCompensation(int camInd,
-			Status status, float relativeEV) {}
-		int setExposure(int camInd, int time) {}
-		int makeSetEffective(int k) {}
-		int waitForRecordFinish() {}
-		int startCaptureThreads() {}
-		int stopCaptureThreads() {}
+			Status status, float relativeEV) { return 0;}
+		int setExposure(int camInd, int time) { return 0; }
+		int makeSetEffective(int k) { return 0; }
+		int waitForRecordFinish() { return 0; }
+		int startCaptureThreads() { return 0; }
+		int stopCaptureThreads() { return 0; }
 
 		/*************************************************************/
 		/*                   basic camera function                   */
