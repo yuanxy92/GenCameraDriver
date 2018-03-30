@@ -509,7 +509,7 @@ namespace cam {
 	@return 
 	*/
 	std::shared_ptr<GenCamera> createCamera(CameraModel camModel,
-		std::string dir = "");
+		std::string dir);
 };
 
 
