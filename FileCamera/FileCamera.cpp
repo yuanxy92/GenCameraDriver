@@ -11,6 +11,7 @@ namespace cam {
 	// constructor
 	GenCameraFile::GenCameraFile() {}
 	GenCameraFile::GenCameraFile(std::string dir) {
+		this->camModel = cam::CameraModel::File;
 		this->dir = dir;
 	}
 	GenCameraFile::~GenCameraFile() {}
@@ -47,7 +48,6 @@ namespace cam {
 		cv::FileStorage fs(configname, cv::FileStorage::READ);
 		// read basic information
 		int camNum;
-		fs["dir"] >> this->dir;
 		fs["CamNum"] >> camNum;
 		this->cameraNum = camNum;
 		fs["BufferScale"] >> this->bufferScale;
@@ -63,6 +63,7 @@ namespace cam {
 		}
 		fs.release();
 		// get camera infos
+		camInfos.resize(this->cameraNum);
 		this->getCamInfos(camInfos);
 		return 0;
 	}
@@ -92,12 +93,14 @@ namespace cam {
 		// read images from videos
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			SysUtil::infoOutput("Buffer video " + filenames[i]);
-			cv::VideoCapture reader(filenames[i]);
+			char videoname[1024];
+			sprintf(videoname, "%s/%s", this->dir.c_str(), filenames[i].c_str());
+			cv::VideoCapture reader(videoname);
 			cv::Mat img, smallImg, bayerImg;
-			reader >> img;
-			cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
-			bayerImg = colorBGR2BayerRG(smallImg);
 			for (size_t j = 0; j < bufferSize; j++) {
+				reader >> img;
+				cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
+				bayerImg = colorBGR2BayerRG(smallImg);
 				this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
 				memcpy(this->bufferImgs[j][i].data, bayerImg.data, 
 					this->bufferImgs[j][i].length);
@@ -117,11 +120,8 @@ namespace cam {
 	int GenCameraFile::init() {
 		// read config file in dir
 		this->loadConfigFile();
-		// buffer image data
-		this->bufferImageData();
 		// set sign bit
 		this->isInit = true;
-		this->isCapture = true;
 		return 0;
 	}
 
@@ -147,6 +147,7 @@ namespace cam {
 	*/
 	int GenCameraFile::getCamInfos(std::vector<GenCamInfo>& camInfos) {
 		frameCounts.resize(this->cameraNum);
+		camInfos.resize(this->cameraNum);
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			camInfos[i].sn = filenames[i];
 			camInfos[i].redGain = 1;
@@ -156,7 +157,9 @@ namespace cam {
 			camInfos[i].autoExposure = cam::Status::off;
 			camInfos[i].bayerPattern = GenCamBayerPattern::BayerGRBG;
 			// read width and height from video file
-			cv::VideoCapture reader(filenames[i]);
+			char videoname[1024];
+			sprintf(videoname, "%s/%s", this->dir.c_str(), filenames[i].c_str());
+			cv::VideoCapture reader(videoname);
 			camInfos[i].fps = reader.get(CV_CAP_PROP_FPS);
 			camInfos[i].width = reader.get(CV_CAP_PROP_FRAME_WIDTH) 
 				* this->bufferScale;
@@ -210,6 +213,14 @@ namespace cam {
 				+ std::string("change to " + finalBufferSize) + " !");
 		}
 		this->bufferSize = finalBufferSize;
+		// buffer image data
+		this->bufferImageData();
+		this->isCapture = true;
+		// init frame indices buffer
+		this->thBufferInds.resize(this->cameraNum);
+		for (size_t i = 0; i < this->cameraNum; i++) {
+			thBufferInds[i] = 1;
+		}
 		return 0;
 	}
 };

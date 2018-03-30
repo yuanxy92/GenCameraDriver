@@ -95,10 +95,49 @@ int record(int argc, char* argv[]) {
 	return 0;
 }
 
+int testFileCamera() {
+	std::vector<cam::GenCamInfo> camInfos;
+	std::shared_ptr<cam::GenCamera> cameraPtr
+		= cam::createCamera(cam::CameraModel::File, "E:/data/giga/NanshanIPark/2");
+	cameraPtr->init();
+	// set camera setting
+	cameraPtr->startCapture();
+	cameraPtr->setFPS(-1, 10);
+	cameraPtr->setAutoExposure(-1, cam::Status::on);
+	cameraPtr->setAutoExposureLevel(-1, 25);
+	cameraPtr->makeSetEffective();
+	// set capturing setting
+	cameraPtr->setCamBufferType(cam::GenCamBufferType::Raw);
+	cameraPtr->setJPEGQuality(85, 0.15);
+	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 10);
+	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
+	cameraPtr->setVerbose(false);
+	cameraPtr->makeSetEffective();
+	cameraPtr->getCamInfos(camInfos);
+	cam::SysUtil::sleep(1000);
+	cameraPtr->startCaptureThreads();
+	// wait for recoding to finish
+	cameraPtr->waitForRecordFinish();
+	// get images
+	for (int i = 0; i < 10; i++) {
+		std::vector<cam::Imagedata> imgs(7);
+		cameraPtr->captureFrame(imgs);
+		cv::Mat img0(1500, 2000, CV_8U, imgs[0].data);
+		cv::Mat img1(1500, 2000, CV_8U, imgs[2].data);
+		cv::Mat img2(1500, 2000, CV_8U, imgs[5].data);
+		int a = 0;
+		a++;
+	}
+	cameraPtr->stopCaptureThreads();
+	cameraPtr->release();
+	return 0;
+}
+
 
 int main(int argc, char* argv[]) {
 	//preview(argc, argv);
-	record(argc, argv);
+	//record(argc, argv);
+	testFileCamera();
 	return 0;
 }
 
