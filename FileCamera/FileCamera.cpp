@@ -82,11 +82,11 @@ namespace cam {
 			int width, height;
 			width = camInfos[i].width;
 			height = camInfos[i].height;
-			size_t length = width * height * sizeof(uchar);
+			size_t length = width * height;
 			for (size_t j = 0; j < bufferSize; j++) {
 				this->bufferImgs[j][i].data = new char[length];
-				this->bufferImgs[j][i].length = length;
-				this->bufferImgs[j][i].maxLength = length;
+				this->bufferImgs[j][i].length = length * sizeof(uchar);
+				this->bufferImgs[j][i].maxLength = length * sizeof(uchar);
 				this->bufferImgs[j][i].type = this->bufferType;
 			}
 		}
@@ -195,6 +195,7 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraFile::setCaptureMode(GenCamCaptureMode captureMode, int bufferSize) {
+		this->captureMode = captureMode;
 		if (bufferType != GenCamBufferType::Raw) {
 			SysUtil::errorOutput("File camera only support raw type buffer ! ");
 			exit(-1);

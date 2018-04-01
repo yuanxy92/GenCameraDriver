@@ -222,15 +222,13 @@ namespace cam {
 		size_t length; // jpeg data length
 
 		Imagedata(): data(NULL) {}
-		~Imagedata() {
-			delete[] data;
-		}
+		~Imagedata() {}
 
 		/**
 		@brief deep copy
 		@return
 		*/
-		Imagedata& deepCopy() {
+		Imagedata deepCopy() {
 			Imagedata out;
 			out.type = this->type;
 			out.length = this->length;
@@ -240,6 +238,12 @@ namespace cam {
 			memcpy(out.data, this->data, out.length);
 			return out;
 		}
+
+		/**
+		@brief release function
+		@return int
+		*/
+		int release() { delete[] data; }
 	};
 
 	/**
