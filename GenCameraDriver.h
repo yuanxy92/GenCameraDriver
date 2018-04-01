@@ -220,6 +220,26 @@ namespace cam {
 		GenCamBufferType type; // buffer data type
 		size_t maxLength; // max malloced memory size
 		size_t length; // jpeg data length
+
+		Imagedata(): data(NULL) {}
+		~Imagedata() {
+			delete[] data;
+		}
+
+		/**
+		@brief deep copy
+		@return
+		*/
+		Imagedata& deepCopy() {
+			Imagedata out;
+			out.type = this->type;
+			out.length = this->length;
+			out.maxLength = this->maxLength;
+			// malloc memory
+			out.data = new char[out.maxLength];
+			memcpy(out.data, this->data, out.length);
+			return out;
+		}
 	};
 
 	/**
@@ -469,6 +489,8 @@ namespace cam {
 
 		/*************************************************************/
 		/*    function to set mapping vector of capture function     */
+		/*                and function to capture images             */
+		/*         old function will be deprecated in the future     */
 		/*************************************************************/
 		/**
 		@brief set mapping vector of capture function
@@ -502,6 +524,21 @@ namespace cam {
 		*/
 		int getCameraInfoListsWithMapping(std::vector<cam::GenCamInfo> & camInfos);
 
+		/*************************************************************/
+		/*                function to capture images                 */
+		/*************************************************************/
+		/**
+		@brief capture one frame
+		@param std::vector<Imagedata> & refImgs: output reference images
+		@param std::vector<Imagedata> & localImgs: output localview images
+		@param std::vector<int> refInds: input reference indices
+		@param std::vector<int> localInds: input local indices
+		@return int
+		*/
+		int captureFrame(std::vector<Imagedata> & refImgs, 
+			std::vector<Imagedata> & localImgs,
+			std::vector<int> refInds,
+			std::vector<int> localInds);
 	};
 
 	/**
