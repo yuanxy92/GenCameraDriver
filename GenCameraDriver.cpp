@@ -251,6 +251,12 @@ namespace cam {
 				int index = (thBufferInds[camInd] - 1 + bufferSize) % bufferSize;
 				localImgs[i] = bufferImgs[index][camInd];
 			}
+			// increase buffer indices for file camera
+			if (this->camModel == cam::CameraModel::File) {
+				for (size_t camInd = 0; camInd < this->cameraNum; camInd++) {
+					thBufferInds[camInd] = (thBufferInds[camInd] + 1) % bufferSize;
+				}
+			}
 		}
 		else if (captureMode == GenCamCaptureMode::Single ||
 			captureMode == GenCamCaptureMode::SingleTrigger) {
