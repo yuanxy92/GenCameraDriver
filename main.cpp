@@ -89,6 +89,7 @@ int record(int argc, char* argv[]) {
     for(int i = 0; i < camInfos.size();i++)
     {
         printf("%d:%s\n",i, camInfos[i].sn.c_str());
+	printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
     }
 	cameraPtr->stopCaptureThreads();
 	cameraPtr->release();
@@ -136,8 +137,8 @@ int testFileCamera() {
 
 int main(int argc, char* argv[]) {
 	//preview(argc, argv);
-	//record(argc, argv);
-	testFileCamera();
+	record(argc, argv);
+	//testFileCamera();
 	return 0;
 }
 
