@@ -75,11 +75,13 @@ namespace cam {
 	*/
 	int GenCamera::saveImages(std::string dir) {
 		if (this->bufferType == GenCamBufferType::JPEG) {
+			std::vector<cam::GenCamInfo> _camInfos;
+			this->getCamInfos(_camInfos);
 			SysUtil::mkdir(dir);
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				for (size_t j = 0; j < this->bufferSize; j++) {
 					char outname[256];
-					sprintf(outname, "%s/%02d_%05d.jpg", dir.c_str(), i, j);
+					sprintf(outname, "%s/%s_%02d_%05d.jpg", dir.c_str(), _camInfos[i].sn.c_str(), i, j);
 					std::ofstream outputFile(outname, std::ios::out | std::ios::binary);
 					outputFile.write(reinterpret_cast<const char*>(this->bufferImgs[j][i].data),
 						this->bufferImgs[j][i].length);
