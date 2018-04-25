@@ -62,20 +62,21 @@ int preview(int argc, char* argv[]) {
 int record(int argc, char* argv[]) {
 	std::vector<cam::GenCamInfo> camInfos;
 	std::shared_ptr<cam::GenCamera> cameraPtr
+		//= cam::createCamera(cam::CameraModel::PointGrey_u3);
 		= cam::createCamera(cam::CameraModel::XIMEA_xiC);
 	cameraPtr->init();
 	// set camera setting
 	cameraPtr->startCapture();
 	cameraPtr->setFPS(-1, 10);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);
-	cameraPtr->setAutoExposureLevel(-1, 25);
+	cameraPtr->setAutoExposureLevel(-1, 30);
 	//cameraPtr->setAutoExposureCompensation(-1, cam::Status::on);
 	cameraPtr->setAutoWhiteBalance(-1);
 	cameraPtr->makeSetEffective();
 	// set capturing setting
 	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
-	cameraPtr->setJPEGQuality(85, 0.15);
-	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 10);
+	cameraPtr->setJPEGQuality(85, 0.25);
+	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
 	cameraPtr->setVerbose(false);
 	cameraPtr->makeSetEffective();
@@ -85,7 +86,7 @@ int record(int argc, char* argv[]) {
 	// wait for recoding to finish
 	cameraPtr->waitForRecordFinish();
 	cameraPtr->saveImages("test_img");
-	//cameraPtr->saveVideos("saved");
+	cameraPtr->saveVideos("saved");
     for(int i = 0; i < camInfos.size();i++)
     {
         printf("%d:%s\n",i, camInfos[i].sn.c_str());
@@ -136,8 +137,8 @@ int testFileCamera() {
 
 int main(int argc, char* argv[]) {
 	//preview(argc, argv);
-	//record(argc, argv);
-	testFileCamera();
+	record(argc, argv);
+	//testFileCamera();
 	return 0;
 }
 

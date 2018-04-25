@@ -77,12 +77,19 @@ namespace cam {
 		if (this->bufferType == GenCamBufferType::JPEG) {
 			SysUtil::mkdir(dir);
 			for (size_t i = 0; i < this->cameraNum; i++) {
+				// init npp jpeg coder
+				npp::NPPJpegCoder coder;
+				coder.init(camInfos[i].width, camInfos[i].height, JPEGQuality);
+				cv::cuda::GpuMat img_d(camInfos[i].height, camInfos[i].width, CV_8UC3);
+				cv::Mat img(camInfos[i].height, camInfos[i].width, CV_8UC3);
 				for (size_t j = 0; j < this->bufferSize; j++) {
 					char outname[256];
 					sprintf(outname, "%s/%02d_%05d.jpg", dir.c_str(), i, j);
-					std::ofstream outputFile(outname, std::ios::out | std::ios::binary);
-					outputFile.write(reinterpret_cast<const char*>(this->bufferImgs[j][i].data),
-						this->bufferImgs[j][i].length);
+					coder.decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data),
+						this->bufferImgs[j][i].length,
+						img_d, 0);
+					img_d.download(img);
+					cv::imwrite(cv::format("%s/%02d_%05d.jpg", dir.c_str(), i, j), img);
 				}
 			}
 		}
