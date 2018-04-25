@@ -75,6 +75,8 @@ namespace cam {
 	*/
 	int GenCamera::saveImages(std::string dir) {
 		if (this->bufferType == GenCamBufferType::JPEG) {
+			std::vector<cam::GenCamInfo> _camInfos;
+			this->getCamInfos(_camInfos);
 			SysUtil::mkdir(dir);
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				// init npp jpeg coder
@@ -84,12 +86,12 @@ namespace cam {
 				cv::Mat img(camInfos[i].height, camInfos[i].width, CV_8UC3);
 				for (size_t j = 0; j < this->bufferSize; j++) {
 					char outname[256];
-					sprintf(outname, "%s/%02d_%05d.jpg", dir.c_str(), i, j);
 					coder.decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data),
 						this->bufferImgs[j][i].length,
 						img_d, 0);
 					img_d.download(img);
-					cv::imwrite(cv::format("%s/%02d_%05d.jpg", dir.c_str(), i, j), img);
+					sprintf(outname, "%s/%s_%02d_%05d.jpg", dir.c_str(), _camInfos[i].sn.c_str(), i, j);
+					cv::imwrite(outname, img);
 				}
 			}
 		}
@@ -124,6 +126,9 @@ namespace cam {
 						img_d, 0);
 					img_d.download(img);
 					writer << img;
+					char outname[256];
+					sprintf(outname, "%s/%02d_%05d.jpg", dir.c_str(), i, j);
+					cv::imwrite(outname, img);
 				}
 				writer.release();
 				// release npp jpeg coder
@@ -139,6 +144,8 @@ namespace cam {
 
 	/*************************************************************/
 	/*    function to set mapping vector of capture function     */
+	/*                and function to capture images             */
+	/*         old function will be deprecated in the future     */
 	/*************************************************************/
 	/**
 	@brief set mapping vector of capture function
@@ -222,6 +229,51 @@ namespace cam {
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			camInd = mappingVector[i];
 			camInfos[i] = camInfosWoMapping[camInd];
+		}
+		return 0;
+	}
+
+	/*************************************************************/
+	/*                function to capture images                 */
+	/*************************************************************/
+	/**
+	@brief capture one frame
+	@param std::vector<Imagedata> & refImgs: output reference images
+	@param std::vector<Imagedata> & localImgs: output localview images
+	@param std::vector<int> refInds: input reference indices
+	@param std::vector<int> localInds: input local indices
+	@return int
+	*/
+	int GenCamera::captureFrame(std::vector<Imagedata> & refImgs,
+		std::vector<Imagedata> & localImgs,
+		std::vector<int> refInds,
+		std::vector<int> localInds) {
+		size_t camInd;
+		if (captureMode == GenCamCaptureMode::Continous ||
+			captureMode == GenCamCaptureMode::ContinousTrigger) {
+			// get refernce images from buffer
+			for (size_t i = 0; i < refInds.size(); i++) {
+				camInd = refInds[i];
+				int index = (thBufferInds[camInd] - 1 + bufferSize) % bufferSize;
+				refImgs[i] = bufferImgs[index][camInd];
+			}
+			// get local images from buffer
+			for (size_t i = 0; i < localInds.size(); i++) {
+				camInd = localInds[i];
+				int index = (thBufferInds[camInd] - 1 + bufferSize) % bufferSize;
+				localImgs[i] = bufferImgs[index][camInd];
+			}
+			// increase buffer indices for file camera
+			if (this->camModel == cam::CameraModel::File) {
+				for (size_t camInd = 0; camInd < this->cameraNum; camInd++) {
+					thBufferInds[camInd] = (thBufferInds[camInd] + 1) % bufferSize;
+				}
+			}
+		}
+		else if (captureMode == GenCamCaptureMode::Single ||
+			captureMode == GenCamCaptureMode::SingleTrigger) {
+			SysUtil::errorOutput("Single mode is not implemented yet !");
+			exit(-1);
 		}
 		return 0;
 	}

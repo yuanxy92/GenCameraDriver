@@ -82,11 +82,11 @@ namespace cam {
 			int width, height;
 			width = camInfos[i].width;
 			height = camInfos[i].height;
-			size_t length = width * height * sizeof(uchar);
+			size_t length = width * height;
 			for (size_t j = 0; j < bufferSize; j++) {
 				this->bufferImgs[j][i].data = new char[length];
-				this->bufferImgs[j][i].length = length;
-				this->bufferImgs[j][i].maxLength = length;
+				this->bufferImgs[j][i].length = length * sizeof(uchar);
+				this->bufferImgs[j][i].maxLength = length * sizeof(uchar);
 				this->bufferImgs[j][i].type = this->bufferType;
 			}
 		}
@@ -95,17 +95,35 @@ namespace cam {
 			SysUtil::infoOutput("Buffer video " + filenames[i]);
 			char videoname[1024];
 			sprintf(videoname, "%s/%s", this->dir.c_str(), filenames[i].c_str());
-			cv::VideoCapture reader(videoname);
-			cv::Mat img, smallImg, bayerImg;
-			for (size_t j = 0; j < bufferSize; j++) {
-				reader >> img;
+			std::string fileExtension = filenames[i].substr(filenames[i].find_last_of(".") + 1);
+			if (fileExtension.compare("avi") == 0 || fileExtension.compare("mp4") == 0) {
+				cv::VideoCapture reader(videoname);
+				cv::Mat img, smallImg, bayerImg;
+				for (size_t j = 0; j < bufferSize; j++) {
+					reader >> img;
+					cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
+					bayerImg = colorBGR2BayerRG(smallImg);
+					this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
+					memcpy(this->bufferImgs[j][i].data, bayerImg.data,
+						this->bufferImgs[j][i].length);
+				}
+				reader.release();
+			}
+			else if (fileExtension.compare("jpg") == 0 || fileExtension.compare("png") == 0) {
+				cv::Mat img = cv::imread(videoname);
+				cv::Mat smallImg, bayerImg;
 				cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
 				bayerImg = colorBGR2BayerRG(smallImg);
-				this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
-				memcpy(this->bufferImgs[j][i].data, bayerImg.data, 
-					this->bufferImgs[j][i].length);
+				// assign to buffer
+				for (size_t j = 0; j < bufferSize; j++) {
+					this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
+					memcpy(this->bufferImgs[j][i].data, bayerImg.data,
+						this->bufferImgs[j][i].length);
+				}
 			}
-			reader.release();
+			else {
+				SysUtil::errorOutput("Unknown file type for FileCamera, only avi, mp4, jpg, png are support !");
+			}
 		}
 		return 0;
 	}
@@ -195,6 +213,7 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraFile::setCaptureMode(GenCamCaptureMode captureMode, int bufferSize) {
+		this->captureMode = captureMode;
 		if (bufferType != GenCamBufferType::Raw) {
 			SysUtil::errorOutput("File camera only support raw type buffer ! ");
 			exit(-1);

@@ -90,6 +90,7 @@ int record(int argc, char* argv[]) {
     for(int i = 0; i < camInfos.size();i++)
     {
         printf("%d:%s\n",i, camInfos[i].sn.c_str());
+	printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
     }
 	cameraPtr->stopCaptureThreads();
 	cameraPtr->release();
