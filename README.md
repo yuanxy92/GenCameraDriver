@@ -1,4 +1,7 @@
 # GenCameraDriver
+## Scalable Coding Branch
+In this branch, we add function to resize the images before JPEG encoding. The purpose is to reduce the pressure of streaming and decoding.
+
 ## Introduction
 Generic Industry Camera Driver, support capturing (software synchronization), JPEG compression, Saving to video
 
