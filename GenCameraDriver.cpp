@@ -108,7 +108,7 @@ namespace cam {
 					cv::Mat rgb_img_mat;
 					bayer_img_d.upload(bayer_img);
 					cv::cuda::demosaicing(bayer_img_d, rgb_img_mat_d, 
-						npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+						npp::bayerPatternNPP2CVBGR(static_cast<NppiBayerGridPosition>(
 							_camInfos[i].bayerPattern)), -1);
 					rgb_img_mat_d.download(rgb_img_mat);
 					char outname[256];
@@ -170,7 +170,7 @@ namespace cam {
 					cv::Mat rgb_img_mat;
 					bayer_img_d.upload(bayer_img);
 					cv::cuda::demosaicing(bayer_img_d, rgb_img_mat_d,
-						npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+						npp::bayerPatternNPP2CVBGR(static_cast<NppiBayerGridPosition>(
 							_camInfos[i].bayerPattern)), -1);
 					rgb_img_mat_d.download(rgb_img_mat);
 					writer << rgb_img_mat;

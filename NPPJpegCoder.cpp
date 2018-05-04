@@ -323,6 +323,34 @@ namespace npp {
 	}
 
 	/**
+	@brief convert NppiBayerGridPosition code to OpenCV color conversion code
+	@param NppiBayerGridPosition bayerPattern: input bayer pattern code
+	@return int: output opencv color conversion code
+	*/
+	int bayerPatternNPP2CVBGR(NppiBayerGridPosition bayerPattern) {
+		int code;
+		switch (bayerPattern)
+		{
+		case NPPI_BAYER_BGGR:
+			code = cv::COLOR_BayerBG2BGR;
+			break;
+		case NPPI_BAYER_RGGB:
+			code = cv::COLOR_BayerRG2BGR;
+			break;
+		case NPPI_BAYER_GBRG:
+			code = cv::COLOR_BayerGB2BGR;
+			break;
+		case NPPI_BAYER_GRBG:
+			code = cv::COLOR_BayerGR2BGR;
+			break;
+		default:
+			std::cerr << "Function bayerPatternNPP2CVBGR, wrong bayer pattern is inputed.";
+			break;
+		}
+		return code;
+	}
+
+	/**
 	@brief constructor
 	*/
 	NPPJpegCoder::NPPJpegCoder(): isWBRaw(false) {}
