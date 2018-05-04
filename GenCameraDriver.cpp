@@ -96,8 +96,26 @@ namespace cam {
 			}
 		}
 		else {
-			SysUtil::errorOutput("Sorry, save function for other buffer types is not support yet. ");
-			exit(-1);
+			std::vector<cam::GenCamInfo> _camInfos;
+			this->getCamInfos(_camInfos);
+			SysUtil::mkdir(dir);
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				for (size_t j = 0; j < this->bufferSize; j++) {
+					cv::cuda::GpuMat bayer_img_d(camInfos[i].height, camInfos[i].width, CV_8U);
+					cv::cuda::GpuMat rgb_img_mat_d(camInfos[i].height, camInfos[i].width, CV_8UC3);
+					cv::Mat bayer_img(camInfos[i].height, camInfos[i].width, CV_8U, 
+						reinterpret_cast<uchar*>(this->bufferImgs[j][i].data));
+					cv::Mat rgb_img_mat;
+					bayer_img_d.upload(bayer_img);
+					cv::cuda::demosaicing(bayer_img_d, rgb_img_mat_d, 
+						npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+							_camInfos[i].bayerPattern)), -1);
+					rgb_img_mat_d.download(rgb_img_mat);
+					char outname[256];
+					sprintf(outname, "%s/%s_%02d_%05d.png", dir.c_str(), _camInfos[i].sn.c_str(), i, j);
+					cv::imwrite(outname, rgb_img_mat);
+				}
+			}
 		}
 		return 0;
 	}
@@ -126,9 +144,9 @@ namespace cam {
 						img_d, 0);
 					img_d.download(img);
 					writer << img;
-					char outname[256];
-					sprintf(outname, "%s/%02d_%05d.jpg", dir.c_str(), i, j);
-					cv::imwrite(outname, img);
+					//char outname[256];
+					//sprintf(outname, "%s/%02d_%05d.jpg", dir.c_str(), i, j);
+					//cv::imwrite(outname, img);
 				}
 				writer.release();
 				// release npp jpeg coder
@@ -136,8 +154,29 @@ namespace cam {
 			}
 		}
 		else {
-			SysUtil::errorOutput("Sorry, save function for other buffer types is not support yet. ");
-			exit(-1);
+			std::vector<cam::GenCamInfo> _camInfos;
+			this->getCamInfos(_camInfos);
+			SysUtil::mkdir(dir);
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				// init video parameter
+				std::string videoname = cv::format("%s/cam_%02d.avi", dir.c_str(), i);
+				cv::VideoWriter writer(videoname, cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
+					camInfos[i].fps, cv::Size(camInfos[i].width, camInfos[i].height), true);
+				for (size_t j = 0; j < this->bufferSize; j++) {
+					cv::cuda::GpuMat bayer_img_d(camInfos[i].height, camInfos[i].width, CV_8U);
+					cv::cuda::GpuMat rgb_img_mat_d(camInfos[i].height, camInfos[i].width, CV_8UC3);
+					cv::Mat bayer_img(camInfos[i].height, camInfos[i].width, CV_8U,
+						reinterpret_cast<uchar*>(this->bufferImgs[j][i].data));
+					cv::Mat rgb_img_mat;
+					bayer_img_d.upload(bayer_img);
+					cv::cuda::demosaicing(bayer_img_d, rgb_img_mat_d,
+						npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+							_camInfos[i].bayerPattern)), -1);
+					rgb_img_mat_d.download(rgb_img_mat);
+					writer << rgb_img_mat;
+				}
+				writer.release();
+			}
 		}
 		return 0;
 	}
