@@ -78,7 +78,8 @@ namespace npp {
 	@param NppiBayerGridPosition bayerPattern: input bayer pattern code
 	@return int: output opencv color conversion code
 	*/
-	int bayerPatternNPP2CVRGB(NppiBayerGridPosition bayerPattern); 
+	int bayerPatternNPP2CVRGB(NppiBayerGridPosition bayerPattern);
+	int bayerPatternNPP2CVBGR(NppiBayerGridPosition bayerPattern); 
 
 
 	class NPPJpegCoder {
