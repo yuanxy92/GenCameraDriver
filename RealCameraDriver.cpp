@@ -170,6 +170,12 @@ namespace cam {
 					break;
 				// begin time
 				begin_time = clock();
+
+
+				//TODO (SHADOWK) : added ratio control code here (also more coder is needed)
+
+
+
 				// compress
 				coders[camInd].encode(this->bufferImgs_cuda[camInd],
 					reinterpret_cast<uchar*>(bufferImgs[thBufferInds[camInd]][camInd].data),

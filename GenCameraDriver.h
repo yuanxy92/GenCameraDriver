@@ -211,6 +211,15 @@ namespace cam {
 		Raw16 = 3 // save 16-bit raw images in buffer
 	};
 
+	/**
+	@brief image resize ratio
+	*/
+	enum class GenCamImgRatio {
+		Full = 0,
+		Half = 1,
+		Quarter = 2,
+		Octopus = 3 //one-eighth
+	};
 	
 	/**
 	@brief class to save JPEG data
@@ -218,10 +227,11 @@ namespace cam {
 	struct Imagedata {
 		char* data; // data pointer
 		GenCamBufferType type; // buffer data type
+		GenCamImgRatio ratio; // img ratio compared to caminfo
 		size_t maxLength; // max malloced memory size
 		size_t length; // jpeg data length
 
-		Imagedata(): data(NULL) {}
+		Imagedata(): data(NULL), ratio(GenCamImgRatio::Full) {}
 		~Imagedata() {}
 
 		/**
@@ -281,6 +291,12 @@ namespace cam {
 
 		// image mapping vector in capturing function
 		std::vector<size_t> mappingVector;
+
+		// ratio set for each img
+		// considering that we may not have the ability to change the ratio very fast,
+		// we may need another vector to save the last setting in RealCameraDriver
+		// ¡ü TODO (SHADOWK)
+		std::vector<GenCamImgRatio> imgRatios;
 
 	public:
 
@@ -490,6 +506,17 @@ namespace cam {
 		@return int
 		*/
 		int saveVideos(std::string dir);
+
+		/*************************************************************/
+		/*   function to set jepg scale ratio for capture function   */
+		/*************************************************************/
+		/**
+		@brief set scale ratio vector of capture function
+		@param std::vector<GenCamImgRatio> imgRatios: input scale ratio vector
+		@return int
+		*/
+		int setImageRatios(std::vector<GenCamImgRatio> imgRatios);
+
 
 		/*************************************************************/
 		/*    function to set mapping vector of capture function     */
