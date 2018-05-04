@@ -75,7 +75,7 @@ int record(int argc, char* argv[]) {
 	cameraPtr->setAutoWhiteBalance(-1);
 	cameraPtr->makeSetEffective();
 	// set capturing setting
-	cameraPtr->setCamBufferType(cam::GenCamBufferType::Raw);
+	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
 	cameraPtr->setJPEGQuality(85, 0.25);
 	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
@@ -86,7 +86,8 @@ int record(int argc, char* argv[]) {
 	// set image ratios
 	imgRatios.resize(camInfos.size());
 	for (size_t i = 0; i < camInfos.size(); i++) {
-		imgRatios[i] = cam::GenCamImgRatio::Quarter;
+		imgRatios[i] = static_cast<cam::GenCamImgRatio>(i % 4);
+		//imgRatios[i] = cam::GenCamImgRatio::Octopus;
 	}
 	cameraPtr->setImageRatios(imgRatios);
 
@@ -98,7 +99,7 @@ int record(int argc, char* argv[]) {
     for(int i = 0; i < camInfos.size();i++)
     {
         printf("%d:%s\n",i, camInfos[i].sn.c_str());
-	printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
+		printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
     }
 	cameraPtr->stopCaptureThreads();
 	cameraPtr->release();

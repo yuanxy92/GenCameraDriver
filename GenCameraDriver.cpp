@@ -83,16 +83,17 @@ namespace cam {
 				// init npp jpeg coder
 				std::vector<npp::NPPJpegCoder> coder(4);
 				for (size_t k = 0; k < 4; k++) {
-					float ratio = 1.0f / powf(2.0f, k);
-					cv::Size size(static_cast<int>(camInfos[i].width * ratio),
-						static_cast<int>(camInfos[i].height * ratio));
+					cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
+						static_cast<cam::GenCamImgRatio>(k));
 					coder[k].init(size.width, size.height, JPEGQuality);
 				}
-				cv::cuda::GpuMat img_d(camInfos[i].height, camInfos[i].width, CV_8UC3);
 				cv::Mat img(camInfos[i].height, camInfos[i].width, CV_8UC3);
 				for (size_t j = 0; j < this->bufferSize; j++) {
 					char outname[256];
 					int ratioInd = static_cast<int>(this->bufferImgs[j][i].ratio);
+					cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
+						static_cast<cam::GenCamImgRatio>(ratioInd));
+					cv::cuda::GpuMat img_d(size, CV_8UC3);
 					coder[ratioInd].decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data),
 						this->bufferImgs[j][i].length,
 						img_d, 0);
@@ -143,9 +144,8 @@ namespace cam {
 				// init npp jpeg coder
 				std::vector<npp::NPPJpegCoder> coder(4);
 				for (size_t k = 0; k < 4; k++) {
-					float ratio = 1.0f / powf(2.0f, k);
-					cv::Size size(static_cast<int>(camInfos[i].width * ratio),
-						static_cast<int>(camInfos[i].height * ratio));
+					cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
+						static_cast<cam::GenCamImgRatio>(k));
 					coder[k].init(size.width, size.height, JPEGQuality);
 				}
 				// init video parameter
@@ -156,9 +156,13 @@ namespace cam {
 				cv::Mat img(camInfos[i].height, camInfos[i].width, CV_8UC3);
 				for (size_t j = 0; j < this->bufferSize; j++) {
 					int ratioInd = static_cast<int>(this->bufferImgs[j][i].ratio);
+					cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
+						static_cast<cam::GenCamImgRatio>(ratioInd));
+					cv::cuda::GpuMat img_d_temp(size, CV_8UC3);
 					coder[ratioInd].decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data), 
 						this->bufferImgs[j][i].length,
-						img_d, 0);
+						img_d_temp, 0);
+					cv::cuda::resize(img_d_temp, img_d, img_d.size(), cv::INTER_LINEAR);
 					img_d.download(img);
 					writer << img;
 					//char outname[256];
@@ -211,6 +215,22 @@ namespace cam {
 	{
 		this->imgRatios = imgRatios;
 		return 0;
+	}
+
+	/**
+	@brief make image size even
+	@param cv::Size size: input size
+	@param cam::GenCamImgRatio ratio: input resize ratio
+	@return cv::Size: even size (NPP only accept even size)
+	*/
+	cv::Size GenCamera::makeDoubleSize(cv::Size size, cam::GenCamImgRatio ratio) {
+		cv::Size out;
+		float r = 1.0f / powf(2.0f, static_cast<int>(ratio));
+		out.width = static_cast<int>(size.width * r);
+		out.height = static_cast<int>(size.height * r);
+		out.width += (out.width % 2);
+		out.height += (out.height % 2);
+		return out;
 	}
 
 	/*************************************************************/

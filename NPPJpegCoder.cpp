@@ -281,14 +281,14 @@ namespace npp {
 	bool printfNPPinfo(int cudaVerMajor, int cudaVerMinor) {
 		const NppLibraryVersion *libVer = nppGetLibVersion();
 
-		printf("NPP Library Version %d.%d.%d\n", libVer->major, libVer->minor, libVer->build);
+		printf("NPP JPEG Coder Init, NPP Library Version %d.%d.%d\n", libVer->major, libVer->minor, libVer->build);
 
 		int driverVersion, runtimeVersion;
 		cudaDriverGetVersion(&driverVersion);
 		cudaRuntimeGetVersion(&runtimeVersion);
 
-		printf("  CUDA Driver  Version: %d.%d\n", driverVersion / 1000, (driverVersion % 100) / 10);
-		printf("  CUDA Runtime Version: %d.%d\n", runtimeVersion / 1000, (runtimeVersion % 100) / 10);
+		//printf("  CUDA Driver  Version: %d.%d\n", driverVersion / 1000, (driverVersion % 100) / 10);
+		//printf("  CUDA Runtime Version: %d.%d\n", runtimeVersion / 1000, (runtimeVersion % 100) / 10);
 
 		bool bVal = checkCudaCapabilities(cudaVerMajor, cudaVerMinor);
 		return bVal;

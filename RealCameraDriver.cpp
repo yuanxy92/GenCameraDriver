@@ -188,6 +188,7 @@ namespace cam {
 					&bufferImgs[thBufferInds[camInd]][camInd].length,
 					bufferImgs[thBufferInds[camInd]][camInd].maxLength,
 					stream);
+				bufferImgs[thBufferInds[camInd]][camInd].ratio = static_cast<cam::GenCamImgRatio>(ratioInd);
 				//cudaStreamSynchronize(stream);
 				stream.waitForCompletion();
 				// end time
@@ -296,9 +297,8 @@ namespace cam {
 				for (size_t i = 0; i < this->cameraNum; i++) {
 					this->coders[i].resize(4);
 					for (size_t j = 0; j < 4; j++) {
-						float ratio = 1.0f / powf(2.0f, j);
-						cv::Size size(static_cast<int>(camInfos[i].width * ratio), 
-							static_cast<int>(camInfos[i].height * ratio));
+						cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
+							static_cast<cam::GenCamImgRatio>(j));
 						coders[i][j].init(size.width, size.height, JPEGQuality);
 						coders[i][j].setCfaBayerType(static_cast<int>(camInfos[i].bayerPattern));
 						coders[i][j].setWBRawType(camInfos[i].isWBRaw);

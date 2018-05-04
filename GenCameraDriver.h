@@ -517,6 +517,13 @@ namespace cam {
 		*/
 		int setImageRatios(std::vector<GenCamImgRatio> imgRatios);
 
+		/**
+		@brief make image size even
+		@param cv::Size size: input size
+		@param cam::GenCamImgRatio ratio: input resize ratio
+		@return cv::Size: even size (NPP only accept even size)
+		*/
+		static cv::Size makeDoubleSize(cv::Size size, cam::GenCamImgRatio ratio);
 
 		/*************************************************************/
 		/*    function to set mapping vector of capture function     */
