@@ -95,6 +95,11 @@ namespace cam {
 		ths.resize(this->cameraNum);
 		thStatus.resize(this->cameraNum);
 		this->isInit = true;
+		// init image ratio vector
+		imgRatios.resize(this->cameraNum);
+		for (size_t i = 0; i < this->cameraNum; i++) {
+			imgRatios[i] = GenCamImgRatio::Full;
+		}
 		return 0;
 	}
 

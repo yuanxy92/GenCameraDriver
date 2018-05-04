@@ -508,7 +508,7 @@ namespace cam {
 		int saveVideos(std::string dir);
 
 		/*************************************************************/
-		/*   function to set jepg scale ratio for capture function   */
+		/*   function to set jpeg scale ratio for capture function   */
 		/*************************************************************/
 		/**
 		@brief set scale ratio vector of capture function

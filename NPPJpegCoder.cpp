@@ -606,6 +606,20 @@ namespace npp {
 		return 0;
 	}
 
+	/***************************************************************************/
+	/*                             get image size                              */
+	/***************************************************************************/
+	/**
+	@brief function to get image size
+	@return cv::Size: image size this class can encode
+	*/
+	cv::Size NPPJpegCoder::getImageSize() {
+		return cv::Size(width, height);
+	}
+
+	/***************************************************************************/
+	/*                           encode bayer image                            */
+	/***************************************************************************/
 	/**
 	@brief encode raw image data to jpeg
 	@param unsigned char* bayer_img_d: input bayer image
@@ -862,6 +876,128 @@ namespace npp {
 		return 0;
 	}
 
+	/***************************************************************************/
+	/*                       encode debayered image                            */
+	/***************************************************************************/
+	/**
+	@brief encode debayered image data to jpeg (rgb format)
+	@param cv::cuda::GpuMat bayer_img_d: input bayer image
+	@param unsigned char* jpegdata: output jpeg data
+	@param size_t* datalength: output data length
+	@param size_t maxlength: max length (bytes) could be copied to in jpeg data
+	@param cv::cuda::Stream stream: cudastream
+	@return int
+	*/
+	int NPPJpegCoder::encode_rgb(cv::cuda::GpuMat debayer_img_d, unsigned char* jpegdata,
+		size_t* datalength, size_t maxlength, cv::cuda::Stream & cvstream) {
+		cudaStream_t stream = cv::cuda::StreamAccessor::getStream(cvstream);
+		nppSetStream(stream);
+		NppiDCTState *pDCTState;
+
+#ifdef MEASURE_KERNEL_TIME
+		cudaEvent_t start, stop;
+		float elapsedTime;
+		cudaEventCreate(&start);
+		cudaEventRecord(start, 0);
+#endif
+
+		// debayer
+		NppiSize osize;
+		osize.width = this->width;
+		osize.height = this->height;
+		NppiRect orect;
+		orect.x = 0;
+		orect.y = 0;
+		orect.width = this->width;
+		orect.height = this->height;
+
+		rgb_img_d = debayer_img_d.data;
+		step_rgb = debayer_img_d.step;
+
+		if (isWBRaw == false) {
+			// apply white balance
+			NPP_CHECK_NPP(nppiColorTwist32f_8u_C3IR(rgb_img_d, step_rgb, osize, wbTwist));
+		}
+
+		// rgb to yuv420
+		NPP_CHECK_NPP(nppiRGBToYUV420_8u_C3P3R(rgb_img_d, step_rgb, apDstImage, aDstImageStep,
+			osize));
+
+		NPP_CHECK_NPP(nppiDCTInitAlloc(&pDCTState));
+		// Forward DCT
+		for (int i = 0; i < 3; ++i) {
+			NPP_CHECK_NPP(nppiDCTQuantFwd8x8LS_JPEG_8u16s_C1R_NEW(apDstImage[i], aDstImageStep[i],
+				apdDCT[i], aDCTStep[i],
+				pdQuantizationTables + oFrameHeader.aQuantizationTableSelector[i] * 64,
+				aDstSize[i],
+				pDCTState));
+		}
+
+		NPP_CHECK_NPP(nppiEncodeHuffmanScan_JPEG_8u16s_P3R(apdDCT, aDCTStep,
+			0, oScanHeader.nSs, oScanHeader.nSe, oScanHeader.nA >> 4, oScanHeader.nA & 0x0f,
+			pdScan, &nScanLength,
+			apHuffmanDCTable,
+			apHuffmanACTable,
+			aDstSize,
+			pJpegEncoderTemp));
+
+#ifdef MEASURE_KERNEL_TIME
+		cudaEventCreate(&stop);
+		cudaEventRecord(stop, 0);
+		cudaEventSynchronize(stop);
+		cudaEventElapsedTime(&elapsedTime, start, stop);
+		printf("JPEG encode step1: (file:%s, line:%d) elapsed time : %f ms\n", __FILE__, __LINE__, elapsedTime);
+#endif
+
+#ifdef MEASURE_KERNEL_TIME
+		cudaEventCreate(&start);
+		cudaEventRecord(start, 0);
+#endif
+
+		// Write JPEG
+		unsigned char *pDstOutput = jpegdata;
+
+		writeMarker(0x0D8, pDstOutput);
+		writeJFIFTag(pDstOutput);
+		writeQuantizationTable(aQuantizationTables[0], pDstOutput);
+		writeQuantizationTable(aQuantizationTables[1], pDstOutput);
+		writeFrameHeader(oFrameHeader, pDstOutput);
+		writeHuffmanTable(pHuffmanDCTables[0], pDstOutput);
+		writeHuffmanTable(pHuffmanACTables[0], pDstOutput);
+		writeHuffmanTable(pHuffmanDCTables[1], pDstOutput);
+		writeHuffmanTable(pHuffmanACTables[1], pDstOutput);
+		writeScanHeader(oScanHeader, pDstOutput);
+
+		NPP_CHECK_CUDA(cudaMemcpyAsync(pDstOutput, pdScan, nScanLength, cudaMemcpyDeviceToHost, stream));
+
+		if (static_cast<size_t>(pDstOutput + nScanLength + 2 - jpegdata) > maxlength) {
+			char info[256];
+			sprintf(info, "FATAL ERROR: Pre-malloced jpeg data size is too small ! nScanLength = %d, maxlength = %d", nScanLength, maxlength);
+			std::cout << info << std::endl;
+			exit(-1);
+		}
+
+		pDstOutput += nScanLength;
+		writeMarker(0x0D9, pDstOutput);
+
+#ifdef MEASURE_KERNEL_TIME
+		cudaEventCreate(&stop);
+		cudaEventRecord(stop, 0);
+		cudaEventSynchronize(stop);
+		cudaEventElapsedTime(&elapsedTime, start, stop);
+		printf("JPEG encode step2: (file:%s, line:%d) elapsed time : %f ms\n", __FILE__, __LINE__, elapsedTime);
+#endif
+
+		// calculate compressed jpeg data length
+		*datalength = static_cast<size_t>(pDstOutput - jpegdata);
+		// release gpu memory
+		nppiDCTFree(pDCTState);
+		return 0;
+	}
+
+	/***************************************************************************/
+	/*                     decode jpeg compressed image                        */
+	/***************************************************************************/
 	/**
 	@brief decode jpeg image to raw image data (full)
 	@param unsigned char* jpegdata: input jpeg data

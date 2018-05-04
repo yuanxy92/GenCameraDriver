@@ -21,6 +21,7 @@ namespace cam {
 			std::vector<Imagedata> bufferImgs_data_ptr;
 			std::vector<cv::Mat> bufferImgs_host;
 		    std::vector<cv::cuda::GpuMat> bufferImgs_cuda;
+		    std::vector<cv::cuda::GpuMat> dabayerImgs_cuda;
 
             // threads to capture images
 		    std::vector<std::thread> ths; 
@@ -41,7 +42,7 @@ namespace cam {
 			int thexit;
 
             // NPP JPEG coders
-		    std::vector<npp::NPPJpegCoder> coders;
+		    std::vector<std::vector<npp::NPPJpegCoder>> coders;
 
             // memory status 
             int isCaptureModeSet;

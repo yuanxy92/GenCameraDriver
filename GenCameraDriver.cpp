@@ -80,18 +80,29 @@ namespace cam {
 			SysUtil::mkdir(dir);
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				// init npp jpeg coder
-				npp::NPPJpegCoder coder;
-				coder.init(camInfos[i].width, camInfos[i].height, JPEGQuality);
+				// init npp jpeg coder
+				std::vector<npp::NPPJpegCoder> coder(4);
+				for (size_t k = 0; k < 4; k++) {
+					float ratio = 1.0f / powf(2.0f, k);
+					cv::Size size(static_cast<int>(camInfos[i].width * ratio),
+						static_cast<int>(camInfos[i].height * ratio));
+					coder[k].init(size.width, size.height, JPEGQuality);
+				}
 				cv::cuda::GpuMat img_d(camInfos[i].height, camInfos[i].width, CV_8UC3);
 				cv::Mat img(camInfos[i].height, camInfos[i].width, CV_8UC3);
 				for (size_t j = 0; j < this->bufferSize; j++) {
 					char outname[256];
-					coder.decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data),
+					int ratioInd = static_cast<int>(this->bufferImgs[j][i].ratio);
+					coder[ratioInd].decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data),
 						this->bufferImgs[j][i].length,
 						img_d, 0);
 					img_d.download(img);
 					sprintf(outname, "%s/%s_%02d_%05d.jpg", dir.c_str(), _camInfos[i].sn.c_str(), i, j);
 					cv::imwrite(outname, img);
+				}
+				// release npp jpeg coder
+				for (size_t k = 0; k < 4; k++) {
+					coder[k].release();
 				}
 			}
 		}
@@ -130,8 +141,13 @@ namespace cam {
 			SysUtil::mkdir(dir);
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				// init npp jpeg coder
-				npp::NPPJpegCoder coder;
-				coder.init(camInfos[i].width, camInfos[i].height, JPEGQuality);
+				std::vector<npp::NPPJpegCoder> coder(4);
+				for (size_t k = 0; k < 4; k++) {
+					float ratio = 1.0f / powf(2.0f, k);
+					cv::Size size(static_cast<int>(camInfos[i].width * ratio),
+						static_cast<int>(camInfos[i].height * ratio));
+					coder[k].init(size.width, size.height, JPEGQuality);
+				}
 				// init video parameter
 				std::string videoname = cv::format("%s/cam_%02d.avi", dir.c_str(), i);
 				cv::VideoWriter writer(videoname, cv::VideoWriter::fourcc('D', 'I', 'V', 'X'), 
@@ -139,7 +155,8 @@ namespace cam {
 				cv::cuda::GpuMat img_d(camInfos[i].height, camInfos[i].width, CV_8UC3);
 				cv::Mat img(camInfos[i].height, camInfos[i].width, CV_8UC3);
 				for (size_t j = 0; j < this->bufferSize; j++) {
-					coder.decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data), 
+					int ratioInd = static_cast<int>(this->bufferImgs[j][i].ratio);
+					coder[ratioInd].decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data), 
 						this->bufferImgs[j][i].length,
 						img_d, 0);
 					img_d.download(img);
@@ -150,7 +167,9 @@ namespace cam {
 				}
 				writer.release();
 				// release npp jpeg coder
-				coder.release();
+				for (size_t k = 0; k < 4; k++) {
+					coder[k].release();
+				}
 			}
 		}
 		else {

@@ -60,6 +60,7 @@ int preview(int argc, char* argv[]) {
 }
 
 int record(int argc, char* argv[]) {
+	std::vector<cam::GenCamImgRatio> imgRatios;
 	std::vector<cam::GenCamInfo> camInfos;
 	std::shared_ptr<cam::GenCamera> cameraPtr
 		= cam::createCamera(cam::CameraModel::PointGrey_u3);
@@ -82,6 +83,13 @@ int record(int argc, char* argv[]) {
 	cameraPtr->makeSetEffective();
     cameraPtr->getCamInfos(camInfos);
 	cam::SysUtil::sleep(1000);
+	// set image ratios
+	imgRatios.resize(camInfos.size());
+	for (size_t i = 0; i < camInfos.size(); i++) {
+		imgRatios[i] = cam::GenCamImgRatio::Quarter;
+	}
+	cameraPtr->setImageRatios(imgRatios);
+
 	cameraPtr->startCaptureThreads();
 	// wait for recoding to finish
 	cameraPtr->waitForRecordFinish();

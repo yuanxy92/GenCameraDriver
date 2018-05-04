@@ -295,6 +295,18 @@ namespace npp {
 		*/
 		int release();
 
+		/***************************************************************************/
+		/*                             get image size                              */
+		/***************************************************************************/
+		/**
+		@brief function to get image size
+		@return cv::Size: image size this class can encode
+		*/
+		cv::Size getImageSize();
+
+		/***************************************************************************/
+		/*                           encode bayer image                            */
+		/***************************************************************************/
 		/**
 		@brief encode raw image data to jpeg
 		@param unsigned char* bayer_img_d: input bayer image (default step = image width)
@@ -316,9 +328,27 @@ namespace npp {
 		@param cv::cuda::Stream stream: cudastream
 		@return int
 		*/
-		int encode(cv::cuda::GpuMat bayer_img_d, unsigned char* jpegdata, 
+		int encode(cv::cuda::GpuMat rgb_img_d, unsigned char* jpegdata, 
 			size_t* datalength, size_t maxlength, cv::cuda::Stream & cvstream);
 
+		/***************************************************************************/
+		/*                       encode debayered image                            */
+		/***************************************************************************/
+		/**
+		@brief encode debayered image data to jpeg (rgb format)
+		@param cv::cuda::GpuMat bayer_img_d: input bayer image
+		@param unsigned char* jpegdata: output jpeg data
+		@param size_t* datalength: output data length
+		@param size_t maxlength: max length (bytes) could be copied to in jpeg data
+		@param cv::cuda::Stream stream: cudastream
+		@return int
+		*/
+		int encode_rgb(cv::cuda::GpuMat bayer_img_d, unsigned char* jpegdata,
+			size_t* datalength, size_t maxlength, cv::cuda::Stream & cvstream);
+
+		/***************************************************************************/
+		/*                     decode jpeg compressed image                        */
+		/***************************************************************************/
 		/**
 		@brief decode jpeg image to raw image data (full)
 		@param unsigned char* jpegdata: input jpeg data

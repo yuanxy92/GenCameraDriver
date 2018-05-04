@@ -171,13 +171,19 @@ namespace cam {
 				// begin time
 				begin_time = clock();
 
-
 				//TODO (SHADOWK) : added ratio control code here (also more coder is needed)
-
-
-
+				int ratioInd = static_cast<int>(imgRatios[camInd]);
+				// debayer
+				cv::cuda::demosaicing(this->bufferImgs_cuda[camInd], this->dabayerImgs_cuda[camInd], 
+					npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+						static_cast<int>(camInfos[camInd].bayerPattern))), -1, stream);
+				// resize
+				if (ratioInd != 0) {
+					cv::cuda::resize(this->dabayerImgs_cuda[camInd], this->dabayerImgs_cuda[camInd],
+						coders[camInd][ratioInd].getImageSize(), cv::INTER_LINEAR);
+				}
 				// compress
-				coders[camInd].encode(this->bufferImgs_cuda[camInd],
+				coders[camInd][ratioInd].encode_rgb(this->dabayerImgs_cuda[camInd],
 					reinterpret_cast<uchar*>(bufferImgs[thBufferInds[camInd]][camInd].data),
 					&bufferImgs[thBufferInds[camInd]][camInd].length,
 					bufferImgs[thBufferInds[camInd]][camInd].maxLength,
@@ -271,6 +277,7 @@ namespace cam {
 				}
 				// pre-malloc cuda memory for debayer and jpeg compression
 				this->bufferImgs_cuda.resize(this->cameraNum);
+				this->dabayerImgs_cuda.resize(this->cameraNum);
 				this->bufferImgs_host.resize(this->cameraNum);
 				this->bufferImgs_data_ptr.resize(this->cameraNum);
 				for (size_t i = 0; i < this->cameraNum; i++) {
@@ -287,10 +294,16 @@ namespace cam {
 				// init NPP jpeg coder	
 				this->coders.resize(this->cameraNum);
 				for (size_t i = 0; i < this->cameraNum; i++) {
-					coders[i].init(camInfos[i].width, camInfos[i].height, JPEGQuality);
-					coders[i].setCfaBayerType(static_cast<int>(camInfos[i].bayerPattern));
-					coders[i].setWBRawType(camInfos[i].isWBRaw);
-					coders[i].setWhiteBalanceGain(camInfos[i].redGain, camInfos[i].greenGain, camInfos[i].blueGain);
+					this->coders[i].resize(4);
+					for (size_t j = 0; j < 4; j++) {
+						float ratio = 1.0f / powf(2.0f, j);
+						cv::Size size(static_cast<int>(camInfos[i].width * ratio), 
+							static_cast<int>(camInfos[i].height * ratio));
+						coders[i][j].init(size.width, size.height, JPEGQuality);
+						coders[i][j].setCfaBayerType(static_cast<int>(camInfos[i].bayerPattern));
+						coders[i][j].setWBRawType(camInfos[i].isWBRaw);
+						coders[i][j].setWhiteBalanceGain(camInfos[i].redGain, camInfos[i].greenGain, camInfos[i].blueGain);
+					}
 				}
 			}
 		}
@@ -428,7 +441,9 @@ namespace cam {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				this->bufferImgs_cuda[i].release();
 				delete[] this->bufferImgs_data_ptr[i].data;
-				coders[i].release();
+				for (size_t j = 0; j < 4; j++) {
+					coders[i][j].release();
+				}
 				for (size_t j = 0; j < this->cameraNum; j++) {
 					delete[] bufferImgs[j][i].data;
 					bufferImgs[j][i].maxLength = 0;
