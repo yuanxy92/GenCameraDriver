@@ -541,9 +541,10 @@ namespace cam {
 			float relativeEV;
 			if (brightness == 1)
 				relativeEV = 0.2;
-			else if (brightness == 0)
+			else if (brightness == -1)
 				relativeEV = -0.2;
 			evPtr->SetValue(evVal + relativeEV);
+			SysUtil::infoOutput(cv::format("Set brightness to %f - %f ...", evVal, relativeEV));
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());
