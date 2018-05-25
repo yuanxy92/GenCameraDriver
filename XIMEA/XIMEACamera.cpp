@@ -318,6 +318,27 @@ namespace cam {
 	}
 
 	/**
+	@brief set brightness time
+	@param int camInd: index of camera
+	@param int brightness: input brightness
+	+1: brighten, -1: darken, 0: do nothing
+	@return int
+	*/
+	int GenCameraXIMEA::adjustBrightness(int camInd, int brightness) {
+		float level, relativeLevel;
+		checkXIMEAErrors(xiGetParamFloat(hcams[camInd], XI_PRM_AEAG_LEVEL, &level));
+		if (brightness == 1)
+			relativeLevel = 5;
+		else relativeLevel = -5;
+		checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_AEAG_LEVEL,
+			level + relativeLevel));
+		char info[256];
+		sprintf(info, "XIMEA camera %d, exposure level set to %f%%", camInd, level);
+		SysUtil::infoOutput(info);
+		return 0;
+	}
+
+	/**
 	@brief set exposure time
 	@param int camInd: index of camera (-1 means all the cameras)
 	@param int time: exposure time (in microseconds)

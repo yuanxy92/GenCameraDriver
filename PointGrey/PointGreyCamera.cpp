@@ -19,7 +19,7 @@ namespace cam {
 			exit(-1);
 		}
 	}
-	
+
 	// constructor
 	GenCameraPTGREY::GenCameraPTGREY() {
 		this->camModel = CameraModel::PointGrey_u3;
@@ -72,7 +72,7 @@ namespace cam {
 		this->cameraNum = camList.GetSize();
 		if (cameraNum < 1) {
 			SysUtil::errorOutput("No pointgrey cameras detected !");
-			return -1;	
+			return -1;
 		}
 		// init cameras
 		try {
@@ -81,10 +81,10 @@ namespace cam {
 				camList.GetByIndex(i)->Init();
 			}
 			// set some default values
-			for (size_t i = 0; i < this->cameraNum; i ++) {
+			for (size_t i = 0; i < this->cameraNum; i++) {
 
 				// set camera inside buffers strategy
-				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);	
+				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
 				//pCam->EndAcquisition();
 				Spinnaker::GenApi::INodeMap & sNodeMap = pCam->GetTLStreamNodeMap();
 				Spinnaker::GenApi::CIntegerPtr StreamNode = sNodeMap.GetNode("StreamDefaultBufferCount");
@@ -224,7 +224,7 @@ namespace cam {
 	*/
 	int GenCameraPTGREY::startCapture() {
 		try {
-			for (size_t camInd = 0; camInd < this->cameraNum; camInd ++) {
+			for (size_t camInd = 0; camInd < this->cameraNum; camInd++) {
 				camList.GetByIndex(camInd)->BeginAcquisition();
 			}
 		}
@@ -304,7 +304,7 @@ namespace cam {
 				beginInd = camInd;
 				endInd = camInd;
 			}
-			for (size_t i = beginInd; i <= endInd; i ++) {
+			for (size_t i = beginInd; i <= endInd; i++) {
 				// Select camera
 				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
 				Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
@@ -509,6 +509,41 @@ namespace cam {
 					SysUtil::infoOutput(info);
 				}
 			}
+		}
+		catch (Spinnaker::Exception &e) {
+			SysUtil::errorOutput(e.GetFullErrorMessage());
+			exit(-1);
+		}
+		return 0;
+	}
+
+	/**
+	@brief set brightness time
+	@param int camInd: index of camera
+	@param int brightness: input brightness
+		+1: brighten, -1: darken, 0: do nothing
+	@return int
+	*/
+	int GenCameraPTGREY::adjustBrightness(int camInd, int brightness) {
+		try {
+			// Select camera
+			Spinnaker::CameraPtr pCam = camList.GetByIndex(camInd);
+			Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
+			// turn off auto EV
+			Spinnaker::GenApi::CEnumerationPtr evAuto = nodeMap.GetNode("pgrExposureCompensationAuto");
+			if (evAuto) {
+				evAuto->SetIntValue(evAuto->GetEntryByName("Off")->GetValue());
+			}
+			// get value
+			Spinnaker::GenApi::CFloatPtr evPtr = nodeMap.GetNode("pgrExposureCompensation");
+			float evVal = evPtr->GetValue();
+			// set new EV value
+			float relativeEV;
+			if (brightness == 1)
+				relativeEV = 0.2;
+			else if (brightness == 0)
+				relativeEV = -0.2;
+			evPtr->SetValue(evVal + relativeEV);
 		}
 		catch (Spinnaker::Exception &e) {
 			SysUtil::errorOutput(e.GetFullErrorMessage());

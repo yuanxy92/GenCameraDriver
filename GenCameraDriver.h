@@ -384,12 +384,21 @@ namespace cam {
 			Status status, float relativeEV) = 0;
 
 		/**
+		@brief set brightness time
+		@param int brightness: input brightness
+		+1: brighten, -1: darken, 0: do nothing
+		@return int
+		*/
+		virtual int adjustBrightness(int camInd, int brightness) = 0;
+
+		/**
 		@brief set exposure time
 		@param int camInd: index of camera (-1 means all the cameras)
 		@param int time: exposure time (in microseconds)
 		@return int
 		*/
 		virtual int setExposure(int camInd, int time) = 0;
+		
 
 		/**
 		@brief set/get bayer pattern

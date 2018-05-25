@@ -135,6 +135,15 @@ namespace cam {
 			Status status, float relativeEV) override;
 
 		/**
+		@brief set brightness time
+		@param int camInd: index of camera
+		@param int brightness: input brightness
+			+1: brighten, -1: darken, 0: do nothing
+		@return int
+		*/
+		int adjustBrightness(int camInd, int brightness) override;
+
+		/**
 		@brief set exposure time
 		@param int ind: index of camera (-1 means all the cameras)
 		@param int time: exposure time (in microseconds)

@@ -71,6 +71,7 @@ namespace cam {
 		int waitForRecordFinish() { return 0; }
 		int startCaptureThreads() { return 0; }
 		int stopCaptureThreads() { return 0; }
+		int adjustBrightness(int camInd, int brightness) { return 0; }
 
 		/*************************************************************/
 		/*                   basic camera function                   */
