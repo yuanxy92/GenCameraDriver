@@ -12,6 +12,7 @@ namespace cam {
 	GenCameraFile::GenCameraFile() {}
 	GenCameraFile::GenCameraFile(std::string dir) {
 		this->camModel = cam::CameraModel::File;
+		this->camPurpose = cam::GenCamCapturePurpose::Streaming;
 		this->dir = dir;
 	}
 	GenCameraFile::~GenCameraFile() {}
@@ -74,6 +75,7 @@ namespace cam {
 	*/
 	int GenCameraFile::bufferImageData() {
 		this->bufferImgs.resize(this->bufferSize);
+		this->readers.resize(this->cameraNum);
 		for (size_t i = 0; i < bufferSize; i++) {
 			this->bufferImgs[i].resize(this->cameraNum);
 		}
@@ -97,17 +99,19 @@ namespace cam {
 			sprintf(videoname, "%s/%s", this->dir.c_str(), filenames[i].c_str());
 			std::string fileExtension = filenames[i].substr(filenames[i].find_last_of(".") + 1);
 			if (fileExtension.compare("avi") == 0 || fileExtension.compare("mp4") == 0) {
-				cv::VideoCapture reader(videoname);
+				readers[i].open(videoname);
 				cv::Mat img, smallImg, bayerImg;
 				for (size_t j = 0; j < bufferSize; j++) {
-					reader >> img;
+					readers[i] >> img;
 					cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
 					bayerImg = colorBGR2BayerRG(smallImg);
 					this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
 					memcpy(this->bufferImgs[j][i].data, bayerImg.data,
 						this->bufferImgs[j][i].length);
 				}
-				reader.release();
+				if (this->camPurpose != cam::GenCamCapturePurpose::FileCameraRecording) {
+					readers[i].release();
+				}
 			}
 			else if (fileExtension.compare("jpg") == 0 || fileExtension.compare("png") == 0) {
 				cv::Mat img = cv::imread(videoname);
@@ -232,6 +236,11 @@ namespace cam {
 				+ std::string("change to " + finalBufferSize) + " !");
 		}
 		this->bufferSize = finalBufferSize;
+		if (this->camPurpose == cam::GenCamCapturePurpose::FileCameraRecording) {
+			SysUtil::infoOutput("Camera capturing purpose is set to file camera recording, "\
+				"reset buffer size to 1 !");
+			this->bufferSize = 1;
+		}
 		// buffer image data
 		this->bufferImageData();
 		this->isCapture = true;
@@ -239,6 +248,40 @@ namespace cam {
 		this->thBufferInds.resize(this->cameraNum);
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			thBufferInds[i] = 1;
+		}
+		return 0;
+	}
+
+	/*************************************************************/
+	/*            function to update images in buffer            */
+	/*************************************************************/
+	/**
+	@brief buffer next frame
+	@return int
+	*/
+	int GenCameraFile::bufferNextFrame() {
+		bool isFinalFrame = false;
+		for (size_t i = 0; i < this->cameraNum; i++) {
+			//SysUtil::infoOutput("Buffer next frame of video " + filenames[i]);
+			cv::Mat img, smallImg, bayerImg;
+			int j = 0;
+			readers[i] >> img;
+			if (img.rows > 0) {
+				cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
+				bayerImg = colorBGR2BayerRG(smallImg);
+				this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
+				memcpy(this->bufferImgs[j][i].data, bayerImg.data,
+					this->bufferImgs[j][i].length);
+			}
+			else {
+				isFinalFrame = true;
+				break;
+			}
+		}
+		if (isFinalFrame) {
+			for (size_t i = 0; i < this->cameraNum; i++)
+				readers[i].release();
+			return 1;
 		}
 		return 0;
 	}
