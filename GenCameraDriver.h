@@ -197,7 +197,8 @@ namespace cam {
 	*/
 	enum class GenCamCapturePurpose {
 		Streaming = 0, // capture images to buffers circularly  
-		Recording = 1 // capture images to fill the buffer once
+		Recording = 1, // capture images to fill the buffer once
+		FileCameraRecording = 2
 	};
 
 	/**
@@ -449,6 +450,15 @@ namespace cam {
 		virtual int stopCaptureThreads() = 0;
 
 		/*************************************************************/
+		/*            function to update images in buffer            */
+		/*************************************************************/
+		/**
+		@brief buffer next frame
+		@return int
+		*/
+		virtual int bufferNextFrame() = 0;
+
+		/*************************************************************/
 		/*              non-virtual setting function                 */
 		/*************************************************************/
 		/**
@@ -552,6 +562,7 @@ namespace cam {
 			std::vector<Imagedata> & localImgs,
 			std::vector<int> refInds,
 			std::vector<int> localInds);
+
 	};
 
 	/**

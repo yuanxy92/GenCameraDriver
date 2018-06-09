@@ -329,7 +329,8 @@ namespace cam {
 		checkXIMEAErrors(xiGetParamFloat(hcams[camInd], XI_PRM_AEAG_LEVEL, &level));
 		if (brightness == 1)
 			relativeLevel = 5;
-		else relativeLevel = -5;
+		else if (brightness == -1)
+			relativeLevel = -5;
 		checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_AEAG_LEVEL,
 			level + relativeLevel));
 		char info[256];

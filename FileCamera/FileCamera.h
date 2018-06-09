@@ -21,6 +21,7 @@ namespace cam {
 		float bufferScale;
 		std::vector<std::string> filenames;
 		std::vector<size_t> frameCounts;
+		std::vector<cv::VideoCapture> readers;
 		// pre-define bayer pattern
 		GenCamBayerPattern bayerPattern;
 
@@ -117,6 +118,16 @@ namespace cam {
 		*/
 		int setCaptureMode(GenCamCaptureMode captureMode,
 			int bufferSize);
+
+
+		/*************************************************************/
+		/*            function to update images in buffer            */
+		/*************************************************************/
+		/**
+		@brief buffer next frame
+		@return int
+		*/
+		int bufferNextFrame();
 
 	};
 
