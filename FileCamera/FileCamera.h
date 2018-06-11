@@ -19,6 +19,7 @@ namespace cam {
 		// config information
 		std::string dir;
 		float bufferScale;
+		std::vector<std::string> videonames;
 		std::vector<std::string> filenames;
 		std::vector<size_t> frameCounts;
 		std::vector<cv::VideoCapture> readers;
@@ -123,6 +124,12 @@ namespace cam {
 		/*************************************************************/
 		/*            function to update images in buffer            */
 		/*************************************************************/
+		/**
+		@brief buffer next frame
+		@return int
+		*/
+		int reBufferFileCamera();
+
 		/**
 		@brief buffer next frame
 		@return int

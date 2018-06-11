@@ -133,7 +133,14 @@ namespace cam {
 			@brief buffer next frame
 			@return int
 			*/
+			int reBufferFileCamera();
+
+			/**
+			@brief buffer next frame
+			@return int
+			*/
 			int bufferNextFrame();
+
     };
 };
 

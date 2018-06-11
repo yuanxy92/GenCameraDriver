@@ -93,10 +93,12 @@ namespace cam {
 			}
 		}
 		// read images from videos
+		videonames.resize(this->cameraNum);
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			SysUtil::infoOutput("Buffer video " + filenames[i]);
 			char videoname[1024];
 			sprintf(videoname, "%s/%s", this->dir.c_str(), filenames[i].c_str());
+			videonames[i] = std::string(videoname);
 			std::string fileExtension = filenames[i].substr(filenames[i].find_last_of(".") + 1);
 			if (fileExtension.compare("avi") == 0 || fileExtension.compare("mp4") == 0) {
 				readers[i].open(videoname);
@@ -255,6 +257,20 @@ namespace cam {
 	/*************************************************************/
 	/*            function to update images in buffer            */
 	/*************************************************************/
+	/**
+	@brief buffer next frame
+	@return int
+	*/
+	int GenCameraFile::reBufferFileCamera() {
+		for (size_t i = 0; i < this->cameraNum; i++) {
+			if (readers[i].isOpened() == true) {
+				readers[i].release();
+			}
+			readers[i].open(videonames[i]);
+		}
+		return 0;
+	}
+
 	/**
 	@brief buffer next frame
 	@return int
