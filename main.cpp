@@ -69,15 +69,16 @@ int record(int argc, char* argv[]) {
 	cameraPtr->startCapture();
 	cameraPtr->setFPS(-1, 10);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);
-	cameraPtr->setAutoExposureLevel(-1, 30);
-	//cameraPtr->setAutoExposureCompensation(-1, cam::Status::on);
-	cameraPtr->setAutoWhiteBalance(-1);
+	//cameraPtr->setAutoExposureLevel(-1, 30);
+	//cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
+	//cameraPtr->setAutoWhiteBalance(-1);
+	cameraPtr->setWhiteBalance(-1, 1.8, 1, 2);
 	cameraPtr->makeSetEffective();
 	// set capturing setting
-	cameraPtr->setCamBufferType(cam::GenCamBufferType::Raw);
-	cameraPtr->setJPEGQuality(85, 0.25);
-	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
+	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
+	cameraPtr->setJPEGQuality(90, 0.25);
+	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 2000);
 	cameraPtr->setVerbose(false);
 	cameraPtr->makeSetEffective();
     cameraPtr->getCamInfos(camInfos);
@@ -85,12 +86,11 @@ int record(int argc, char* argv[]) {
 	cameraPtr->startCaptureThreads();
 	// wait for recoding to finish
 	cameraPtr->waitForRecordFinish();
-	cameraPtr->saveImages("test_img");
-	//cameraPtr->saveVideos("saved");
-    for(int i = 0; i < camInfos.size();i++)
-    {
+	//cameraPtr->saveImages("test_img");
+	cameraPtr->saveVideos("saved");
+    for(int i = 0; i < camInfos.size();i++) {
         printf("%d:%s\n",i, camInfos[i].sn.c_str());
-	printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
+		printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
     }
 	cameraPtr->stopCaptureThreads();
 	cameraPtr->release();
