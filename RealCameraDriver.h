@@ -125,6 +125,15 @@ namespace cam {
             @return int
             */
             int stopCaptureThreads();
+
+			/*************************************************************/
+			/*            function to update images in buffer            */
+			/*************************************************************/
+			/**
+			@brief buffer next frame
+			@return int
+			*/
+			int bufferNextFrame();
     };
 };
 
