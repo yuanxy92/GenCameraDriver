@@ -86,7 +86,7 @@ int record(int argc, char* argv[]) {
 	// set image ratios
 	imgRatios.resize(camInfos.size());
 	for (size_t i = 0; i < camInfos.size(); i++) {
-		imgRatios[i] = static_cast<cam::GenCamImgRatio>(i % 4);
+		imgRatios[i] = static_cast<cam::GenCamImgRatio>(0);
 		//imgRatios[i] = cam::GenCamImgRatio::Octopus;
 	}
 	cameraPtr->setImageRatios(imgRatios);
