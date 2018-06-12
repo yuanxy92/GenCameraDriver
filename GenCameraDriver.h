@@ -456,6 +456,12 @@ namespace cam {
 		@brief buffer next frame
 		@return int
 		*/
+		virtual int reBufferFileCamera() = 0;
+
+		/**
+		@brief buffer next frame
+		@return int
+		*/
 		virtual int bufferNextFrame() = 0;
 
 		/*************************************************************/
