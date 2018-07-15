@@ -197,7 +197,8 @@ namespace cam {
 	*/
 	enum class GenCamCapturePurpose {
 		Streaming = 0, // capture images to buffers circularly  
-		Recording = 1 // capture images to fill the buffer once
+		Recording = 1, // capture images to fill the buffer once
+		FileCameraRecording = 2
 	};
 
 	/**
@@ -295,7 +296,7 @@ namespace cam {
 		// ratio set for each img
 		// considering that we may not have the ability to change the ratio very fast,
 		// we may need another vector to save the last setting in RealCameraDriver
-		// ¡ü TODO (SHADOWK)
+		// ï¿½ï¿½ TODO (SHADOWK)
 		std::vector<GenCamImgRatio> imgRatios;
 
 	public:
@@ -400,12 +401,21 @@ namespace cam {
 			Status status, float relativeEV) = 0;
 
 		/**
+		@brief set brightness time
+		@param int brightness: input brightness
+		+1: brighten, -1: darken, 0: do nothing
+		@return int
+		*/
+		virtual int adjustBrightness(int camInd, int brightness) = 0;
+
+		/**
 		@brief set exposure time
 		@param int camInd: index of camera (-1 means all the cameras)
 		@param int time: exposure time (in microseconds)
 		@return int
 		*/
 		virtual int setExposure(int camInd, int time) = 0;
+		
 
 		/**
 		@brief set/get bayer pattern
@@ -454,6 +464,21 @@ namespace cam {
 		@return int
 		*/
 		virtual int stopCaptureThreads() = 0;
+
+		/*************************************************************/
+		/*            function to update images in buffer            */
+		/*************************************************************/
+		/**
+		@brief buffer next frame
+		@return int
+		*/
+		virtual int reBufferFileCamera() = 0;
+
+		/**
+		@brief buffer next frame
+		@return int
+		*/
+		virtual int bufferNextFrame() = 0;
 
 		/*************************************************************/
 		/*              non-virtual setting function                 */
@@ -577,6 +602,7 @@ namespace cam {
 			std::vector<Imagedata> & localImgs,
 			std::vector<int> refInds,
 			std::vector<int> localInds);
+
 	};
 
 	/**

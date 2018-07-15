@@ -455,4 +455,27 @@ namespace cam {
 		return 0;
 	}
 
+	/*************************************************************/
+	/*            function to update images in buffer            */
+	/*************************************************************/
+	/**
+	@brief buffer next frame
+	@return int
+	*/
+	int RealCamera::bufferNextFrame() {
+		SysUtil::warningOutput("Function bufferNextFrame only valid for"\
+			"FileCamera with capturing purpose FileCameraRecording.");
+		return 0;
+	}
+
+	/**
+	@brief buffer next frame
+	@return int
+	*/
+	int RealCamera::reBufferFileCamera() {
+		SysUtil::warningOutput("Function reBufferFileCamera only valid for"\
+			"FileCamera with capturing purpose FileCameraRecording.");
+		return 0;
+	}
+
 };

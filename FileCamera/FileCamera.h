@@ -19,8 +19,10 @@ namespace cam {
 		// config information
 		std::string dir;
 		float bufferScale;
+		std::vector<std::string> videonames;
 		std::vector<std::string> filenames;
 		std::vector<size_t> frameCounts;
+		std::vector<cv::VideoCapture> readers;
 		// pre-define bayer pattern
 		GenCamBayerPattern bayerPattern;
 
@@ -71,6 +73,7 @@ namespace cam {
 		int waitForRecordFinish() { return 0; }
 		int startCaptureThreads() { return 0; }
 		int stopCaptureThreads() { return 0; }
+		int adjustBrightness(int camInd, int brightness) { return 0; }
 
 		/*************************************************************/
 		/*                   basic camera function                   */
@@ -116,6 +119,22 @@ namespace cam {
 		*/
 		int setCaptureMode(GenCamCaptureMode captureMode,
 			int bufferSize);
+
+
+		/*************************************************************/
+		/*            function to update images in buffer            */
+		/*************************************************************/
+		/**
+		@brief buffer next frame
+		@return int
+		*/
+		int reBufferFileCamera();
+
+		/**
+		@brief buffer next frame
+		@return int
+		*/
+		int bufferNextFrame();
 
 	};
 
