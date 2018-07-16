@@ -406,6 +406,8 @@ namespace npp {
 			cerr << "jpegNPP requires a GPU with Compute Capability 2.0 or higher" << endl;
 			exit(-1);
 		}
+		NPP_CHECK_NPP(nppiDCTInitAlloc(&pDCTState));
+
 		// calculate quantization table from quality
 		float s;
 		if (quality < 50) 
@@ -603,6 +605,7 @@ namespace npp {
 		cudaFree(pdScan);
 		//nppiFree(rgb_img_d);
 		rgb_img_mat_d.release();
+		nppiDCTFree(pDCTState);
 		return 0;
 	}
 
@@ -633,7 +636,6 @@ namespace npp {
 		size_t* datalength, size_t maxlength, cudaStream_t stream) {
 		
 		nppSetStream(stream);
-		NppiDCTState *pDCTState;
 
 #ifdef MEASURE_KERNEL_TIME
 		cudaEvent_t start, stop;
@@ -671,7 +673,6 @@ namespace npp {
 		NPP_CHECK_NPP(nppiRGBToYUV420_8u_C3P3R(rgb_img_d, step_rgb, apDstImage, aDstImageStep,
 			osize));
 
-		NPP_CHECK_NPP(nppiDCTInitAlloc(&pDCTState));
 		// Forward DCT
 		for (int i = 0; i < 3; ++i) {
 			NPP_CHECK_NPP(nppiDCTQuantFwd8x8LS_JPEG_8u16s_C1R_NEW(apDstImage[i], aDstImageStep[i],
@@ -738,8 +739,6 @@ namespace npp {
 
 		// calculate compressed jpeg data length
 		*datalength = static_cast<size_t>(pDstOutput - jpegdata);
-		// release gpu memory
-		nppiDCTFree(pDCTState);
 		return 0;
 	}
 
@@ -757,7 +756,6 @@ namespace npp {
 		
 		cudaStream_t stream = cv::cuda::StreamAccessor::getStream(cvstream);
 		nppSetStream(stream);
-		NppiDCTState *pDCTState;
 
 #ifdef MEASURE_KERNEL_TIME
 		cudaEvent_t start, stop;
@@ -804,7 +802,6 @@ namespace npp {
 		NPP_CHECK_NPP(nppiRGBToYUV420_8u_C3P3R(rgb_img_d, step_rgb, apDstImage, aDstImageStep,
 			osize));
 
-		NPP_CHECK_NPP(nppiDCTInitAlloc(&pDCTState));
 		// Forward DCT
 		for (int i = 0; i < 3; ++i) {
 			NPP_CHECK_NPP(nppiDCTQuantFwd8x8LS_JPEG_8u16s_C1R_NEW(apDstImage[i], aDstImageStep[i],
@@ -871,8 +868,6 @@ namespace npp {
 
 		// calculate compressed jpeg data length
 		*datalength = static_cast<size_t>(pDstOutput - jpegdata);
-		// release gpu memory
-		nppiDCTFree(pDCTState);	
 		return 0;
 	}
 
@@ -881,7 +876,7 @@ namespace npp {
 	/***************************************************************************/
 	/**
 	@brief encode debayered image data to jpeg (rgb format)
-	@param cv::cuda::GpuMat bayer_img_d: input bayer image
+	@param cv::cuda::GpuMat debayer_img_d: input bayer image
 	@param unsigned char* jpegdata: output jpeg data
 	@param size_t* datalength: output data length
 	@param size_t maxlength: max length (bytes) could be copied to in jpeg data
@@ -892,7 +887,6 @@ namespace npp {
 		size_t* datalength, size_t maxlength, cv::cuda::Stream & cvstream) {
 		cudaStream_t stream = cv::cuda::StreamAccessor::getStream(cvstream);
 		nppSetStream(stream);
-		NppiDCTState *pDCTState;
 
 #ifdef MEASURE_KERNEL_TIME
 		cudaEvent_t start, stop;
@@ -923,7 +917,6 @@ namespace npp {
 		NPP_CHECK_NPP(nppiRGBToYUV420_8u_C3P3R(rgb_img_d, step_rgb, apDstImage, aDstImageStep,
 			osize));
 
-		NPP_CHECK_NPP(nppiDCTInitAlloc(&pDCTState));
 		// Forward DCT
 		for (int i = 0; i < 3; ++i) {
 			NPP_CHECK_NPP(nppiDCTQuantFwd8x8LS_JPEG_8u16s_C1R_NEW(apDstImage[i], aDstImageStep[i],
@@ -990,8 +983,6 @@ namespace npp {
 
 		// calculate compressed jpeg data length
 		*datalength = static_cast<size_t>(pDstOutput - jpegdata);
-		// release gpu memory
-		nppiDCTFree(pDCTState);
 		return 0;
 	}
 
@@ -1011,8 +1002,7 @@ namespace npp {
 	int NPPJpegCoder::decode(unsigned char* jpegdata, size_t input_datalength,
 		cv::cuda::GpuMat & outimg, int type) {
 		// init state
-		NppiDCTState *pDCTState;
-		NPP_CHECK_NPP(nppiDCTInitAlloc(&pDCTState));
+		
 
 #ifdef MEASURE_KERNEL_TIME
 		cudaEvent_t start, stop;
@@ -1181,7 +1171,6 @@ namespace npp {
 		printf("JPEG decode GPU step: (file:%s, line:%d) elapsed time : %f ms\n", __FILE__, __LINE__, elapsedTime);
 #endif
 		// release gpu memory
-		nppiDCTFree(pDCTState);
 
 		return 0;
 	}

@@ -28,7 +28,7 @@ namespace cam {
 		GenCamBayerPattern bayerPattern;
 
 		// npp jpeg coder
-		std::array<std::shared_ptr<npp::NPPJpegCoder>, 4> encoder;
+		std::vector<npp::NPPJpegCoder> encoder;
 
 	public:
 

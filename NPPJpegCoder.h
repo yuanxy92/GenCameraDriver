@@ -136,6 +136,8 @@ namespace npp {
 		int nMCUBlocksH = 0;
 		int nMCUBlocksV = 0;
 
+		NppiDCTState *pDCTState;
+
 	public:
 		// white balance color twist
 		Npp32f wbTwist[3][4] = {
@@ -336,14 +338,14 @@ namespace npp {
 		/***************************************************************************/
 		/**
 		@brief encode debayered image data to jpeg (rgb format)
-		@param cv::cuda::GpuMat bayer_img_d: input bayer image
+		@param cv::cuda::GpuMat debayer_img_d: input bayer image
 		@param unsigned char* jpegdata: output jpeg data
 		@param size_t* datalength: output data length
 		@param size_t maxlength: max length (bytes) could be copied to in jpeg data
 		@param cv::cuda::Stream stream: cudastream
 		@return int
 		*/
-		int encode_rgb(cv::cuda::GpuMat bayer_img_d, unsigned char* jpegdata,
+		int encode_rgb(cv::cuda::GpuMat debayer_img_d, unsigned char* jpegdata,
 			size_t* datalength, size_t maxlength, cv::cuda::Stream & cvstream);
 
 		/***************************************************************************/

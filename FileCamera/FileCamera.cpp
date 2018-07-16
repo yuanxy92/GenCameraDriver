@@ -82,11 +82,14 @@ namespace cam {
 		if (this->bufferType == cam::GenCamBufferType::JPEG) {
 			// init encoder
 			int width, height;
+			encoder.resize(4);
 			for (int i = 0; i < encoder.size(); i++) {
 				float scale = 1.0f / powf(2.0f, static_cast<float>(i));
 				width = camInfos[0].width * scale;
 				height = camInfos[0].height * scale;
-				encoder[i]->init(width, height, 85);
+				encoder[i].init(width, height, 85);
+				encoder[i].setCfaBayerType(static_cast<int>(camInfos[i].bayerPattern));
+				encoder[i].setWBRawType(true);
 			}
 		}
 		// malloc mat memory
@@ -129,10 +132,18 @@ namespace cam {
 						cv::cuda::GpuMat smallImg_d;
 						cv::cuda::Stream stream;
 						smallImg_d.upload(smallImg);
-						encoder[0]->encode(smallImg_d, (unsigned char*)this->bufferImgs[j][i].data,
+						cv::cuda::cvtColor(smallImg_d, smallImg_d, cv::COLOR_BGR2RGB);
+						encoder[0].encode_rgb(smallImg_d, reinterpret_cast<uchar*>(this->bufferImgs[j][i].data),
 							&this->bufferImgs[j][i].length, this->bufferImgs[j][i].maxLength,
 							stream);
 						bufferImgs[j][i].ratio = static_cast<cam::GenCamImgRatio>(0);
+
+						//cv::cuda::GpuMat imgd(3000, 4000, CV_8UC3);
+						//cv::Mat img;
+						//encoder[0].decode((unsigned char*)bufferImgs[j][i].data, bufferImgs[j][i].length, imgd, 0);
+						//imgd.download(img);
+						//int a = 0;
+						//a++;
 					}
 				}
 				if (this->camPurpose != cam::GenCamCapturePurpose::FileCameraRecording) {
@@ -157,7 +168,8 @@ namespace cam {
 					cv::cuda::Stream stream;
 					smallImg_d.upload(smallImg);
 					int j = 0;
-					encoder[0]->encode(smallImg_d, (unsigned char*)this->bufferImgs[j][i].data,
+					cv::cuda::cvtColor(smallImg_d, smallImg_d, cv::COLOR_BGR2RGB);
+					encoder[0].encode_rgb(smallImg_d, (unsigned char*)this->bufferImgs[j][i].data,
 						&this->bufferImgs[j][i].length, this->bufferImgs[j][i].maxLength,
 						stream);
 					bufferImgs[j][i].ratio = static_cast<cam::GenCamImgRatio>(0);
@@ -173,6 +185,15 @@ namespace cam {
 				SysUtil::errorOutput("Unknown file type for FileCamera, only avi, mp4, jpg, png are support !");
 			}
 		}
+
+		if (this->bufferType == cam::GenCamBufferType::JPEG) {
+			// de-init encoder
+			int width, height;
+			for (int i = 0; i < encoder.size(); i++) {
+				encoder[i].release();
+			}
+		}
+
 		return 0;
 	}
 
