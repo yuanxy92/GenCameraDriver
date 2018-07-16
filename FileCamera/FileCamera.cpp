@@ -80,17 +80,35 @@ namespace cam {
 			this->bufferImgs[i].resize(this->cameraNum);
 		}
 		cv::cuda::Stream stream;
+		//// buffer image data
+		//if (this->bufferType == cam::GenCamBufferType::JPEG) {
+		//	// init encoder
+		//	int width, height;
+		//	encoder.resize(4);
+		//	for (int i = 0; i < encoder.size(); i++) {
+		//		float scale = 1.0f / powf(2.0f, static_cast<float>(i));
+		//		width = camInfos[0].width * scale;
+		//		height = camInfos[0].height * scale;
+		//		width += width % 2;
+		//		height += height % 2;
+		//		encoder[i].init(width, height, 85);
+		//		encoder[i].setWBRawType(true);
+		//	}
+		//}
 		// malloc mat memory
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			int width, height;
 			width = camInfos[i].width;
 			height = camInfos[i].height;
+			width += (width % 2);
+			height += (height % 2);
 			size_t length = width * height;
 			if (this->bufferType == cam::GenCamBufferType::JPEG) {
 				length = length * 0.2;
 			}
 			for (size_t j = 0; j < bufferSize; j++) {
 				this->bufferImgs[j][i].data = new char[length];
+				memset(this->bufferImgs[j][i].data, 0, sizeof(uchar) * length);
 				this->bufferImgs[j][i].length = length * sizeof(uchar);
 				this->bufferImgs[j][i].maxLength = length * sizeof(uchar);
 				this->bufferImgs[j][i].type = this->bufferType;
@@ -109,7 +127,20 @@ namespace cam {
 				cv::Mat img, smallImg, bayerImg;
 				for (size_t j = 0; j < bufferSize; j++) {
 					readers[i] >> img;
-					cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
+					int width, height;
+					width = camInfos[i].width;
+					height = camInfos[i].height;
+
+					int a = i % 4;
+					if (i == 2) a = 0;
+					float scale = 1.0f / powf(2.0f, static_cast<float>(a));
+					width *= scale;
+					height *= scale;
+
+					width += (width % 2);
+					height += (height % 2);
+					cv::resize(img, smallImg, cv::Size(width, height));
+
 					if (this->bufferType == cam::GenCamBufferType::Raw) {
 						bayerImg = colorBGR2BayerRG(smallImg);
 						this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
@@ -117,62 +148,73 @@ namespace cam {
 							this->bufferImgs[j][i].length);
 					}
 					else {
-						cv::cuda::GpuMat smallImg_d;
-						smallImg_d.upload(smallImg);
-						cv::cuda::cvtColor(smallImg_d, smallImg_d, cv::COLOR_BGR2RGB);
-						encoder[0].encode_rgb(smallImg_d, reinterpret_cast<uchar*>(this->bufferImgs[j][i].data),
-							&this->bufferImgs[j][i].length, this->bufferImgs[j][i].maxLength,
-							stream);
-						bufferImgs[j][i].ratio = static_cast<cam::GenCamImgRatio>(0);
+						//cv::cuda::GpuMat smallImg_d;
+						//smallImg_d.upload(smallImg);
+						//cv::cuda::cvtColor(smallImg_d, smallImg_d, cv::COLOR_BGR2RGB);
+						//encoder[0].encode_rgb(smallImg_d, reinterpret_cast<uchar*>(this->bufferImgs[j][i].data),
+						//	&this->bufferImgs[j][i].length, this->bufferImgs[j][i].maxLength,
+						//	stream);
+						//stream.waitForCompletion();
 
-						//cv::cuda::GpuMat imgd(3000, 4000, CV_8UC3);
-						//cv::Mat img;
-						//encoder[0].decode((unsigned char*)bufferImgs[j][i].data, bufferImgs[j][i].length, imgd, 0);
-						//imgd.download(img);
-						//int a = 0;
-						//a++;
+						std::vector<int> param = std::vector<int>(2);
+						param[0] = CV_IMWRITE_JPEG_QUALITY;
+						param[1] = 95;//default(95) 0-100
+						std::vector<uchar> buff;
+						cv::imencode(".jpg", smallImg, buff, param);
+						this->bufferImgs[j][i].length = buff.size();
+						memcpy(this->bufferImgs[j][i].data, &buff[0], sizeof(char) * buff.size());
+
+						bufferImgs[j][i].ratio = static_cast<cam::GenCamImgRatio>(a);
 					}
 				}
 				if (this->camPurpose != cam::GenCamCapturePurpose::FileCameraRecording) {
 					readers[i].release();
 				}
 			}
-			else if (fileExtension.compare("jpg") == 0 || fileExtension.compare("png") == 0) {
-				cv::Mat img = cv::imread(videoname);
-				cv::Mat smallImg, bayerImg;
-				cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
-				if (this->bufferType == cam::GenCamBufferType::Raw) {
-					bayerImg = colorBGR2BayerRG(smallImg);
-					// assign to buffer
-					for (size_t j = 0; j < bufferSize; j++) {
-						this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
-						memcpy(this->bufferImgs[j][i].data, bayerImg.data,
-							this->bufferImgs[j][i].length);
-					}
-				}
-				else {
-					cv::cuda::GpuMat smallImg_d;
-					cv::cuda::Stream stream;
-					smallImg_d.upload(smallImg);
-					int j = 0;
-					cv::cuda::cvtColor(smallImg_d, smallImg_d, cv::COLOR_BGR2RGB);
-					encoder[0].encode_rgb(smallImg_d, (unsigned char*)this->bufferImgs[j][i].data,
-						&this->bufferImgs[j][i].length, this->bufferImgs[j][i].maxLength,
-						stream);
-					bufferImgs[j][i].ratio = static_cast<cam::GenCamImgRatio>(0);
-					for (size_t j = 1; j < bufferSize; j++) {
-						this->bufferImgs[j][i].length = bufferImgs[0][i].length;
-						memcpy(this->bufferImgs[j][i].data, this->bufferImgs[0][i].data,
-							this->bufferImgs[0][i].length);
-						bufferImgs[j][i].ratio = static_cast<cam::GenCamImgRatio>(0);
-					}
-				}
-			}
+			//else if (fileExtension.compare("jpg") == 0 || fileExtension.compare("png") == 0) {
+			//	cv::Mat img = cv::imread(videoname);
+			//	cv::Mat smallImg, bayerImg;
+			//	cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
+			//	if (this->bufferType == cam::GenCamBufferType::Raw) {
+			//		bayerImg = colorBGR2BayerRG(smallImg);
+			//		// assign to buffer
+			//		for (size_t j = 0; j < bufferSize; j++) {
+			//			this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
+			//			memcpy(this->bufferImgs[j][i].data, bayerImg.data,
+			//				this->bufferImgs[j][i].length);
+			//		}
+			//	}
+			//	else {
+			//		cv::cuda::GpuMat smallImg_d;
+			//		cv::cuda::Stream stream;
+			//		smallImg_d.upload(smallImg);
+			//		int j = 0;
+			//		cv::cuda::cvtColor(smallImg_d, smallImg_d, cv::COLOR_BGR2RGB);
+			//		encoder[0].encode_rgb(smallImg_d, (unsigned char*)this->bufferImgs[j][i].data,
+			//			&this->bufferImgs[j][i].length, this->bufferImgs[j][i].maxLength,
+			//			stream);
+			//		bufferImgs[j][i].ratio = static_cast<cam::GenCamImgRatio>(0);
+			//		for (size_t j = 1; j < bufferSize; j++) {
+			//			this->bufferImgs[j][i].length = bufferImgs[0][i].length;
+			//			memcpy(this->bufferImgs[j][i].data, this->bufferImgs[0][i].data,
+			//				this->bufferImgs[0][i].length);
+			//			bufferImgs[j][i].ratio = static_cast<cam::GenCamImgRatio>(0);
+			//		}
+			//	}
+			//}
 			else {
 				SysUtil::errorOutput("Unknown file type for FileCamera, only avi, mp4, jpg, png are support !");
 			}
 		}
-		stream.waitForCompletion();
+
+		//if (this->bufferType == cam::GenCamBufferType::JPEG) {
+		//	// de-init encoder
+		//	int width, height;
+		//	for (int i = 0; i < encoder.size(); i++) {
+		//		encoder[i].release();
+		//	}
+		//}
+
 		return 0;
 	}
 
@@ -205,13 +247,6 @@ namespace cam {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				for (size_t j = 0; j < bufferSize; j++) {
 					delete[] this->bufferImgs[j][i].data;
-				}
-			}
-			if (this->bufferType == cam::GenCamBufferType::JPEG) {
-				// de-init encoder
-				int width, height;
-				for (int i = 0; i < encoder.size(); i++) {
-					encoder[i].release();
 				}
 			}
 		}
@@ -297,28 +332,15 @@ namespace cam {
 				"reset buffer size to 1 !");
 			this->bufferSize = 1;
 		}
-		// buffer image data
-		if (this->bufferType == cam::GenCamBufferType::JPEG) {
-			// init encoder
-			int width, height;
-			encoder.resize(4);
-			for (int i = 0; i < encoder.size(); i++) {
-				float scale = 1.0f / powf(2.0f, static_cast<float>(i));
-				width = camInfos[0].width * scale;
-				height = camInfos[0].height * scale;
-				encoder[i].init(width, height, 85);
-				encoder[i].setWBRawType(true);
-			}
-		}
-
+		
 		this->bufferImageData();
+
 		this->isCapture = true;
 		// init frame indices buffer
 		this->thBufferInds.resize(this->cameraNum);
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			thBufferInds[i] = 1;
 		}
-
 		return 0;
 	}
 
