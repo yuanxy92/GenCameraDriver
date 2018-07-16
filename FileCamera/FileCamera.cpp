@@ -158,7 +158,7 @@ namespace cam {
 
 						std::vector<int> param = std::vector<int>(2);
 						param[0] = CV_IMWRITE_JPEG_QUALITY;
-						param[1] = 95;//default(95) 0-100
+						param[1] = 85;//default(95) 0-100
 						std::vector<uchar> buff;
 						cv::imencode(".jpg", smallImg, buff, param);
 						this->bufferImgs[j][i].length = buff.size();
