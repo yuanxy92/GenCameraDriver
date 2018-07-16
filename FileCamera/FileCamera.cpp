@@ -79,12 +79,25 @@ namespace cam {
 		for (size_t i = 0; i < bufferSize; i++) {
 			this->bufferImgs[i].resize(this->cameraNum);
 		}
+		if (this->bufferType == cam::GenCamBufferType::JPEG) {
+			// init encoder
+			int width, height;
+			for (int i = 0; i < encoder.size(); i++) {
+				float scale = 1.0f / powf(2.0f, static_cast<float>(i));
+				width = camInfos[0].width * scale;
+				height = camInfos[0].height * scale;
+				encoder[i]->init(width, height, 85);
+			}
+		}
 		// malloc mat memory
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			int width, height;
 			width = camInfos[i].width;
 			height = camInfos[i].height;
 			size_t length = width * height;
+			if (this->bufferType == cam::GenCamBufferType::JPEG) {
+				length = length * 0.2;
+			}
 			for (size_t j = 0; j < bufferSize; j++) {
 				this->bufferImgs[j][i].data = new char[length];
 				this->bufferImgs[j][i].length = length * sizeof(uchar);
@@ -106,10 +119,21 @@ namespace cam {
 				for (size_t j = 0; j < bufferSize; j++) {
 					readers[i] >> img;
 					cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
-					bayerImg = colorBGR2BayerRG(smallImg);
-					this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
-					memcpy(this->bufferImgs[j][i].data, bayerImg.data,
-						this->bufferImgs[j][i].length);
+					if (this->bufferType == cam::GenCamBufferType::Raw) {
+						bayerImg = colorBGR2BayerRG(smallImg);
+						this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
+						memcpy(this->bufferImgs[j][i].data, bayerImg.data,
+							this->bufferImgs[j][i].length);
+					}
+					else {
+						cv::cuda::GpuMat smallImg_d;
+						cv::cuda::Stream stream;
+						smallImg_d.upload(smallImg);
+						encoder[0]->encode(smallImg_d, (unsigned char*)this->bufferImgs[j][i].data,
+							&this->bufferImgs[j][i].length, this->bufferImgs[j][i].maxLength,
+							stream);
+						bufferImgs[j][i].ratio = static_cast<cam::GenCamImgRatio>(0);
+					}
 				}
 				if (this->camPurpose != cam::GenCamCapturePurpose::FileCameraRecording) {
 					readers[i].release();
@@ -119,12 +143,30 @@ namespace cam {
 				cv::Mat img = cv::imread(videoname);
 				cv::Mat smallImg, bayerImg;
 				cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
-				bayerImg = colorBGR2BayerRG(smallImg);
-				// assign to buffer
-				for (size_t j = 0; j < bufferSize; j++) {
-					this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
-					memcpy(this->bufferImgs[j][i].data, bayerImg.data,
-						this->bufferImgs[j][i].length);
+				if (this->bufferType == cam::GenCamBufferType::Raw) {
+					bayerImg = colorBGR2BayerRG(smallImg);
+					// assign to buffer
+					for (size_t j = 0; j < bufferSize; j++) {
+						this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
+						memcpy(this->bufferImgs[j][i].data, bayerImg.data,
+							this->bufferImgs[j][i].length);
+					}
+				}
+				else {
+					cv::cuda::GpuMat smallImg_d;
+					cv::cuda::Stream stream;
+					smallImg_d.upload(smallImg);
+					int j = 0;
+					encoder[0]->encode(smallImg_d, (unsigned char*)this->bufferImgs[j][i].data,
+						&this->bufferImgs[j][i].length, this->bufferImgs[j][i].maxLength,
+						stream);
+					bufferImgs[j][i].ratio = static_cast<cam::GenCamImgRatio>(0);
+					for (size_t j = 1; j < bufferSize; j++) {
+						this->bufferImgs[j][i].length = bufferImgs[0][i].length;
+						memcpy(this->bufferImgs[j][i].data, this->bufferImgs[0][i].data,
+							this->bufferImgs[0][i].length);
+						bufferImgs[j][i].ratio = static_cast<cam::GenCamImgRatio>(0);
+					}
 				}
 			}
 			else {
@@ -225,10 +267,10 @@ namespace cam {
 	*/
 	int GenCameraFile::setCaptureMode(GenCamCaptureMode captureMode, int bufferSize) {
 		this->captureMode = captureMode;
-		if (bufferType != GenCamBufferType::Raw) {
-			SysUtil::errorOutput("File camera only support raw type buffer ! ");
-			exit(-1);
-		}
+		//if (bufferType != GenCamBufferType::Raw) {
+		//	SysUtil::errorOutput("File camera only support raw type buffer ! ");
+		//	exit(-1);
+		//}
 		if (captureMode != GenCamCaptureMode::Continous) {
 			SysUtil::errorOutput("File camera only support continous capture mode ! "\
 				"Capture mode set to continous");
