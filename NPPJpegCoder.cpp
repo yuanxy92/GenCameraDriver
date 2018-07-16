@@ -580,6 +580,8 @@ namespace npp {
 		step_rgb = rgb_img_mat_d.step;
 		// set defaut cfa bayer pattern
 		this->cfaBayerType = NPPI_BAYER_RGGB;
+		
+		nppiDCTFree(pDCTState);
 
 		return 0;
 	}
@@ -605,7 +607,6 @@ namespace npp {
 		cudaFree(pdScan);
 		//nppiFree(rgb_img_d);
 		rgb_img_mat_d.release();
-		nppiDCTFree(pDCTState);
 		return 0;
 	}
 
@@ -636,6 +637,7 @@ namespace npp {
 		size_t* datalength, size_t maxlength, cudaStream_t stream) {
 		
 		nppSetStream(stream);
+		NPP_CHECK_NPP(nppiDCTInitAlloc(&pDCTState));
 
 #ifdef MEASURE_KERNEL_TIME
 		cudaEvent_t start, stop;
@@ -739,6 +741,7 @@ namespace npp {
 
 		// calculate compressed jpeg data length
 		*datalength = static_cast<size_t>(pDstOutput - jpegdata);
+		nppiDCTFree(pDCTState);
 		return 0;
 	}
 
@@ -756,6 +759,8 @@ namespace npp {
 		
 		cudaStream_t stream = cv::cuda::StreamAccessor::getStream(cvstream);
 		nppSetStream(stream);
+
+		NPP_CHECK_NPP(nppiDCTInitAlloc(&pDCTState));
 
 #ifdef MEASURE_KERNEL_TIME
 		cudaEvent_t start, stop;
@@ -868,6 +873,7 @@ namespace npp {
 
 		// calculate compressed jpeg data length
 		*datalength = static_cast<size_t>(pDstOutput - jpegdata);
+		nppiDCTFree(pDCTState);
 		return 0;
 	}
 
@@ -887,6 +893,7 @@ namespace npp {
 		size_t* datalength, size_t maxlength, cv::cuda::Stream & cvstream) {
 		cudaStream_t stream = cv::cuda::StreamAccessor::getStream(cvstream);
 		nppSetStream(stream);
+		NPP_CHECK_NPP(nppiDCTInitAlloc(&pDCTState));
 
 #ifdef MEASURE_KERNEL_TIME
 		cudaEvent_t start, stop;
@@ -983,6 +990,7 @@ namespace npp {
 
 		// calculate compressed jpeg data length
 		*datalength = static_cast<size_t>(pDstOutput - jpegdata);
+		nppiDCTFree(pDCTState);
 		return 0;
 	}
 
@@ -1002,7 +1010,7 @@ namespace npp {
 	int NPPJpegCoder::decode(unsigned char* jpegdata, size_t input_datalength,
 		cv::cuda::GpuMat & outimg, int type) {
 		// init state
-		
+		NPP_CHECK_NPP(nppiDCTInitAlloc(&pDCTState));
 
 #ifdef MEASURE_KERNEL_TIME
 		cudaEvent_t start, stop;
@@ -1171,7 +1179,7 @@ namespace npp {
 		printf("JPEG decode GPU step: (file:%s, line:%d) elapsed time : %f ms\n", __FILE__, __LINE__, elapsedTime);
 #endif
 		// release gpu memory
-
+		nppiDCTFree(pDCTState);
 		return 0;
 	}
 

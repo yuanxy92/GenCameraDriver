@@ -79,19 +79,7 @@ namespace cam {
 		for (size_t i = 0; i < bufferSize; i++) {
 			this->bufferImgs[i].resize(this->cameraNum);
 		}
-		if (this->bufferType == cam::GenCamBufferType::JPEG) {
-			// init encoder
-			int width, height;
-			encoder.resize(4);
-			for (int i = 0; i < encoder.size(); i++) {
-				float scale = 1.0f / powf(2.0f, static_cast<float>(i));
-				width = camInfos[0].width * scale;
-				height = camInfos[0].height * scale;
-				encoder[i].init(width, height, 85);
-				encoder[i].setCfaBayerType(static_cast<int>(camInfos[i].bayerPattern));
-				encoder[i].setWBRawType(true);
-			}
-		}
+		cv::cuda::Stream stream;
 		// malloc mat memory
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			int width, height;
@@ -130,7 +118,6 @@ namespace cam {
 					}
 					else {
 						cv::cuda::GpuMat smallImg_d;
-						cv::cuda::Stream stream;
 						smallImg_d.upload(smallImg);
 						cv::cuda::cvtColor(smallImg_d, smallImg_d, cv::COLOR_BGR2RGB);
 						encoder[0].encode_rgb(smallImg_d, reinterpret_cast<uchar*>(this->bufferImgs[j][i].data),
@@ -185,15 +172,7 @@ namespace cam {
 				SysUtil::errorOutput("Unknown file type for FileCamera, only avi, mp4, jpg, png are support !");
 			}
 		}
-
-		if (this->bufferType == cam::GenCamBufferType::JPEG) {
-			// de-init encoder
-			int width, height;
-			for (int i = 0; i < encoder.size(); i++) {
-				encoder[i].release();
-			}
-		}
-
+		stream.waitForCompletion();
 		return 0;
 	}
 
@@ -226,6 +205,13 @@ namespace cam {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				for (size_t j = 0; j < bufferSize; j++) {
 					delete[] this->bufferImgs[j][i].data;
+				}
+			}
+			if (this->bufferType == cam::GenCamBufferType::JPEG) {
+				// de-init encoder
+				int width, height;
+				for (int i = 0; i < encoder.size(); i++) {
+					encoder[i].release();
 				}
 			}
 		}
@@ -312,6 +298,19 @@ namespace cam {
 			this->bufferSize = 1;
 		}
 		// buffer image data
+		if (this->bufferType == cam::GenCamBufferType::JPEG) {
+			// init encoder
+			int width, height;
+			encoder.resize(4);
+			for (int i = 0; i < encoder.size(); i++) {
+				float scale = 1.0f / powf(2.0f, static_cast<float>(i));
+				width = camInfos[0].width * scale;
+				height = camInfos[0].height * scale;
+				encoder[i].init(width, height, 85);
+				encoder[i].setWBRawType(true);
+			}
+		}
+
 		this->bufferImageData();
 		this->isCapture = true;
 		// init frame indices buffer
@@ -319,6 +318,7 @@ namespace cam {
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			thBufferInds[i] = 1;
 		}
+
 		return 0;
 	}
 
