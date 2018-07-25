@@ -116,6 +116,10 @@ set(MY_HEADER_FILES
     XIMEA/XIMEACamera.h
     # File camera
     FileCamera/FileCamera.h
+    # Stereo camera
+    Stereo/StereoCamera.h
+    Stereo/INIReader.h
+    Stereo/StereoRectify.h
 )
 
 set(MY_SOURCE_FILES 
@@ -125,6 +129,9 @@ set(MY_SOURCE_FILES
     XIMEA/XIMEACamera.cpp
     # File camera
     FileCamera/FileCamera.cpp
+    # Stereo camera
+    Stereo/StereoCamera.cpp
+    Stereo/StereoRectify.cpp
     # C++ source file
     NPPJpegCoder.cpp
     # generic camera driver
@@ -145,6 +152,14 @@ source_group("XIMEA" FILES
     XIMEA/XIMEACamera.cpp
 )
 
+source_group("Stereo" FILES
+    Stereo/INIReader.h
+    Stereo/StereoCamera.h
+    Stereo/StereoCamera.cpp
+    Stereo/StereoRectify.h
+    Stereo/StereoRectify.cpp
+)
+
 source_group("FileCamera" FILES
     FileCamera/FileCamera.h
     FileCamera/FileCamera.cpp
@@ -160,7 +175,8 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/cuda	
 	${PROJECT_SOURCE_DIR}/XIMEA	
 	${PROJECT_SOURCE_DIR}/PointGrey	
-	${PROJECT_SOURCE_DIR}/FileCamera	
+    ${PROJECT_SOURCE_DIR}/FileCamera	
+    ${PROJECT_SOURCE_DIR}/Stereo
 )
 
 cuda_add_executable(${name}

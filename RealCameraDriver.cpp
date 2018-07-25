@@ -106,6 +106,8 @@ namespace cam {
 			//cudaMemcpy(this->bufferImgs_cuda[camInd], bufferImgs_singleframe[camInd].data,
 			//	sizeof(uchar) * camInfos[camInd].width * camInfos[camInd].height,
 			//	cudaMemcpyHostToDevice);
+
+			//TODO: next we will provide uploaded img
 			this->bufferImgs_host[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data),
 			this->bufferImgs_cuda[camInd].upload(this->bufferImgs_host[camInd]
 				,std::ref(cvstream));

@@ -1,12 +1,12 @@
 /**
 @brief Generic Camera Driver Class
-Implementation of XIMEA camera
-@author Shane Yuan
-@date Dec 29, 2017
+Implementation of Stereo camera
+@author zhu-ty
+@date Jul 25, 2018
 */
 
-#ifndef __GENERIC_CAMERA_DRIVER_XIMEA_H__
-#define __GENERIC_CAMERA_DRIVER_XIMEA_H__
+#ifndef __GENERIC_CAMERA_DRIVER_STEREO_H__
+#define __GENERIC_CAMERA_DRIVER_STEREO_H__
 
 #ifdef WIN32
 #include <windows.h>
@@ -18,28 +18,45 @@ Implementation of XIMEA camera
 
 #include "GenCameraDriver.h"
 #include "RealCameraDriver.h"
+#include "Stereo/StereoRectify.h"
 
 namespace cam {
 
-	// function to check XIMEA function error
-	void checkXIMEAInternal(XI_RETURN result, char const *const func,
-		const char *const file, int const line);
-
-	// XIMEA function safe call
-	#define checkXIMEAErrors(val)  checkXIMEAInternal ( (val), #val, __FILE__, __LINE__ )
-
-	class GenCameraXIMEA : public RealCamera {
+	class GenCameraStereo : public RealCamera {
 	private:
-		std::vector<HANDLE> hcams;
-		std::vector<XI_IMG> xiImages;
-	public:
-
+		struct StereoPair
+		{
+			std::string master_sn;
+			std::string slave_sn;
+			std::string int_path;
+			std::string ext_path;
+			bool inv;
+			std::string& operator[](int i)
+			{
+				return (i == 0) ? master_sn : slave_sn;
+ 			}
+			StereoRectify sr;
+			cv::Mat single_mix_img;
+			cv::Mat single_master_img;
+			cv::Mat single_slave_img;
+		};
 	private:
-		
+		std::string config_file_path;
+		CameraModel sub_model;
+		std::vector<cam::GenCamInfo> sub_camInfos;
+		std::shared_ptr<cam::GenCamera> sub_cameraPtr;
+		std::vector<StereoPair> pair_infos;
+		std::vector<Imagedata> raw_imgs;
+	private:
+		int load_config(std::string path);
+
+		int search_camera(std::string sn,std::vector<GenCamInfo> list, GenCamInfo& info);
+
+		int search_pair(std::string sn, std::vector<StereoPair> list, StereoPair& pair);
 
 	public:
-		GenCameraXIMEA();
-		~GenCameraXIMEA();
+		GenCameraStereo();
+		~GenCameraStereo();
 
 		/***********************************************************/
 		/*                   basic camera functions                */
@@ -183,4 +200,4 @@ namespace cam {
 
 };
 
-#endif
+#endif //__GENERIC_CAMERA_DRIVER_STEREO_H__

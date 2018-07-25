@@ -8,6 +8,7 @@
 #include "XIMEA/XIMEACamera.h"
 #include "PointGrey/PointGreyCamera.h"
 #include "FileCamera/FileCamera.h"
+#include "Stereo/StereoCamera.h"
 
 namespace cam {
 	/**
@@ -25,6 +26,10 @@ namespace cam {
 		}
 		else if (camModel == CameraModel::File) {
 			std::shared_ptr<GenCameraFile> cameraPtr = std::make_shared<GenCameraFile>(dir);
+			return std::static_pointer_cast<GenCamera>(cameraPtr);
+		}
+		else if (camModel == CameraModel::Stereo) {
+			std::shared_ptr<GenCameraStereo> cameraPtr = std::make_shared<GenCameraStereo>();
 			return std::static_pointer_cast<GenCamera>(cameraPtr);
 		}
 	}

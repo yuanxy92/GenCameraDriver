@@ -149,7 +149,8 @@ namespace cam {
 		XIMEA_xiC = 0,
 		PointGrey_u3 = 1,
 		Network = 2,
-		File = 3
+		File = 3,
+		Stereo = 4
 	};
 
 	/**
@@ -180,6 +181,15 @@ namespace cam {
 		// true: raw data is after white balance
 		// false: raw data is before white balance
 		bool isWBRaw;
+
+		bool operator==(const GenCamInfo &another)
+		{
+			return this->sn.compare(another.sn) == 0;
+		}
+		bool operator==(const std::string &another)
+		{
+			return this->sn.compare(another) == 0;
+		}
 	};
 
 	/**
