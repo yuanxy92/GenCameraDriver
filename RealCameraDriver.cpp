@@ -12,7 +12,7 @@ directly
 
 namespace cam {
     RealCamera::RealCamera():isCaptureThreadRunning(false),
-		isCompressThreadRunning(false), isCaptureModeSet(false) {}
+		isCompressThreadRunning(false), isCaptureModeSet(false), isCapturedFrameGpuPointer(false), isCapturedFrameDebayered(false){}
     RealCamera::~RealCamera() {}
 
     /**
@@ -23,6 +23,12 @@ namespace cam {
 	@param int camInd: index of camera
 	*/
 	void RealCamera::capture_thread_raw_(int camInd) {
+		if (this->camModel == cam::CameraModel::Stereo)
+		{
+			SysUtil::errorOutput("RealCamera::capture_thread_raw_ raw image is not supported for Stereo Camera!");
+			return;
+		}
+
 		clock_t begin_time, end_time;
 		double time = 1000.0 / static_cast<double>(camInfos[camInd].fps);
 		thStatus[camInd] = 1;
@@ -107,11 +113,17 @@ namespace cam {
 			//	sizeof(uchar) * camInfos[camInd].width * camInfos[camInd].height,
 			//	cudaMemcpyHostToDevice);
 
-			//TODO: next we will provide uploaded img
-			this->bufferImgs_host[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data),
-			this->bufferImgs_cuda[camInd].upload(this->bufferImgs_host[camInd]
-				,std::ref(cvstream));
-			cvstream.waitForCompletion();
+			if (this->isCapturedFrameGpuPointer == false)
+			{
+				this->bufferImgs_host[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data);
+				this->bufferImgs_cuda[camInd].upload(this->bufferImgs_host[camInd]
+					, std::ref(cvstream));
+				cvstream.waitForCompletion();
+			}
+			else
+			{
+				this->bufferImgs_cuda[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data);
+			}
 			// end time
 			end_time = clock();
 			float waitTime = time - static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
@@ -176,9 +188,16 @@ namespace cam {
 				//TODO (SHADOWK) : added ratio control code here (also more coder is needed)
 				int ratioInd = static_cast<int>(imgRatios[camInd]);
 				// debayer
-				cv::cuda::demosaicing(this->bufferImgs_cuda[camInd], this->dabayerImgs_cuda[camInd], 
-					npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
-						static_cast<int>(camInfos[camInd].bayerPattern))), -1, stream);
+				if (this->isCapturedFrameDebayered == false)
+				{
+					cv::cuda::demosaicing(this->bufferImgs_cuda[camInd], this->dabayerImgs_cuda[camInd],
+						npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+							static_cast<int>(camInfos[camInd].bayerPattern))), -1, stream);
+				}
+				else
+				{
+					this->dabayerImgs_cuda[camInd] = this->bufferImgs_cuda[camInd];
+				}
 				// resize
 				if (ratioInd != 0) {
 					cv::cuda::resize(this->dabayerImgs_cuda[camInd], this->dabayerImgs_cuda[camInd],

@@ -111,6 +111,18 @@ namespace cam {
 			raw_imgs[i * 2 + 1].length = length;
 			raw_imgs[i * 2 + 1].maxLength = length;
 
+			pair_infos[i][0].cpu_raw_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8U);
+			pair_infos[i][1].cpu_raw_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8U);
+
+			pair_infos[i][0].gpu_raw_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8U);
+			pair_infos[i][1].gpu_raw_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8U);
+
+			pair_infos[i][0].gpu_rgb_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
+			pair_infos[i][1].gpu_rgb_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
+
+			pair_infos[i][0].gpu_rec_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
+			pair_infos[i][1].gpu_rec_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
+
 			//Searching Slave
 			idx = search_camera(pair_infos[i][1].sn, sub_camInfos);
 			if (idx == -1)
@@ -130,6 +142,11 @@ namespace cam {
 		for (size_t i = 0; i < cameraNum; i++) {
 			imgRatios[i] = GenCamImgRatio::Full;
 		}
+
+		//Tell the real camera driver that we are different
+		this->isCapturedFrameGpuPointer = true;
+		this->isCapturedFrameDebayered = true;
+
 		return 0;
 	}
 
@@ -304,28 +321,50 @@ namespace cam {
 	int GenCameraStereo::captureFrame(int camInd, Imagedata & img) 
 	{
 		sub_cameraPtr->captureFrame(raw_imgs);
-
-		//test only
-		cv::Mat m, s, opt;
 		int cols = sub_camInfos[pair_infos[camInd][0].index].width;
 		int rows = sub_camInfos[pair_infos[camInd][0].index].height;
-		m.create(rows, cols, CV_8U);
-		s.create(rows, cols, CV_8U);
-		opt.create(rows, cols, CV_8U);
-		memcpy(m.data, raw_imgs[pair_infos[camInd][0].index].data, cols * rows * sizeof(uchar));
-		memcpy(s.data, raw_imgs[pair_infos[camInd][1].index].data, cols * rows * sizeof(uchar));
+		memcpy(pair_infos[camInd][0].cpu_raw_img.data, raw_imgs[pair_infos[camInd][0].index].data, cols * rows * sizeof(uchar));
+		memcpy(pair_infos[camInd][1].cpu_raw_img.data, raw_imgs[pair_infos[camInd][1].index].data, cols * rows * sizeof(uchar));
 
-		cv::Rect r1(0, 0, cols / 2, rows);
-		cv::Rect r2(cols / 2, 0, cols / 2, rows);
-		cv::Mat tmp;
-		tmp.create(rows, cols / 2, CV_8U);
-		cv::Mat mask = cv::Mat::ones(rows, cols / 2, CV_8U);
-		cv::resize(m, tmp, cv::Size(cols / 2, rows));
-		tmp.copyTo(opt(r1), mask);
-		cv::resize(s, tmp, cv::Size(cols / 2, rows));
-		tmp.copyTo(opt(r2), mask);
+		pair_infos[camInd][0].gpu_raw_img.upload(pair_infos[camInd][0].cpu_raw_img);
+		pair_infos[camInd][1].gpu_raw_img.upload(pair_infos[camInd][1].cpu_raw_img);
 
-		memcpy(img.data, opt.data, cols * rows * sizeof(uchar));
+		cv::cuda::demosaicing(pair_infos[camInd][0].gpu_raw_img, pair_infos[camInd][0].gpu_rgb_img,
+			npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+				static_cast<int>(camInfos[camInd].bayerPattern))));
+		cv::cuda::demosaicing(pair_infos[camInd][1].gpu_raw_img, pair_infos[camInd][1].gpu_rgb_img,
+			npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+				static_cast<int>(camInfos[camInd].bayerPattern))));
+
+		pair_infos[camInd].sr.rectify(
+			pair_infos[camInd][0].gpu_rgb_img,
+			pair_infos[camInd][0].gpu_rec_img,
+			pair_infos[camInd][1].gpu_rgb_img,
+			pair_infos[camInd][1].gpu_rec_img);
+
+		img.data = reinterpret_cast<char*>(pair_infos[camInd][0].gpu_rec_img.data);
+
+		////test only
+		//cv::Mat m, s, opt;
+		//int cols = sub_camInfos[pair_infos[camInd][0].index].width;
+		//int rows = sub_camInfos[pair_infos[camInd][0].index].height;
+		//m.create(rows, cols, CV_8U);
+		//s.create(rows, cols, CV_8U);
+		//opt.create(rows, cols, CV_8U);
+		//memcpy(m.data, raw_imgs[pair_infos[camInd][0].index].data, cols * rows * sizeof(uchar));
+		//memcpy(s.data, raw_imgs[pair_infos[camInd][1].index].data, cols * rows * sizeof(uchar));
+
+		//cv::Rect r1(0, 0, cols / 2, rows);
+		//cv::Rect r2(cols / 2, 0, cols / 2, rows);
+		//cv::Mat tmp;
+		//tmp.create(rows, cols / 2, CV_8U);
+		//cv::Mat mask = cv::Mat::ones(rows, cols / 2, CV_8U);
+		//cv::resize(m, tmp, cv::Size(cols / 2, rows));
+		//tmp.copyTo(opt(r1), mask);
+		//cv::resize(s, tmp, cv::Size(cols / 2, rows));
+		//tmp.copyTo(opt(r2), mask);
+
+		//memcpy(img.data, opt.data, cols * rows * sizeof(uchar));
 		return 0;
 	}
 

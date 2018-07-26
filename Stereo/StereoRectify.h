@@ -34,6 +34,8 @@ private:
 	cv::Rect validRoi[2];
 	cv::Mat rmap[2][2];
 	cv::Rect rect;
+
+	cv::cuda::GpuMat gpu_rmap[2][2];
 public:
 
 private:
@@ -58,6 +60,16 @@ public:
 	@return int
 	*/
 	int rectify(cv::Mat & leftImg, cv::Mat & rightImg);
+
+	/**
+	@brief function to rectify images
+	@param cv::cuda::GpuMat & srcImg0: src image 0
+	@param cv::cuda::GpuMat & dstImg0: dst image 0
+	@param cv::cuda::GpuMat & srcImg1: src image 1
+	@param cv::cuda::GpuMat & dstImg1: dst image 1
+	@return int
+	*/
+	int rectify(cv::cuda::GpuMat & srcImg0, cv::cuda::GpuMat & dstImg0, cv::cuda::GpuMat & srcImg1, cv::cuda::GpuMat & dstImg1);
 };
 
 #endif

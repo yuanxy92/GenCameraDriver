@@ -48,6 +48,10 @@ int StereoRectify::init(std::string intfile, std::string extfile, cv::Size imgsi
 	initUndistortRectifyMap(M1, D1, R1, P1, imgsize, CV_16SC2, rmap[0][0], rmap[0][1]);
 	initUndistortRectifyMap(M2, D2, R2, P2, imgsize, CV_16SC2, rmap[1][0], rmap[1][1]);
 
+	for (int i = 0; i < 2; i++)
+		for (int j = 0; j < 2; j++)
+			gpu_rmap[i][j].upload(rmap[i][j]);
+
 	return 0;
 }
 
@@ -64,5 +68,16 @@ int StereoRectify::rectify(cv::Mat & leftImg, cv::Mat & rightImg) {
 	cv::remap(rightImg, rightImg, rmap[1][0], rmap[1][1], cv::INTER_LINEAR);
 	leftImg(rect).copyTo(leftImg);
 	rightImg(rect).copyTo(rightImg);
+	return 0;
+}
+
+int StereoRectify::rectify(cv::cuda::GpuMat & srcImg0, cv::cuda::GpuMat & dstImg0, cv::cuda::GpuMat & srcImg1, cv::cuda::GpuMat & dstImg1)
+{
+	cv::cuda::remap(srcImg0, dstImg0, gpu_rmap[0][0], gpu_rmap[0][1], cv::INTER_LINEAR);
+	dstImg0(rect).copyTo(dstImg0);
+	cv::cuda::resize(dstImg0, dstImg0, cv::Size(srcImg0.cols, srcImg0.rows));
+	cv::cuda::remap(srcImg1, dstImg1, gpu_rmap[0][0], gpu_rmap[0][1], cv::INTER_LINEAR);
+	dstImg1(rect).copyTo(dstImg1);
+	cv::cuda::resize(dstImg1, dstImg1, cv::Size(srcImg1.cols, srcImg1.rows));
 	return 0;
 }

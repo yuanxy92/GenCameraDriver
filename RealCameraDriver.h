@@ -46,6 +46,8 @@ namespace cam {
 
             // memory status 
             int isCaptureModeSet;
+			int isCapturedFrameGpuPointer;
+			int isCapturedFrameDebayered;
         public:
 
         protected:

@@ -24,16 +24,26 @@ namespace cam {
 
 	class GenCameraStereo : public RealCamera {
 	private:
-		struct CameraIndexInfo
+		struct SubCamera
 		{
 			// The SN for real camera
 			std::string sn;
 			// The index for the real camera in sub_cameraPtr
 			int index;
-			CameraIndexInfo& operator =(const CameraIndexInfo& info)
+			// The Cpu mat for image (raw)
+			cv::Mat cpu_raw_img;
+			// The Gpu mat for image
+			cv::cuda::GpuMat gpu_raw_img;
+			cv::cuda::GpuMat gpu_rgb_img;
+			cv::cuda::GpuMat gpu_rec_img;
+			SubCamera& operator =(const SubCamera& another)
 			{
-				this->sn = info.sn;
-				this->index = info.index;
+				this->sn = another.sn;
+				this->index = another.index;
+				this->cpu_raw_img = another.cpu_raw_img;
+				this->gpu_raw_img = another.gpu_raw_img;
+				this->gpu_rgb_img = another.gpu_rgb_img;
+				this->gpu_rec_img = another.gpu_rec_img;
 				return *this;
 			}
 			int& operator=(const int& infoIDX)
@@ -49,11 +59,11 @@ namespace cam {
 		};
 		struct StereoPair
 		{
-			CameraIndexInfo master, slave;
+			SubCamera master, slave;
 			std::string int_path;
 			std::string ext_path;
 			bool inv; // Tell whether we have to change the order to do the rectify
-			CameraIndexInfo& operator[](int i)
+			SubCamera& operator[](int i)
 			{
 				return (i == 0) ? master : slave;
  			}
