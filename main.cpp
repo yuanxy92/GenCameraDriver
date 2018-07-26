@@ -63,7 +63,8 @@ int record(int argc, char* argv[]) {
 	std::vector<cam::GenCamImgRatio> imgRatios;
 	std::vector<cam::GenCamInfo> camInfos;
 	std::shared_ptr<cam::GenCamera> cameraPtr
-		= cam::createCamera(cam::CameraModel::PointGrey_u3);
+		= cam::createCamera(cam::CameraModel::Stereo);
+		//= cam::createCamera(cam::CameraModel::PointGrey_u3);
 		//= cam::createCamera(cam::CameraModel::XIMEA_xiC);
 	cameraPtr->init();
 	// set camera setting
@@ -77,12 +78,12 @@ int record(int argc, char* argv[]) {
 	cameraPtr->makeSetEffective();
 	// set capturing setting
 	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
-	cameraPtr->setJPEGQuality(85, 0.25);
+	cameraPtr->setJPEGQuality(85, 0.5);
 	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
-	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
-	cameraPtr->setJPEGQuality(90, 0.25);
-	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 2000);
+	//cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
+	//cameraPtr->setJPEGQuality(90, 0.25);
+	//cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 2000);
 	cameraPtr->setVerbose(false);
 	cameraPtr->makeSetEffective();
     cameraPtr->getCamInfos(camInfos);
@@ -98,8 +99,8 @@ int record(int argc, char* argv[]) {
 	cameraPtr->startCaptureThreads();
 	// wait for recoding to finish
 	cameraPtr->waitForRecordFinish();
-	//cameraPtr->saveImages("test_img");
-	cameraPtr->saveVideos("saved");
+	cameraPtr->saveImages("test_img");
+	//cameraPtr->saveVideos("saved");
     for(int i = 0; i < camInfos.size();i++) {
         printf("%d:%s\n",i, camInfos[i].sn.c_str());
 		printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);

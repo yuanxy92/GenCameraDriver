@@ -23,36 +23,34 @@ namespace cam {
 		{
 			std::string stridx = cv::format("Stereo%d", i);
 			StereoPair sp;
-			sp.master_sn = reader.Get(stridx, "master_sn", "default_master_sn");
-			sp.slave_sn = reader.Get(stridx, "slave_sn", "default_slave_sn");
+			sp[0] = reader.Get(stridx, "master_sn", "default_master_sn");
+			sp[1] = reader.Get(stridx, "slave_sn", "default_slave_sn");
 			sp.int_path = reader.Get(stridx, "int_path", "default_int_path");
 			sp.ext_path = reader.Get(stridx, "ext_path", "default_ext_path");
-			sp.inv = reader.GetBoolean(stridx, "master_sn", false);
+			sp.inv = reader.GetBoolean(stridx, "inv", false);
 			this->pair_infos.push_back(sp);
 		}
 		return 0;
 	}
 
-	int GenCameraStereo::search_camera(std::string sn, std::vector<GenCamInfo> list, GenCamInfo & info)
+	int GenCameraStereo::search_camera(std::string sn, std::vector<GenCamInfo> list)
 	{
 		for (int i = 0; i < list.size(); i++)
 		{
 			if (list[i] == sn)
 			{
-				info = list[i];
 				return i;
 			}
 		}
 		return -1;
 	}
 
-	int GenCameraStereo::search_pair(std::string sn, std::vector<StereoPair> list, StereoPair & pair)
+	int GenCameraStereo::search_pair(std::string sn, std::vector<StereoPair> list)
 	{
 		for (int i = 0; i < list.size(); i++)
 		{
-			if (list[i][0] == sn || list[i][1] == sn )
+			if (list[i][0].sn == sn || list[i][1].sn == sn )
 			{
-				pair = list[i];
 				return i;
 			}
 		}
@@ -75,16 +73,16 @@ namespace cam {
 
 
 		//TODO : Now only support sub XIMEA camera
-		this->sub_model = CameraModel::XIMEA_xiC;
+		sub_model = CameraModel::XIMEA_xiC;
 		//TODO : How do we input the config file path?
-		this->config_file_path = "./StereoConfig.ini";
+		config_file_path = "./StereoConfig.ini";
 		//TODO : Now can only open every camera
-		this->sub_cameraPtr = cam::createCamera(cam::CameraModel::XIMEA_xiC);
-		this->sub_cameraPtr->init();
-		this->sub_cameraPtr->getCamInfos(this->sub_camInfos);
-		this->sub_cameraPtr->setCamBufferType(GenCamBufferType::Raw);
-		this->sub_cameraPtr->setCaptureMode(GenCamCaptureMode::Continous, 200);
-		this->sub_cameraPtr->setCapturePurpose(GenCamCapturePurpose::Streaming);
+		sub_cameraPtr = cam::createCamera(cam::CameraModel::XIMEA_xiC);
+		sub_cameraPtr->init();
+		sub_cameraPtr->getCamInfos(sub_camInfos);
+		sub_cameraPtr->setCamBufferType(GenCamBufferType::Raw);
+		sub_cameraPtr->setCaptureMode(GenCamCaptureMode::Continous, 200);
+		sub_cameraPtr->setCapturePurpose(GenCamCapturePurpose::Streaming);
 
 
 		load_config(this->config_file_path);
@@ -93,39 +91,43 @@ namespace cam {
 			SysUtil::errorOutput("GenCameraStereo::init failed! 0 pairs detected!");
 			return -1;
 		}
-		this->raw_imgs.resize(pair_infos.size() * 2);
+		raw_imgs.resize(pair_infos.size() * 2);
 		for (int i = 0; i < pair_infos.size(); i++)
 		{
-			GenCamInfo info;
-			if (search_camera(pair_infos[i][0], this->sub_camInfos, info) == -1)
+			//Searching Master
+			int idx = search_camera(pair_infos[i][0].sn, sub_camInfos);
+			if (idx == -1)
 			{
-				SysUtil::errorOutput("GenCameraStereo::init failed! master sn not found! Searching for " + pair_infos[i][0]);
+				SysUtil::errorOutput("GenCameraStereo::init failed! master sn not found! Searching for " + pair_infos[i][0].sn);
 				return -1;
 			}
-			pair_infos[i].sr.init(pair_infos[i].int_path, pair_infos[i].ext_path, cv::Size(info.width, info.height));
-			pair_infos[i].single_mix_img.create(info.height, info.width, CV_8U);
-			pair_infos[i].single_master_img.create(info.height, info.width, CV_8U);
-			pair_infos[i].single_slave_img.create(info.height, info.width, CV_8U);
-			if (search_camera(pair_infos[i][1], this->sub_camInfos, info) == -1)
+			pair_infos[i][0] = idx;
+			pair_infos[i].sr.init(pair_infos[i].int_path, pair_infos[i].ext_path, cv::Size(sub_camInfos[idx].width, sub_camInfos[idx].height));
+			size_t length = sizeof(uchar) * sub_camInfos[idx].width * sub_camInfos[idx].height;
+			raw_imgs[i * 2].data = new char[length];
+			raw_imgs[i * 2].length = length;
+			raw_imgs[i * 2].maxLength = length;
+			raw_imgs[i * 2 + 1].data = new char[length];
+			raw_imgs[i * 2 + 1].length = length;
+			raw_imgs[i * 2 + 1].maxLength = length;
+
+			//Searching Slave
+			idx = search_camera(pair_infos[i][1].sn, sub_camInfos);
+			if (idx == -1)
 			{
-				SysUtil::errorOutput("GenCameraStereo::init failed! master sn not found! Searching for " + pair_infos[i][1]);
+				SysUtil::errorOutput("GenCameraStereo::init failed! slave sn not found! Searching for " + pair_infos[i][1].sn);
 				return -1;
 			}
-			size_t length = sizeof(uchar) * info.width * info.height;
-			this->raw_imgs[i * 2].data = new char[length];
-			this->raw_imgs[i * 2].length = length;
-			this->raw_imgs[i * 2].maxLength = length;
-			this->raw_imgs[i * 2 + 1].data = new char[length];
-			this->raw_imgs[i * 2 + 1].length = length;
-			this->raw_imgs[i * 2 + 1].maxLength = length;
+			pair_infos[i][1] = idx;
+
 		}
-		this->cameraNum = pair_infos.size();
-		ths.resize(this->cameraNum);
-		thStatus.resize(this->cameraNum);
-		this->isInit = true;
+		cameraNum = pair_infos.size();
+		ths.resize(cameraNum);
+		thStatus.resize(cameraNum);
+		isInit = true;
 		// init image ratio vector
-		imgRatios.resize(this->cameraNum);
-		for (size_t i = 0; i < this->cameraNum; i++) {
+		imgRatios.resize(cameraNum);
+		for (size_t i = 0; i < cameraNum; i++) {
 			imgRatios[i] = GenCamImgRatio::Full;
 		}
 		return 0;
@@ -133,11 +135,13 @@ namespace cam {
 
 	int GenCameraStereo::startCapture() {
 		this->sub_cameraPtr->startCapture();
+		this->sub_cameraPtr->startCaptureThreads();
 		this->isCapture = true;
 		return 0;
 	}
 
 	int GenCameraStereo::stopCapture() {
+		this->sub_cameraPtr->stopCaptureThreads();
 		this->sub_cameraPtr->stopCapture();
 		this->isCapture = false;
 		return 0;
@@ -145,7 +149,10 @@ namespace cam {
 
 	int GenCameraStereo::release() {
 		if (this->isCapture == true)
+		{
 			this->stopCapture();
+			//this->sub_cameraPtr->stopCapture();
+		}
 		// close cameras
 		this->sub_cameraPtr->release();
 		if (this->isInit)
@@ -159,13 +166,13 @@ namespace cam {
 	}
 
 	int GenCameraStereo::getCamInfos(std::vector<GenCamInfo> & camInfos) {
-		camInfos.resize(this->cameraNum);
-		this->sub_cameraPtr->getCamInfos(this->sub_camInfos);
+		camInfos.resize(cameraNum);
+		sub_cameraPtr->getCamInfos(sub_camInfos);
+		//each pair info = master.info
 		for (size_t i = 0; i < this->cameraNum; i++) 
 		{
-			GenCamInfo info;
-			search_camera(pair_infos[i][0], this->sub_camInfos, info);
-			camInfos[i] = info;
+			camInfos[i] = sub_camInfos[pair_infos[i][0].index];
+			camInfos[i].sn = "MIX_" + sub_camInfos[pair_infos[i][0].index].sn + "_" + sub_camInfos[pair_infos[i][1].index].sn;
 		}
 		return 0;
 	}
@@ -178,15 +185,8 @@ namespace cam {
 		else 
 		{
 			//TODO : now will affect 2 real cameras
-			std::string sn = this->camInfos[camInd].sn;
-			StereoPair sp;
-			this->search_pair(sn, this->pair_infos, sp);
-			GenCamInfo info;
-			int idx;
-			idx = this->search_camera(sp[0], this->sub_camInfos, info);
-			this->sub_cameraPtr->setFPS(idx, fps, exposureUpperLimitRatio);
-			idx = this->search_camera(sp[1], this->sub_camInfos, info);
-			this->sub_cameraPtr->setFPS(idx, fps, exposureUpperLimitRatio);
+			this->sub_cameraPtr->setFPS(pair_infos[camInd][0].index, fps, exposureUpperLimitRatio);
+			this->sub_cameraPtr->setFPS(pair_infos[camInd][1].index, fps, exposureUpperLimitRatio);
 		}
 		return 0;
 	}
@@ -199,15 +199,8 @@ namespace cam {
 		else
 		{
 			//TODO : now will affect 2 real cameras
-			std::string sn = this->camInfos[camInd].sn;
-			StereoPair sp;
-			this->search_pair(sn, this->pair_infos, sp);
-			GenCamInfo info;
-			int idx;
-			idx = this->search_camera(sp[0], this->sub_camInfos, info);
-			this->sub_cameraPtr->setAutoWhiteBalance(idx);
-			idx = this->search_camera(sp[1], this->sub_camInfos, info);
-			this->sub_cameraPtr->setAutoWhiteBalance(idx);
+			this->sub_cameraPtr->setAutoWhiteBalance(pair_infos[camInd][0].index);
+			this->sub_cameraPtr->setAutoWhiteBalance(pair_infos[camInd][1].index);
 		}
 		return 0;
 	}
@@ -221,15 +214,8 @@ namespace cam {
 		else
 		{
 			//TODO : now will affect 2 real cameras
-			std::string sn = this->camInfos[camInd].sn;
-			StereoPair sp;
-			this->search_pair(sn, this->pair_infos, sp);
-			GenCamInfo info;
-			int idx;
-			idx = this->search_camera(sp[0], this->sub_camInfos, info);
-			this->sub_cameraPtr->setWhiteBalance(idx, redGain, greenGain, blueGain);
-			idx = this->search_camera(sp[1], this->sub_camInfos, info);
-			this->sub_cameraPtr->setWhiteBalance(idx, redGain, greenGain, blueGain);
+			this->sub_cameraPtr->setWhiteBalance(pair_infos[camInd][0].index, redGain, greenGain, blueGain);
+			this->sub_cameraPtr->setWhiteBalance(pair_infos[camInd][1].index, redGain, greenGain, blueGain);
 		}
 		return 0;
 	}
@@ -242,16 +228,10 @@ namespace cam {
 		else
 		{
 			//TODO : now will affect 2 real cameras
-			std::string sn = this->camInfos[camInd].sn;
-			StereoPair sp;
-			this->search_pair(sn, this->pair_infos, sp);
-			GenCamInfo info;
-			int idx;
-			idx = this->search_camera(sp[0], this->sub_camInfos, info);
-			this->sub_cameraPtr->setAutoExposure(idx, autoExposure);
-			idx = this->search_camera(sp[1], this->sub_camInfos, info);
-			this->sub_cameraPtr->setAutoExposure(idx, autoExposure);
+			this->sub_cameraPtr->setAutoExposure(pair_infos[camInd][0].index, autoExposure);
+			this->sub_cameraPtr->setAutoExposure(pair_infos[camInd][1].index, autoExposure);
 		}
+		return 0;
 	}
 
 	int GenCameraStereo::setAutoExposureLevel(int camInd, float level) {
@@ -262,15 +242,8 @@ namespace cam {
 		else
 		{
 			//TODO : now will affect 2 real cameras
-			std::string sn = this->camInfos[camInd].sn;
-			StereoPair sp;
-			this->search_pair(sn, this->pair_infos, sp);
-			GenCamInfo info;
-			int idx;
-			idx = this->search_camera(sp[0], this->sub_camInfos, info);
-			this->sub_cameraPtr->setAutoExposureLevel(idx, level);
-			idx = this->search_camera(sp[1], this->sub_camInfos, info);
-			this->sub_cameraPtr->setAutoExposureLevel(idx, level);
+			this->sub_cameraPtr->setAutoExposureLevel(pair_infos[camInd][0].index, level);
+			this->sub_cameraPtr->setAutoExposureLevel(pair_infos[camInd][1].index, level);
 		}
 		return 0;
 	}
@@ -284,15 +257,8 @@ namespace cam {
 		else
 		{
 			//TODO : now will affect 2 real cameras
-			std::string sn = this->camInfos[camInd].sn;
-			StereoPair sp;
-			this->search_pair(sn, this->pair_infos, sp);
-			GenCamInfo info;
-			int idx;
-			idx = this->search_camera(sp[0], this->sub_camInfos, info);
-			this->sub_cameraPtr->setAutoExposureCompensation(idx, status, relativeEV);
-			idx = this->search_camera(sp[1], this->sub_camInfos, info);
-			this->sub_cameraPtr->setAutoExposureCompensation(idx, status, relativeEV);
+			this->sub_cameraPtr->setAutoExposureCompensation(pair_infos[camInd][0].index, status, relativeEV);
+			this->sub_cameraPtr->setAutoExposureCompensation(pair_infos[camInd][1].index, status, relativeEV);
 		}
 		return 0;
 	}
@@ -305,15 +271,8 @@ namespace cam {
 		else
 		{
 			//TODO : now will affect 2 real cameras
-			std::string sn = this->camInfos[camInd].sn;
-			StereoPair sp;
-			this->search_pair(sn, this->pair_infos, sp);
-			GenCamInfo info;
-			int idx;
-			idx = this->search_camera(sp[0], this->sub_camInfos, info);
-			this->sub_cameraPtr->adjustBrightness(idx, brightness);
-			idx = this->search_camera(sp[1], this->sub_camInfos, info);
-			this->sub_cameraPtr->adjustBrightness(idx, brightness);
+			this->sub_cameraPtr->adjustBrightness(pair_infos[camInd][0].index, brightness);
+			this->sub_cameraPtr->adjustBrightness(pair_infos[camInd][1].index, brightness);
 		}
 		return 0;
 	}
@@ -326,28 +285,14 @@ namespace cam {
 		else
 		{
 			//TODO : now will affect 2 real cameras
-			std::string sn = this->camInfos[camInd].sn;
-			StereoPair sp;
-			this->search_pair(sn, this->pair_infos, sp);
-			GenCamInfo info;
-			int idx;
-			idx = this->search_camera(sp[0], this->sub_camInfos, info);
-			this->sub_cameraPtr->setExposure(idx, time);
-			idx = this->search_camera(sp[1], this->sub_camInfos, info);
-			this->sub_cameraPtr->setExposure(idx, time);
+			this->sub_cameraPtr->setExposure(pair_infos[camInd][0].index, time);
+			this->sub_cameraPtr->setExposure(pair_infos[camInd][1].index, time);
 		}
 		return 0;
 	}
 
 	int GenCameraStereo::getBayerPattern(int camInd, GenCamBayerPattern & bayerPattern) {
-
-		std::string sn = this->camInfos[camInd].sn;
-		StereoPair sp;
-		this->search_pair(sn, this->pair_infos, sp);
-		GenCamInfo info;
-		int idx;
-		idx = this->search_camera(sp[0], this->sub_camInfos, info);
-		this->sub_cameraPtr->getBayerPattern(idx, bayerPattern);
+		this->sub_cameraPtr->getBayerPattern(pair_infos[camInd][0].index, bayerPattern);
 		return 0;
 	}
 
@@ -358,32 +303,29 @@ namespace cam {
 
 	int GenCameraStereo::captureFrame(int camInd, Imagedata & img) 
 	{
-		this->sub_cameraPtr->captureFrame(this->raw_imgs);
-		std::string sn = this->camInfos[camInd].sn;
-		StereoPair sp;
-		int sp_idx;
-		sp_idx = this->search_pair(sn, this->pair_infos, sp);
-		GenCamInfo info;
-		int idx;
-		idx = this->search_camera(sp[0], this->sub_camInfos, info);
-		memcpy(this->pair_infos[sp_idx].single_master_img.data, this->raw_imgs[idx].data, info.width * info.height * sizeof(unsigned char));
-		idx = this->search_camera(sp[1], this->sub_camInfos, info);
-		memcpy(this->pair_infos[sp_idx].single_slave_img.data, this->raw_imgs[idx].data, info.width * info.height * sizeof(unsigned char));
-		int cols = this->pair_infos[sp_idx].single_master_img.cols;
-		int rows = this->pair_infos[sp_idx].single_master_img.rows;
-		cv::Mat roi = this->pair_infos[sp_idx].single_master_img(cv::Rect(0, 0, cols / 2, rows));
+		sub_cameraPtr->captureFrame(raw_imgs);
 
-		cv::Mat mask_master(this->pair_infos[sp_idx].single_master_img.rows,
-			this->pair_infos[sp_idx].single_master_img.cols,
-			this->pair_infos[sp_idx].single_master_img.depth,
-			cv::Scalar(0));
+		//test only
+		cv::Mat m, s, opt;
+		int cols = sub_camInfos[pair_infos[camInd][0].index].width;
+		int rows = sub_camInfos[pair_infos[camInd][0].index].height;
+		m.create(rows, cols, CV_8U);
+		s.create(rows, cols, CV_8U);
+		opt.create(rows, cols, CV_8U);
+		memcpy(m.data, raw_imgs[pair_infos[camInd][0].index].data, cols * rows * sizeof(uchar));
+		memcpy(s.data, raw_imgs[pair_infos[camInd][1].index].data, cols * rows * sizeof(uchar));
 
+		cv::Rect r1(0, 0, cols / 2, rows);
+		cv::Rect r2(cols / 2, 0, cols / 2, rows);
+		cv::Mat tmp;
+		tmp.create(rows, cols / 2, CV_8U);
+		cv::Mat mask = cv::Mat::ones(rows, cols / 2, CV_8U);
+		cv::resize(m, tmp, cv::Size(cols / 2, rows));
+		tmp.copyTo(opt(r1), mask);
+		cv::resize(s, tmp, cv::Size(cols / 2, rows));
+		tmp.copyTo(opt(r2), mask);
 
-		// capture images
-		checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
-		// copy to opencv mat
-		std::memcpy(img.data, xiImages[camInd].bp, sizeof(unsigned char) *
-			xiImages[camInd].width * xiImages[camInd].height);
+		memcpy(img.data, opt.data, cols * rows * sizeof(uchar));
 		return 0;
 	}
 

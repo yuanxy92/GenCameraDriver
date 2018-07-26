@@ -24,21 +24,40 @@ namespace cam {
 
 	class GenCameraStereo : public RealCamera {
 	private:
+		struct CameraIndexInfo
+		{
+			// The SN for real camera
+			std::string sn;
+			// The index for the real camera in sub_cameraPtr
+			int index;
+			CameraIndexInfo& operator =(const CameraIndexInfo& info)
+			{
+				this->sn = info.sn;
+				this->index = info.index;
+				return *this;
+			}
+			int& operator=(const int& infoIDX)
+			{
+				this->index = infoIDX;
+				return this->index;
+			}
+			std::string& operator=(const std::string& infoSTR)
+			{
+				this->sn = infoSTR;
+				return this->sn;
+			}
+		};
 		struct StereoPair
 		{
-			std::string master_sn;
-			std::string slave_sn;
+			CameraIndexInfo master, slave;
 			std::string int_path;
 			std::string ext_path;
-			bool inv;
-			std::string& operator[](int i)
+			bool inv; // Tell whether we have to change the order to do the rectify
+			CameraIndexInfo& operator[](int i)
 			{
-				return (i == 0) ? master_sn : slave_sn;
+				return (i == 0) ? master : slave;
  			}
 			StereoRectify sr;
-			cv::Mat single_mix_img;
-			cv::Mat single_master_img;
-			cv::Mat single_slave_img;
 		};
 	private:
 		std::string config_file_path;
@@ -50,9 +69,9 @@ namespace cam {
 	private:
 		int load_config(std::string path);
 
-		int search_camera(std::string sn,std::vector<GenCamInfo> list, GenCamInfo& info);
+		int search_camera(std::string sn,std::vector<GenCamInfo> list);
 
-		int search_pair(std::string sn, std::vector<StereoPair> list, StereoPair& pair);
+		int search_pair(std::string sn, std::vector<StereoPair> list);
 
 	public:
 		GenCameraStereo();
