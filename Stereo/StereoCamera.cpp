@@ -342,6 +342,7 @@ namespace cam {
 			pair_infos[camInd][1].gpu_rgb_img,
 			pair_infos[camInd][1].gpu_rec_img);
 
+
 		img.data = reinterpret_cast<char*>(pair_infos[camInd][0].gpu_rec_img.data);
 
 		////test only

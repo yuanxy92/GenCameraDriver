@@ -120,9 +120,13 @@ namespace cam {
 					, std::ref(cvstream));
 				cvstream.waitForCompletion();
 			}
-			else
+			else if(this->isCapturedFrameDebayered == false)
 			{
 				this->bufferImgs_cuda[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data);
+			}
+			else
+			{
+				this->dabayerImgs_cuda[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data);
 			}
 			// end time
 			end_time = clock();
@@ -194,10 +198,10 @@ namespace cam {
 						npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
 							static_cast<int>(camInfos[camInd].bayerPattern))), -1, stream);
 				}
-				else
-				{
-					this->dabayerImgs_cuda[camInd] = this->bufferImgs_cuda[camInd];
-				}
+				//else
+				//{
+				//	this->dabayerImgs_cuda[camInd] = this->bufferImgs_cuda[camInd];
+				//}
 				// resize
 				if (ratioInd != 0) {
 					cv::cuda::resize(this->dabayerImgs_cuda[camInd], this->dabayerImgs_cuda[camInd],
@@ -306,6 +310,7 @@ namespace cam {
 					//cudaMalloc(&this->bufferImgs_cuda[i], sizeof(uchar)
 					//	* camInfos[i].width * camInfos[i].height);
 					this->bufferImgs_cuda[i].create(camInfos[i].height, camInfos[i].width, CV_8U);
+					this->dabayerImgs_cuda[i].create(camInfos[i].height, camInfos[i].width, CV_8UC3);
 					size_t length = sizeof(uchar) * camInfos[i].width * camInfos[i].height;
 					this->bufferImgs_data_ptr[i].data = new char[length];
 					this->bufferImgs_data_ptr[i].length = length;
@@ -461,7 +466,8 @@ namespace cam {
 		if (this->bufferType == GenCamBufferType::JPEG) {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				this->bufferImgs_cuda[i].release();
-				delete[] this->bufferImgs_data_ptr[i].data;
+				//delete[] this->bufferImgs_data_ptr[i].data;
+				delete[] this->bufferImgs_host[i].data;
 				for (size_t j = 0; j < 4; j++) {
 					coders[i][j].release();
 				}
