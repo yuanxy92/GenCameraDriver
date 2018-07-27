@@ -16,7 +16,7 @@ namespace cam {
 			sprintf(info, "XIMEA camera error at %s:%d function: %s\n",
 				file, line, func);
 			SysUtil::errorOutput(info);
-			exit(-1);
+			//exit(-1);
 		}
 	}
 

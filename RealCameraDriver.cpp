@@ -208,6 +208,11 @@ namespace cam {
 						coders[camInd][ratioInd].getImageSize(), cv::INTER_LINEAR);
 				}
 				// compress
+
+				//cv::Mat tmp;
+				//dabayerImgs_cuda[camInd].download(tmp);
+
+
 				coders[camInd][ratioInd].encode_rgb(this->dabayerImgs_cuda[camInd],
 					reinterpret_cast<uchar*>(bufferImgs[thBufferInds[camInd]][camInd].data),
 					&bufferImgs[thBufferInds[camInd]][camInd].length,

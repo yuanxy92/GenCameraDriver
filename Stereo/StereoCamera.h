@@ -19,6 +19,9 @@ Implementation of Stereo camera
 #include "GenCameraDriver.h"
 #include "RealCameraDriver.h"
 #include "Stereo/StereoRectify.h"
+#include "ExposureFusion.h"
+
+#define EXPOSURE_DIFF 15
 
 namespace cam {
 
@@ -36,6 +39,11 @@ namespace cam {
 			cv::cuda::GpuMat gpu_raw_img;
 			cv::cuda::GpuMat gpu_rgb_img;
 			cv::cuda::GpuMat gpu_rec_img;
+			Npp32f wbTwist[3][4] = {
+				{ 1.0, 0.0, 0.0, 0.0 },
+				{ 0.0, 1.0, 0.0, 0.0 },
+				{ 0.0, 0.0, 1.0, 0.0 }
+			};
 			SubCamera& operator =(const SubCamera& another)
 			{
 				this->sn = another.sn;
@@ -68,6 +76,9 @@ namespace cam {
 				return (i == 0) ? master : slave;
  			}
 			StereoRectify sr;
+			ExposureFusion ef;
+			int isFusionInit;
+			cv::cuda::GpuMat fusioned_img;
 		};
 	private:
 		std::string config_file_path;
@@ -76,6 +87,7 @@ namespace cam {
 		std::shared_ptr<cam::GenCamera> sub_cameraPtr;
 		std::vector<StereoPair> pair_infos;
 		std::vector<Imagedata> raw_imgs;
+
 	private:
 		int load_config(std::string path);
 

@@ -78,7 +78,7 @@ int StereoRectify::rectify(cv::cuda::GpuMat & srcImg0, cv::cuda::GpuMat & dstImg
 	dstImg0(rect).copyTo(tmp_dst0);
 	cv::cuda::resize(tmp_dst0, dstImg0, cv::Size(srcImg0.cols, srcImg0.rows));
 
-	cv::cuda::remap(srcImg1, dstImg1, gpu_rmap[0][0], gpu_rmap[0][1], cv::INTER_LINEAR);
+	cv::cuda::remap(srcImg1, dstImg1, gpu_rmap[1][0], gpu_rmap[1][1], cv::INTER_LINEAR);
 	cv::cuda::GpuMat tmp_dst1;
 	dstImg1(rect).copyTo(tmp_dst1);
 	cv::cuda::resize(tmp_dst1, dstImg1, cv::Size(srcImg1.cols, srcImg1.rows));

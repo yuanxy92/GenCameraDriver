@@ -71,7 +71,7 @@ int record(int argc, char* argv[]) {
 	cameraPtr->startCapture();
 	cameraPtr->setFPS(-1, 10);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);
-	//cameraPtr->setAutoExposureLevel(-1, 30);
+	cameraPtr->setAutoExposureLevel(-1, 30);
 	//cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
 	//cameraPtr->setAutoWhiteBalance(-1);
 	cameraPtr->setWhiteBalance(-1, 1.6, 1, 2);

@@ -7,6 +7,19 @@ Implementation of XIMEA camera
 
 #include "StereoCamera.h"
 #include "INIReader.h"
+#include <npp.h>
+#include "Exceptions.h"
+//#include <nppi_compression_functions.h>
+//#include <cuda_runtime.h>
+//
+//#include <opencv2/opencv.hpp>
+//#include <opencv2/highgui.hpp>
+//#include <opencv2/imgproc.hpp>
+//#include <opencv2/cudaimgproc.hpp>
+//#include <opencv2/core/cuda_stream_accessor.hpp>
+//
+//#include "helper_string.h"
+#include "helper_cuda.h"
 
 namespace cam {
 
@@ -102,6 +115,21 @@ namespace cam {
 				return -1;
 			}
 			pair_infos[i][0] = idx;
+			pair_infos[i][0].wbTwist[0][0] = sub_camInfos[idx].redGain;
+			pair_infos[i][0].wbTwist[1][1] = sub_camInfos[idx].greenGain;
+			pair_infos[i][0].wbTwist[2][2] = sub_camInfos[idx].blueGain;
+			//Searching Slave
+			idx = search_camera(pair_infos[i][1].sn, sub_camInfos);
+			if (idx == -1)
+			{
+				SysUtil::errorOutput("GenCameraStereo::init failed! slave sn not found! Searching for " + pair_infos[i][1].sn);
+				return -1;
+			}
+			pair_infos[i][1] = idx;
+			pair_infos[i][1].wbTwist[0][0] = sub_camInfos[idx].redGain;
+			pair_infos[i][1].wbTwist[1][1] = sub_camInfos[idx].greenGain;
+			pair_infos[i][1].wbTwist[2][2] = sub_camInfos[idx].blueGain;
+
 			pair_infos[i].sr.init(pair_infos[i].int_path, pair_infos[i].ext_path, cv::Size(sub_camInfos[idx].width, sub_camInfos[idx].height));
 			size_t length = sizeof(uchar) * sub_camInfos[idx].width * sub_camInfos[idx].height;
 			raw_imgs[i * 2].data = new char[length];
@@ -122,21 +150,13 @@ namespace cam {
 
 			pair_infos[i][0].gpu_rec_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
 			pair_infos[i][1].gpu_rec_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
-
-			//Searching Slave
-			idx = search_camera(pair_infos[i][1].sn, sub_camInfos);
-			if (idx == -1)
-			{
-				SysUtil::errorOutput("GenCameraStereo::init failed! slave sn not found! Searching for " + pair_infos[i][1].sn);
-				return -1;
-			}
-			pair_infos[i][1] = idx;
-
+			pair_infos[i].isFusionInit = false;
 		}
 		cameraNum = pair_infos.size();
 		ths.resize(cameraNum);
 		thStatus.resize(cameraNum);
 		isInit = true;
+		//isFusionInit = false;
 		// init image ratio vector
 		imgRatios.resize(cameraNum);
 		for (size_t i = 0; i < cameraNum; i++) {
@@ -186,10 +206,19 @@ namespace cam {
 		camInfos.resize(cameraNum);
 		sub_cameraPtr->getCamInfos(sub_camInfos);
 		//each pair info = master.info
-		for (size_t i = 0; i < this->cameraNum; i++) 
+		for (size_t i = 0; i < this->cameraNum; i++)
 		{
 			camInfos[i] = sub_camInfos[pair_infos[i][0].index];
 			camInfos[i].sn = "MIX_" + sub_camInfos[pair_infos[i][0].index].sn + "_" + sub_camInfos[pair_infos[i][1].index].sn;
+			camInfos[i].isWBRaw = true;
+
+			//set twist
+			for (int j = 0; j < 2; j++)
+			{
+				pair_infos[i][j].wbTwist[0][0] = sub_camInfos[pair_infos[i][j].index].redGain;
+				pair_infos[i][j].wbTwist[1][1] = sub_camInfos[pair_infos[i][j].index].greenGain;
+				pair_infos[i][j].wbTwist[2][2] = sub_camInfos[pair_infos[i][j].index].blueGain;
+			}
 		}
 		return 0;
 	}
@@ -254,13 +283,20 @@ namespace cam {
 	int GenCameraStereo::setAutoExposureLevel(int camInd, float level) {
 		if (camInd == -1)
 		{
-			this->sub_cameraPtr->setAutoExposureLevel(camInd, level);
+			//this->sub_cameraPtr->setAutoExposureLevel(camInd, level);
+			for (int i = 0; i < this->cameraNum; i++)
+			{
+				this->sub_cameraPtr->setAutoExposureLevel(pair_infos[i][0].index, level + EXPOSURE_DIFF);
+				this->sub_cameraPtr->setAutoExposureLevel(pair_infos[i][1].index, level - EXPOSURE_DIFF);
+				pair_infos[i].isFusionInit = false;
+			}
 		}
 		else
 		{
 			//TODO : now will affect 2 real cameras
-			this->sub_cameraPtr->setAutoExposureLevel(pair_infos[camInd][0].index, level);
-			this->sub_cameraPtr->setAutoExposureLevel(pair_infos[camInd][1].index, level);
+			this->sub_cameraPtr->setAutoExposureLevel(pair_infos[camInd][0].index, level + EXPOSURE_DIFF);
+			this->sub_cameraPtr->setAutoExposureLevel(pair_infos[camInd][1].index, level - EXPOSURE_DIFF);
+			pair_infos[camInd].isFusionInit = false;
 		}
 		return 0;
 	}
@@ -336,14 +372,51 @@ namespace cam {
 			npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
 				static_cast<int>(camInfos[camInd].bayerPattern))));
 
-		pair_infos[camInd].sr.rectify(
-			pair_infos[camInd][0].gpu_rgb_img,
-			pair_infos[camInd][0].gpu_rec_img,
-			pair_infos[camInd][1].gpu_rgb_img,
-			pair_infos[camInd][1].gpu_rec_img);
+		if (pair_infos[camInd].inv == false)
+		{
+			pair_infos[camInd].sr.rectify(
+				pair_infos[camInd][0].gpu_rgb_img,
+				pair_infos[camInd][0].gpu_rec_img,
+				pair_infos[camInd][1].gpu_rgb_img,
+				pair_infos[camInd][1].gpu_rec_img);
+		}
+		else
+		{
+			pair_infos[camInd].sr.rectify(
+				pair_infos[camInd][1].gpu_rgb_img,
+				pair_infos[camInd][1].gpu_rec_img,
+				pair_infos[camInd][0].gpu_rgb_img,
+				pair_infos[camInd][0].gpu_rec_img);
+		}
 
+		//Twist
+		for (int i = 0; i < 2; i++)
+		{
+			NppiSize osize;
+			osize.width = sub_camInfos[pair_infos[camInd][i].index].width;
+			osize.height = sub_camInfos[pair_infos[camInd][i].index].height;
+			NPP_CHECK_NPP(nppiColorTwist32f_8u_C3IR(pair_infos[camInd][i].gpu_rec_img.data, pair_infos[camInd][i].gpu_rec_img.step, osize, pair_infos[camInd][i].wbTwist));
+		}
+		
 
-		img.data = reinterpret_cast<char*>(pair_infos[camInd][0].gpu_rec_img.data);
+		if (pair_infos[camInd].isFusionInit == false)
+		{
+			cv::Mat cpu_master_tmp, cpu_slave_tmp;
+			pair_infos[camInd][0].gpu_rec_img.download(cpu_master_tmp);
+			pair_infos[camInd][1].gpu_rec_img.download(cpu_slave_tmp);
+			pair_infos[camInd].ef.calcWeight(cpu_slave_tmp, cpu_master_tmp);
+			pair_infos[camInd].isFusionInit = true;
+		}
+
+		pair_infos[camInd].ef.fusion(pair_infos[camInd][1].gpu_rec_img, pair_infos[camInd][0].gpu_rec_img, pair_infos[camInd].fusioned_img);
+
+		//cv::Mat m1, m2, m3;
+		//pair_infos[camInd][1].gpu_rec_img.download(m1);
+		//pair_infos[camInd][0].gpu_rec_img.download(m2);
+		//pair_infos[camInd].fusioned_img.download(m3);
+
+		//img.data = reinterpret_cast<char*>(pair_infos[camInd][0].gpu_rec_img.data);
+		img.data = reinterpret_cast<char*>(pair_infos[camInd].fusioned_img.data);
 
 		////test only
 		//cv::Mat m, s, opt;
@@ -354,7 +427,6 @@ namespace cam {
 		//opt.create(rows, cols, CV_8U);
 		//memcpy(m.data, raw_imgs[pair_infos[camInd][0].index].data, cols * rows * sizeof(uchar));
 		//memcpy(s.data, raw_imgs[pair_infos[camInd][1].index].data, cols * rows * sizeof(uchar));
-
 		//cv::Rect r1(0, 0, cols / 2, rows);
 		//cv::Rect r2(cols / 2, 0, cols / 2, rows);
 		//cv::Mat tmp;
@@ -364,7 +436,6 @@ namespace cam {
 		//tmp.copyTo(opt(r1), mask);
 		//cv::resize(s, tmp, cv::Size(cols / 2, rows));
 		//tmp.copyTo(opt(r2), mask);
-
 		//memcpy(img.data, opt.data, cols * rows * sizeof(uchar));
 		return 0;
 	}

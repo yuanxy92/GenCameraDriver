@@ -120,6 +120,7 @@ set(MY_HEADER_FILES
     Stereo/StereoCamera.h
     Stereo/INIReader.h
     Stereo/StereoRectify.h
+    Stereo/ExposureFusion.h
 )
 
 set(MY_SOURCE_FILES 
@@ -132,6 +133,7 @@ set(MY_SOURCE_FILES
     # Stereo camera
     Stereo/StereoCamera.cpp
     Stereo/StereoRectify.cpp
+    Stereo/ExposureFusion.cpp
     # C++ source file
     NPPJpegCoder.cpp
     # generic camera driver
@@ -158,6 +160,8 @@ source_group("Stereo" FILES
     Stereo/StereoCamera.cpp
     Stereo/StereoRectify.h
     Stereo/StereoRectify.cpp
+    Stereo/ExposureFusion.h
+    Stereo/ExposureFusion.cpp
 )
 
 source_group("FileCamera" FILES
