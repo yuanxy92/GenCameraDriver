@@ -164,12 +164,15 @@ namespace cam {
 			hasFrame = false;
 			// check if threads are need to exit
 			int sum = std::accumulate(thBufferInds.begin(), thBufferInds.end(), 0);
+
+			//SysUtil::infoOutput(cv::format("[OUTSIDE]thBufferInds[0] : %d, sum : %d", thBufferInds[0], sum));
+
 			if (thexit == 1)
 				break;
 			if (sum == bufferSize * this->cameraNum)
-				break;
+ 				break;
 			// compress images
-			for (size_t camInd = 0; camInd < this->cameraNum; camInd ++) {
+			for (size_t camInd = 0; camInd < this->cameraNum; camInd++) {
 				// check if all the images are captured
 				if (thStatus[camInd] != 2 || thBufferInds[camInd] == bufferSize) {
 					// if no image is compressed in this for loop, wait 5ms
@@ -184,6 +187,9 @@ namespace cam {
 					continue;
 				}
 				else hasFrame = true;
+
+				//SysUtil::infoOutput(cv::format("[INSIDE] thBufferInds[0] : %d, sum : %d", thBufferInds[0], sum));
+
 				if (thexit == 1)
 					break;
 				// begin time
@@ -226,7 +232,7 @@ namespace cam {
 				if (isVerbose) {
 					float costTime = static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
 					char info[256];
-					sprintf(info, "Camera %d compress one frame, buffer to index %d, cost %f miliseconds ...", camInd, 
+					sprintf(info, "Camera %d compress one frame, buffer to index %d, cost %f miliseconds ...", camInd,
 						thBufferInds[camInd], costTime);
 					SysUtil::infoOutput(info);
 				}
