@@ -40,6 +40,8 @@ namespace cam {
 			sp[1] = reader.Get(stridx, "slave_sn", "default_slave_sn");
 			sp.int_path = reader.Get(stridx, "int_path", "default_int_path");
 			sp.ext_path = reader.Get(stridx, "ext_path", "default_ext_path");
+			sp.warp_x_path = reader.Get(stridx, "warp_x_path", "default_warp_x_path");
+			sp.warp_y_path = reader.Get(stridx, "warp_y_path", "default_warp_y_path");
 			sp.inv = reader.GetBoolean(stridx, "inv", false);
 			this->pair_infos.push_back(sp);
 		}
@@ -130,7 +132,21 @@ namespace cam {
 			pair_infos[i][1].wbTwist[1][1] = sub_camInfos[idx].greenGain;
 			pair_infos[i][1].wbTwist[2][2] = sub_camInfos[idx].blueGain;
 
+			//fusion bool
+			pair_infos[i].isFusionInit = false;
+
+			//prepare warping mat
+			pair_infos[i].warp_x = cv::imread(pair_infos[i].warp_x_path, cv::IMREAD_ANYDEPTH);
+			pair_infos[i].warp_x.convertTo(pair_infos[i].warp_x, CV_32FC1);
+			pair_infos[i].warp_y = cv::imread(pair_infos[i].warp_y_path, cv::IMREAD_ANYDEPTH);
+			pair_infos[i].warp_y.convertTo(pair_infos[i].warp_y, CV_32FC1);
+			pair_infos[i].gpu_warp_x.upload(pair_infos[i].warp_x);
+			pair_infos[i].gpu_warp_y.upload(pair_infos[i].warp_y);
+
+			//prepare rectify class
 			pair_infos[i].sr.init(pair_infos[i].int_path, pair_infos[i].ext_path, cv::Size(sub_camInfos[idx].width, sub_camInfos[idx].height));
+
+			//prepare raw img space
 			size_t length = sizeof(uchar) * sub_camInfos[idx].width * sub_camInfos[idx].height;
 			raw_imgs[i * 2].data = new char[length];
 			raw_imgs[i * 2].length = length;
@@ -139,6 +155,7 @@ namespace cam {
 			raw_imgs[i * 2 + 1].length = length;
 			raw_imgs[i * 2 + 1].maxLength = length;
 
+			//prepare capture space
 			pair_infos[i][0].cpu_raw_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8U);
 			pair_infos[i][1].cpu_raw_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8U);
 
@@ -150,7 +167,10 @@ namespace cam {
 
 			pair_infos[i][0].gpu_rec_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
 			pair_infos[i][1].gpu_rec_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
-			pair_infos[i].isFusionInit = false;
+
+			pair_infos[i][0].gpu_remap_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
+			pair_infos[i][1].gpu_remap_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
+			
 		}
 		cameraNum = pair_infos.size();
 		ths.resize(cameraNum);
@@ -397,18 +417,25 @@ namespace cam {
 			osize.height = sub_camInfos[pair_infos[camInd][i].index].height;
 			NPP_CHECK_NPP(nppiColorTwist32f_8u_C3IR(pair_infos[camInd][i].gpu_rec_img.data, pair_infos[camInd][i].gpu_rec_img.step, osize, pair_infos[camInd][i].wbTwist));
 		}
-		
+
+		//cv::Mat tmp;
+		//pair_infos[camInd][1].gpu_rec_img.download(tmp);
+
+		cv::cuda::remap(
+			pair_infos[camInd][1].gpu_rec_img, pair_infos[camInd][1].gpu_remap_img,
+			pair_infos[camInd].gpu_warp_x, pair_infos[camInd].gpu_warp_y, cv::INTER_LINEAR, cv::BORDER_REFLECT); //cv::BORDER_TRANSPARENT is now not supported in cuda version
+
 
 		if (pair_infos[camInd].isFusionInit == false)
 		{
 			cv::Mat cpu_master_tmp, cpu_slave_tmp;
 			pair_infos[camInd][0].gpu_rec_img.download(cpu_master_tmp);
-			pair_infos[camInd][1].gpu_rec_img.download(cpu_slave_tmp);
+			pair_infos[camInd][1].gpu_remap_img.download(cpu_slave_tmp);
 			pair_infos[camInd].ef.calcWeight(cpu_slave_tmp, cpu_master_tmp);
 			pair_infos[camInd].isFusionInit = true;
 		}
 
-		pair_infos[camInd].ef.fusion(pair_infos[camInd][1].gpu_rec_img, pair_infos[camInd][0].gpu_rec_img, pair_infos[camInd].fusioned_img);
+		pair_infos[camInd].ef.fusion(pair_infos[camInd][1].gpu_remap_img, pair_infos[camInd][0].gpu_rec_img, pair_infos[camInd].fusioned_img);
 
 		//cv::Mat m1, m2, m3;
 		//pair_infos[camInd][1].gpu_rec_img.download(m1);

@@ -39,6 +39,7 @@ namespace cam {
 			cv::cuda::GpuMat gpu_raw_img;
 			cv::cuda::GpuMat gpu_rgb_img;
 			cv::cuda::GpuMat gpu_rec_img;
+			cv::cuda::GpuMat gpu_remap_img;
 			Npp32f wbTwist[3][4] = {
 				{ 1.0, 0.0, 0.0, 0.0 },
 				{ 0.0, 1.0, 0.0, 0.0 },
@@ -70,6 +71,12 @@ namespace cam {
 			SubCamera master, slave;
 			std::string int_path;
 			std::string ext_path;
+			std::string warp_x_path;
+			std::string warp_y_path;
+			cv::Mat warp_x;
+			cv::Mat warp_y;
+			cv::cuda::GpuMat gpu_warp_x;
+			cv::cuda::GpuMat gpu_warp_y;
 			bool inv; // Tell whether we have to change the order to do the rectify
 			SubCamera& operator[](int i)
 			{

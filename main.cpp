@@ -74,11 +74,11 @@ int record(int argc, char* argv[]) {
 	cameraPtr->setAutoExposureLevel(-1, 30);
 	//cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
 	//cameraPtr->setAutoWhiteBalance(-1);
-	cameraPtr->setWhiteBalance(-1, 1.6, 1, 2);
+	cameraPtr->setWhiteBalance(-1, 2.0, 1.0, 2.0);
 	cameraPtr->makeSetEffective();
 	// set capturing setting
 	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
-	cameraPtr->setJPEGQuality(85, 0.5);
+	cameraPtr->setJPEGQuality(90, 0.75);
 	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
 	//cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
