@@ -283,6 +283,9 @@ namespace cam {
 		// image mapping vector in capturing function
 		std::vector<size_t> mappingVector;
 
+		// variable used to start capturing thread
+		int isStartRecord;
+
 	public:
 
 	protected:
