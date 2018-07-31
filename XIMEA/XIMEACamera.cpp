@@ -288,6 +288,11 @@ namespace cam {
 				sprintf(info, "XIMEA camera %d, exposure level set to %f%% ", i, level);
 				SysUtil::infoOutput(info);
 			}
+			for (size_t frame = 0; frame < 2; frame++) {
+				for (size_t i = 0; i < this->cameraNum; i++) {
+					checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
+				}
+			}
 		}
 		else {
 			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_AEAG_LEVEL,
@@ -295,13 +300,16 @@ namespace cam {
 			char info[256];
 			sprintf(info, "XIMEA camera %d, exposure level set to %f%%", camInd, level);
 			SysUtil::infoOutput(info);
-		}
-
-		for (size_t frame = 0; frame < 20; frame++) {
-			for (size_t i = 0; i < this->cameraNum; i++) {
-				checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
+			for (size_t frame = 0; frame < 2; frame++) {
+				checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
 			}
 		}
+
+		// for (size_t frame = 0; frame < 2; frame++) {
+		// 	for (size_t i = 0; i < this->cameraNum; i++) {
+		// 		checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
+		// 	}
+		// }
 		return 0;
 	}
 
