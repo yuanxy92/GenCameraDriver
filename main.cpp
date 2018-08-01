@@ -46,7 +46,7 @@ int record(int argc, char* argv[]) {
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
 	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
 	cameraPtr->setJPEGQuality(90, 0.25);
-	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 2000);
+	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
 	cameraPtr->setVerbose(false);
 	cameraPtr->makeSetEffective();
     cameraPtr->getCamInfos(camInfos);
@@ -113,7 +113,7 @@ int record_server(int argc, char* argv[]) {
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
 	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
 	cameraPtr->setJPEGQuality(90, 0.25);
-	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 2000);
+	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
 	cameraPtr->setVerbose(false);
 	cameraPtr->makeSetEffective();
     cameraPtr->getCamInfos(camInfos);
@@ -121,6 +121,7 @@ int record_server(int argc, char* argv[]) {
 	cameraPtr->startCaptureThreads();
 
 	// add socket code here to set variable to start capturing 
+	printf("Waiting for action command !\n");
 	listen(sockfd, 5);
 	newsockfd = accept(sockfd, 
                 (struct sockaddr *) &cli_addr, 
@@ -130,7 +131,7 @@ int record_server(int argc, char* argv[]) {
     bzero(buffer, 256);
     n = read(newsockfd, buffer, 255);
     if (n < 0) error("ERROR reading from socket");
-	if (strcmp(buffer, "action") == 0) {
+	if (strcmp(buffer, "Action") == 0) {
 		cameraPtr->isStartRecord = true;
     	printf("Here is the message: %s\n", buffer);
 	}
@@ -155,7 +156,7 @@ int record_server(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
 	//preview(argc, argv);
-	record(argc, argv);
+	record_server(argc, argv);
 	//testFileCamera();
 	return 0;
 }
