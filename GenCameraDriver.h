@@ -517,6 +517,13 @@ namespace cam {
 		*/
 		int saveVideos(std::string dir);
 
+		/**
+		@brief save captured videos to dir
+		@param std::string dir: input dir to save videos
+		@return int
+		*/
+		int saveBinfiles(std::string dir);
+
 		/*************************************************************/
 		/*    function to set mapping vector of capture function     */
 		/*                and function to capture images             */

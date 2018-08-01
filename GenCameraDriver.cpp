@@ -133,7 +133,7 @@ namespace cam {
 				npp::NPPJpegCoder coder;
 				coder.init(camInfos[i].width, camInfos[i].height, JPEGQuality);
 				// init video parameter
-				std::string videoname = cv::format("%s/cam_%02d.avi", dir.c_str(), i);
+				std::string videoname = cv::format("%s/cam_%02d_%s.avi", dir.c_str(), i, camInfos[i].sn.c_str());
 				cv::VideoWriter writer(videoname, cv::VideoWriter::fourcc('D', 'I', 'V', 'X'), 
 					camInfos[i].fps, cv::Size(camInfos[i].width, camInfos[i].height), true);
 				cv::cuda::GpuMat img_d(camInfos[i].height, camInfos[i].width, CV_8UC3);
@@ -159,7 +159,7 @@ namespace cam {
 			SysUtil::mkdir(dir);
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				// init video parameter
-				std::string videoname = cv::format("%s/cam_%02d.avi", dir.c_str(), i);
+				std::string videoname = cv::format("%s/cam_%02d_%s.avi", dir.c_str(), i, camInfos[i].sn.c_str());
 				cv::VideoWriter writer(videoname, cv::VideoWriter::fourcc('D', 'I', 'V', 'X'),
 					camInfos[i].fps, cv::Size(camInfos[i].width, camInfos[i].height), true);
 				for (size_t j = 0; j < this->bufferSize; j++) {
@@ -180,6 +180,30 @@ namespace cam {
 		}
 		return 0;
 	}
+
+	/**
+	@brief save bin files to dir
+	@param std::string dir: input dir to save videos
+	@return int
+	*/
+	int GenCamera::saveBinfiles(std::string dir) {
+		SysUtil::mkdir(dir);
+		for (size_t i = 0; i < this->cameraNum; i++) {
+			// init video parameter
+			std::string videoname = cv::format("%s/cam_%02d_%s.bin", dir.c_str(), i, camInfos[i].sn.c_str());
+			// use C style file output function
+			FILE *fp = fopen(videoname.c_str(), "wb"); 
+			for (size_t j = 0; j < this->bufferSize; j++) {
+				coder.decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data), 
+					this->bufferImgs[j][i].length,
+					img_d, 0);
+				fwrite(&(unsigned int)(this->bufferImgs[j][i].length), sizeof(unsigned int), 1, fp)
+				fwrite(this->bufferImgs[j][i].data, this->bufferImgs[j][i].length, 1, fp);
+			}
+			fclose(fp);
+		}
+		return 0;
+	}	
 
 	/*************************************************************/
 	/*    function to set mapping vector of capture function     */

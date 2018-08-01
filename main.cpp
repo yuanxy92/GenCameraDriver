@@ -73,6 +73,10 @@ void error(const char *msg) {
 
 // record from network
 int record_server(int argc, char* argv[]) {
+	if (argc == 1) {
+		printf("Usage:\n GenCameraDriver [port] [frame number] [record type, video or bin file] [out dir]\n");
+	}
+
 	// init socket
 	int sockfd, newsockfd, portno;
     socklen_t clilen;
@@ -106,6 +110,10 @@ int record_server(int argc, char* argv[]) {
 		= cam::createCamera(cam::CameraModel::PointGrey_u3);
 		//= cam::createCamera(cam::CameraModel::XIMEA_xiC);
 	cameraPtr->init();
+	for(int i = 0; i < camInfos.size();i++) {
+        printf("%d:%s\n",i, camInfos[i].sn.c_str());
+		printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
+    }
 	// set camera setting
 	cameraPtr->startCapture();
 	cameraPtr->setFPS(-1, 10);
@@ -149,13 +157,25 @@ int record_server(int argc, char* argv[]) {
 
 	// wait for recoding to finish
 	cameraPtr->waitForRecordFinish();
-	//cameraPtr->saveImages("test_img");
-	cameraPtr->saveVideos("saved");
-    for(int i = 0; i < camInfos.size();i++) {
-        printf("%d:%s\n",i, camInfos[i].sn.c_str());
-		printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
-    }
 	cameraPtr->stopCaptureThreads();
+
+	// get saving type
+	std::string outdir = "saved";
+	if (argc >= 5) {
+		outdir = std::string(argv[4]);
+	}
+	std::string recordingType = "video";
+	if (argc >= 4) {
+		recordingType = std::string(argv[3]);	
+	}
+	if (recordingType.compare("video") == 0)
+		cameraPtr->saveVideos(outdir);
+	else if (recordingType.compare("bin") == 0)
+		cameraPtr->saveBinfiles(outdir);
+	else {
+		SysUtil::errorOutput("Wrong recording type, only video or bin is supported now!");
+	}
+
 	cameraPtr->release();
 	return 0;
 }
