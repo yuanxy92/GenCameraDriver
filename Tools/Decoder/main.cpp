@@ -21,7 +21,7 @@
 
 int main(int argc, char* argv[]) {
 	std::string input(argv[1]);
-	std::string output(argv[1]);
+	std::string output(argv[2]);
 
 	int frameNum;
 	int quality;
@@ -43,11 +43,12 @@ int main(int argc, char* argv[]) {
 	cv::cuda::GpuMat img(height, width, CV_8UC3);
 	cv::Mat img_h;
 	for (size_t i = 0; i < frameNum; i++) {
+		printf("Decode frame %d, total %d frames.\n", i, frameNum);
 		fread(&length, sizeof(unsigned int), 1, fp);
 		fread(data, length, 1, fp);
 		if (i == 0) {
 			coder.init(width, height, quality);
-			writer.open(output, cv::VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, cv::Size(width, height));
+			writer.open(output.c_str(), cv::VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, cv::Size(width, height));
 		}
 		coder.decode(reinterpret_cast<unsigned char*>(data), length, img, 0);
 		img.download(img_h);
