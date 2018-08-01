@@ -201,7 +201,7 @@ namespace cam {
 			for (size_t j = 0; j < this->bufferSize; j++) {
 				unsigned int dataLength = this->bufferImgs[j][i].length;
 				// write frame length
-				fwrite(&(unsigned int)(dataLength), sizeof(unsigned int), 1, fp);
+				fwrite(&(dataLength), sizeof(unsigned int), 1, fp);
 				// write data
 				fwrite(this->bufferImgs[j][i].data, this->bufferImgs[j][i].length, 1, fp);
 			}
