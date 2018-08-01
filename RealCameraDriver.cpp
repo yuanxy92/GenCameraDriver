@@ -212,6 +212,7 @@ namespace cam {
 				thStatus[camInd] = 1;
 			}
 		}
+		thexit = 1;
 		SysUtil::infoOutput("JPEG compress thread exit successfully !");
 	}
 
