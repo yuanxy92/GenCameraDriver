@@ -198,8 +198,8 @@ namespace cam {
 			unsigned int frames = (unsigned int)(this->bufferSize);
 			int quality = 90;
 			fwrite(&frames, sizeof(unsigned int), 1, fp);		
-			fwrite(&width, sizeof(int), 1, fp);		
-			fwrite(&height, sizeof(int), 1, fp);		
+			fwrite(&camInfos[i].width, sizeof(int), 1, fp);		
+			fwrite(&camInfos[i].height, sizeof(int), 1, fp);		
 			fwrite(&quality, sizeof(int), 1, fp);		
 			for (size_t j = 0; j < this->bufferSize; j++) {
 				unsigned int dataLength = this->bufferImgs[j][i].length;
