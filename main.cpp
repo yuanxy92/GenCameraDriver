@@ -163,6 +163,7 @@ int record_server(int argc, char* argv[]) {
 	std::string outdir = "saved";
 	if (argc >= 5) {
 		outdir = std::string(argv[4]);
+		cam::SysUtil::mkdir(outdir);
 	}
 	std::string recordingType = "video";
 	if (argc >= 4) {
