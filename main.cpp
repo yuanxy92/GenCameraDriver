@@ -78,6 +78,13 @@ int record_server(int argc, char* argv[]) {
 		return 0;
 	}
 
+	// get saving type
+	std::string outdir = "saved";
+	if (argc >= 5) {
+		outdir = std::string(argv[4]);
+		cam::SysUtil::mkdir(outdir);
+	}
+
 	// init socket
 	int sockfd, newsockfd, portno;
     socklen_t clilen;
@@ -159,13 +166,6 @@ int record_server(int argc, char* argv[]) {
 	// wait for recoding to finish
 	cameraPtr->waitForRecordFinish();
 
-	// get saving type
-	std::string outdir = "saved";
-	if (argc >= 5) {
-		outdir = std::string(argv[4]);
-		cam::SysUtil::infoOutput(cv::format("Make new dir %s to save videos", outdir.c_str()));
-		cam::SysUtil::mkdir(outdir);
-	}
 	std::string recordingType = "video";
 	if (argc >= 4) {
 		recordingType = std::string(argv[3]);	
