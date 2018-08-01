@@ -40,7 +40,7 @@ int record(int argc, char* argv[]) {
 	//cameraPtr->setAutoExposureLevel(-1, 30);
 	//cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
 	//cameraPtr->setAutoWhiteBalance(-1);
-	cameraPtr->setWhiteBalance(-1, 1.6, 1, 2);
+	cameraPtr->setWhiteBalance(-1, 1.8, 1, 2);
 	cameraPtr->makeSetEffective();
 	// set capturing setting
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
@@ -95,6 +95,11 @@ int record_server(int argc, char* argv[]) {
     	error("ERROR on binding");
 	listen(sockfd, 5);
 
+	int frameNum = 20;
+	if (argc >= 3) {
+		frameNum = atoi(argv[2]);
+	}	
+
 	// 
 	std::vector<cam::GenCamInfo> camInfos;
 	std::shared_ptr<cam::GenCamera> cameraPtr
@@ -114,7 +119,7 @@ int record_server(int argc, char* argv[]) {
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
 	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
 	cameraPtr->setJPEGQuality(90, 0.25);
-	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
+	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, frameNum);
 	cameraPtr->setVerbose(false);
 	cameraPtr->makeSetEffective();
     cameraPtr->getCamInfos(camInfos);
