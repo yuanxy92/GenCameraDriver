@@ -174,7 +174,7 @@ int record_server(int argc, char* argv[]) {
 	else if (recordingType.compare("bin") == 0)
 		cameraPtr->saveBinfiles(outdir);
 	else {
-		SysUtil::errorOutput("Wrong recording type, only video or bin is supported now!");
+		cam::SysUtil::errorOutput("Wrong recording type, only video or bin is supported now!");
 	}
 
 	cameraPtr->release();
