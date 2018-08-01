@@ -123,6 +123,7 @@ int record_server(int argc, char* argv[]) {
 
 	// add socket code here to set variable to start capturing 
 	printf("Waiting for action command !\n");
+	clilen = sizeof(cli_addr);
 	newsockfd = accept(sockfd, 
                 (struct sockaddr *) &cli_addr, 
                 &clilen);
