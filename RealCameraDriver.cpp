@@ -27,17 +27,17 @@ namespace cam {
 		// File = 3,
 		// Stereo = 4
 		if(this->camModel == CameraModel::XIMEA_xiC)
-			return "XIMEA_xiC   ";
+			return "   XIMEA_xiC";
 		else if(this->camModel == CameraModel::PointGrey_u3)
 			return "PointGrey_u3";
 		else if(this->camModel == CameraModel::Network)
-			return "Network     ";
+			return "     Network";
 		else if(this->camModel == CameraModel::File)
-			return "File        ";
+			return "        File";
 		else if(this->camModel == CameraModel::Stereo)
-			return "Stereo      ";
+			return "      Stereo";
 		else
-			return "Undefined";
+			return "   Undefined";
 	}
 
     /**
@@ -55,6 +55,8 @@ namespace cam {
 		}
 
 		clock_t begin_time, end_time;
+		clock_t stat_last_time = clock();
+		int stat_frame_count = 0;
 		double time = 1000.0 / static_cast<double>(camInfos[camInd].fps);
 		thStatus[camInd] = 1;
 		for (;;) {
@@ -66,6 +68,7 @@ namespace cam {
 				break;
 			// capture image
 			this->captureFrame(camInd, bufferImgs[thBufferInds[camInd]][camInd]);
+			stat_frame_count++;
 			end_time = clock();
 			float waitTime = time - static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
 			// increase index
@@ -85,6 +88,14 @@ namespace cam {
 			if (isVerbose) {
 				printf("Camera %d captures one frame, wait %lld milliseconds for next frame ...\n",
 					camInd, static_cast<long long>(waitTime));
+			}
+			float stat_pass_time = static_cast<double>(end_time - stat_last_time) / CLOCKS_PER_SEC * 1000;
+			if(stat_pass_time > STAT_FPS_OUTPUT_MS && STAT_FPS_OUTPUT_MS > 0)
+			{
+				float stat_fps = (float)stat_frame_count / stat_pass_time * 1000.0f;
+				SysUtil::infoOutput(cv::format("[Capture Raw FPS] CamModel %s , CamInd %d, fps = %f", this->getCamModelString().c_str(), camInd, stat_fps));
+				stat_frame_count = 0;
+				stat_last_time = end_time;
 			}
 		}
 	}
@@ -174,7 +185,7 @@ namespace cam {
 				float stat_fps = (float)stat_frame_count / stat_pass_time * 1000.0f;
 				SysUtil::infoOutput(cv::format("[Capture JpegFPS] CamModel %s , CamInd %d, fps = %f", this->getCamModelString().c_str(), camInd, stat_fps));
 				stat_frame_count = 0;
-				stat_pass_time = end_time;
+				stat_last_time = end_time;
 			}
 			if (waitTime > 0) {
 				SysUtil::sleep(waitTime);
@@ -279,9 +290,9 @@ namespace cam {
 				if(stat_pass_time > STAT_FPS_OUTPUT_MS && STAT_FPS_OUTPUT_MS > 0)
 				{
 					float stat_fps = (float)stat_frame_count / stat_pass_time * 1000.0f;
-					SysUtil::infoOutput(cv::format("[CompressJpegFPS] CamModel %s , fps = %f", this->getCamModelString().c_str(), stat_fps));
+					SysUtil::infoOutput(cv::format("[CompressJpegFPS] CamModel %s , fps = %f (With total %d cameras)", this->getCamModelString().c_str(), stat_fps, this->cameraNum));
 					stat_frame_count = 0;
-					stat_pass_time = end_time;
+					stat_last_time = end_time;
 				}
 				// increase index
 				if (camPurpose == GenCamCapturePurpose::Streaming)

@@ -14,7 +14,7 @@ directly
 // cuda npp JPEG coder
 #include "NPPJpegCoder.h"
 
-#define STAT_FPS_OUTPUT_MS 1000
+#define STAT_FPS_OUTPUT_MS 3000
 
 namespace cam {
     class RealCamera : public GenCamera {
