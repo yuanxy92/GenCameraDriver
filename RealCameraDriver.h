@@ -14,6 +14,8 @@ directly
 // cuda npp JPEG coder
 #include "NPPJpegCoder.h"
 
+#define STAT_FPS_OUTPUT_MS 1000
+
 namespace cam {
     class RealCamera : public GenCamera {
         protected:
@@ -102,6 +104,12 @@ namespace cam {
             RealCamera();
             ~RealCamera(); 
 
+            /**
+            @brief get camera model string
+            @return std::string
+            */
+            std::string getCamModelString();
+
 			/**
 			@brief set capturing mode
 			@param GenCamCaptureMode captureMode: capture mode
@@ -143,6 +151,8 @@ namespace cam {
 			@return int
 			*/
 			int bufferNextFrame();
+
+
 
     };
 };

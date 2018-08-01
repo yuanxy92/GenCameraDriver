@@ -15,6 +15,31 @@ namespace cam {
 		isCompressThreadRunning(false), isCaptureModeSet(false), isCapturedFrameGpuPointer(false), isCapturedFrameDebayered(false){}
     RealCamera::~RealCamera() {}
 
+	/**
+	@brief get camera model string
+	@return std::string
+	*/
+	std::string RealCamera::getCamModelString()
+	{
+		// XIMEA_xiC = 0,
+		// PointGrey_u3 = 1,
+		// Network = 2,
+		// File = 3,
+		// Stereo = 4
+		if(this->camModel == CameraModel::XIMEA_xiC)
+			return "XIMEA_xiC   ";
+		else if(this->camModel == CameraModel::PointGrey_u3)
+			return "PointGrey_u3";
+		else if(this->camModel == CameraModel::Network)
+			return "Network     ";
+		else if(this->camModel == CameraModel::File)
+			return "File        ";
+		else if(this->camModel == CameraModel::Stereo)
+			return "Stereo      ";
+		else
+			return "Undefined";
+	}
+
     /**
 	@brief multi-thread capturing function
 	used for continous mode
@@ -85,6 +110,8 @@ namespace cam {
 	*/
 	void RealCamera::capture_thread_JPEG_(int camInd) {
 		clock_t begin_time, end_time;
+		clock_t stat_last_time = clock();
+		int stat_frame_count = 0;
 		double time = 1000.0 / static_cast<double>(camInfos[camInd].fps);
 		thStatus[camInd] = 1;
 		cv::cuda::Stream cvstream; 
@@ -108,6 +135,7 @@ namespace cam {
 			}
 			// capture image
 			this->captureFrame(camInd, bufferImgs_data_ptr[camInd]);
+			stat_frame_count++;
 			// copy data to GPU
 			//cudaMemcpy(this->bufferImgs_cuda[camInd], bufferImgs_singleframe[camInd].data,
 			//	sizeof(uchar) * camInfos[camInd].width * camInfos[camInd].height,
@@ -140,6 +168,14 @@ namespace cam {
 				printf("Camera %d captures one frame, wait %lld milliseconds for next frame ...\n",
 					camInd, static_cast<long long>(waitTime));
 			}
+			float stat_pass_time = static_cast<double>(end_time - stat_last_time) / CLOCKS_PER_SEC * 1000;
+			if(stat_pass_time > STAT_FPS_OUTPUT_MS && STAT_FPS_OUTPUT_MS > 0)
+			{
+				float stat_fps = (float)stat_frame_count / stat_pass_time * 1000.0f;
+				SysUtil::infoOutput(cv::format("[Capture JpegFPS] CamModel %s , CamInd %d, fps = %f", this->getCamModelString().c_str(), camInd, stat_fps));
+				stat_frame_count = 0;
+				stat_pass_time = end_time;
+			}
 			if (waitTime > 0) {
 				SysUtil::sleep(waitTime);
 			}
@@ -158,6 +194,8 @@ namespace cam {
 	*/
 	void RealCamera::compress_thread_JPEG_() {
 		clock_t begin_time, end_time;
+		clock_t stat_last_time = clock();
+		int stat_frame_count = 0;
 		cv::cuda::Stream stream;
 		bool hasFrame;
 		for (;;) {
@@ -227,6 +265,7 @@ namespace cam {
 				bufferImgs[thBufferInds[camInd]][camInd].ratio = static_cast<cam::GenCamImgRatio>(ratioInd);
 				//cudaStreamSynchronize(stream);
 				stream.waitForCompletion();
+				stat_frame_count++;
 				// end time
 				end_time = clock();
 				if (isVerbose) {
@@ -235,6 +274,14 @@ namespace cam {
 					sprintf(info, "Camera %d compress one frame, buffer to index %d, cost %f miliseconds ...", camInd,
 						thBufferInds[camInd], costTime);
 					SysUtil::infoOutput(info);
+				}
+				float stat_pass_time = static_cast<double>(end_time - stat_last_time) / CLOCKS_PER_SEC * 1000;
+				if(stat_pass_time > STAT_FPS_OUTPUT_MS && STAT_FPS_OUTPUT_MS > 0)
+				{
+					float stat_fps = (float)stat_frame_count / stat_pass_time * 1000.0f;
+					SysUtil::infoOutput(cv::format("[CompressJpegFPS] CamModel %s , fps = %f", this->getCamModelString().c_str(), stat_fps));
+					stat_frame_count = 0;
+					stat_pass_time = end_time;
 				}
 				// increase index
 				if (camPurpose == GenCamCapturePurpose::Streaming)
