@@ -165,7 +165,6 @@ int record_server(int argc, char* argv[]) {
 
 	// wait for recoding to finish
 	cameraPtr->waitForRecordFinish();
-
 	
 	std::string recordingType = "video";
 	if (argc >= 4) {
