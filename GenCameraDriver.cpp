@@ -191,6 +191,7 @@ namespace cam {
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			// init video parameter
 			std::string videoname = cv::format("%s/cam_%02d_%s.bin", dir.c_str(), i, camInfos[i].sn.c_str());
+			SysUtil::infoOutput(cv::format("Start to write video data to %s", videoname.c_str()));
 			// use C style file output function
 			FILE *fp = fopen(videoname.c_str(), "wb"); 
 			// write jpeg quality and total frames, will be used in decoding

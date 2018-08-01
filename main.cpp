@@ -158,7 +158,6 @@ int record_server(int argc, char* argv[]) {
 
 	// wait for recoding to finish
 	cameraPtr->waitForRecordFinish();
-	cameraPtr->stopCaptureThreads();
 
 	// get saving type
 	std::string outdir = "saved";
@@ -177,6 +176,7 @@ int record_server(int argc, char* argv[]) {
 		cam::SysUtil::errorOutput("Wrong recording type, only video or bin is supported now!");
 	}
 
+	cameraPtr->stopCaptureThreads();
 	cameraPtr->release();
 	return 0;
 }
