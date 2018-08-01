@@ -21,7 +21,7 @@ Implementation of Stereo camera
 #include "Stereo/StereoRectify.h"
 #include "ExposureFusion.h"
 
-#define EXPOSURE_DIFF 10
+#define EXPOSURE_DIFF 12
 
 namespace cam {
 
