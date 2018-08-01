@@ -23,6 +23,9 @@ namespace cam {
 	@param int camInd: index of camera
 	*/
 	void RealCamera::capture_thread_raw_(int camInd) {
+		while (this->isStartRecord == false) {
+			SysUtil::sleep(2);
+		}
 		clock_t begin_time, end_time;
 		double time = 1000.0 / static_cast<double>(camInfos[camInd].fps);
 		thStatus[camInd] = 1;
@@ -78,6 +81,9 @@ namespace cam {
 	@param int camInd: index of camera
 	*/
 	void RealCamera::capture_thread_JPEG_(int camInd) {
+		while (this->isStartRecord == false) {
+			SysUtil::sleep(2);
+		}
 		clock_t begin_time, end_time;
 		double time = 1000.0 / static_cast<double>(camInfos[camInd].fps);
 		thStatus[camInd] = 1;
@@ -139,6 +145,9 @@ namespace cam {
 	and wait until the next frame (based on fps)
 	*/
 	void RealCamera::compress_thread_JPEG_() {
+		while (this->isStartRecord == false) {
+			SysUtil::sleep(2);
+		}
 		clock_t begin_time, end_time;
 		cv::cuda::Stream stream;
 		bool hasFrame;

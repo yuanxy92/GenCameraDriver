@@ -18,7 +18,7 @@ namespace cam {
 	GenCamera::GenCamera() : isInit(false), isCapture(false),
 		isVerbose(false), bufferType(GenCamBufferType::Raw),
 		camPurpose(GenCamCapturePurpose::Streaming),
-		JPEGQuality(75), sizeRatio(0.12) {}
+		JPEGQuality(75), sizeRatio(0.12), isStartRecord(false) {}
 	GenCamera::~GenCamera() {}
 
 	/**
