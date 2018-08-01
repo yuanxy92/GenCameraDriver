@@ -194,11 +194,14 @@ namespace cam {
 			// use C style file output function
 			FILE *fp = fopen(videoname.c_str(), "wb"); 
 			// write jpeg quality and total frames, will be used in decoding
-			fwrite(&(unsigned int)(this->bufferSize), sizeof(unsigned int), 1, fp);		
-			fwrite(&(int)(90), sizeof(int), 1, fp);		
+			unsigned int frames = (unsigned int)(this->bufferSize);
+			int quality = 90;
+			fwrite(&frames, sizeof(unsigned int), 1, fp);		
+			fwrite(&quality, sizeof(int), 1, fp);		
 			for (size_t j = 0; j < this->bufferSize; j++) {
+				unsigned int dataLength = this->bufferImgs[j][i].length;
 				// write frame length
-				fwrite(&(unsigned int)(this->bufferImgs[j][i].length), sizeof(unsigned int), 1, fp);
+				fwrite(&(unsigned int)(dataLength), sizeof(unsigned int), 1, fp);
 				// write data
 				fwrite(this->bufferImgs[j][i].data, this->bufferImgs[j][i].length, 1, fp);
 			}
