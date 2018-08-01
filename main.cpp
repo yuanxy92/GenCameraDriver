@@ -75,6 +75,7 @@ void error(const char *msg) {
 int record_server(int argc, char* argv[]) {
 	if (argc == 1) {
 		printf("Usage:\n GenCameraDriver [port] [frame number] [record type, video or bin file] [out dir]\n");
+		return 0;
 	}
 
 	// init socket
