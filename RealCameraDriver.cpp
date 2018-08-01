@@ -259,7 +259,7 @@ namespace cam {
 				//}
 				// resize
 				if (ratioInd != 0) {
-					cv::cuda::resize(this->dabayerImgs_cuda[camInd], this->dabayerImgs_cuda[camInd],
+					cv::cuda::resize(this->dabayerImgs_cuda[camInd], this->resizedDebayerImgs_cuda[camInd][ratioInd],//this->dabayerImgs_cuda[camInd],
 						coders[camInd][ratioInd].getImageSize(), cv::INTER_LINEAR);
 				}
 				// compress
@@ -268,7 +268,8 @@ namespace cam {
 				//dabayerImgs_cuda[camInd].download(tmp);
 
 
-				coders[camInd][ratioInd].encode_rgb(this->dabayerImgs_cuda[camInd],
+				coders[camInd][ratioInd].encode_rgb(
+					((ratioInd == 0) ? this->dabayerImgs_cuda[camInd] : this->resizedDebayerImgs_cuda[camInd][ratioInd]),
 					reinterpret_cast<uchar*>(bufferImgs[thBufferInds[camInd]][camInd].data),
 					&bufferImgs[thBufferInds[camInd]][camInd].length,
 					bufferImgs[thBufferInds[camInd]][camInd].maxLength,
@@ -390,8 +391,10 @@ namespace cam {
 				}
 				// init NPP jpeg coder	
 				this->coders.resize(this->cameraNum);
+				this->resizedDebayerImgs_cuda.resize(this->cameraNum);
 				for (size_t i = 0; i < this->cameraNum; i++) {
 					this->coders[i].resize(4);
+					this->resizedDebayerImgs_cuda[i].resize(4);
 					for (size_t j = 0; j < 4; j++) {
 						cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
 							static_cast<cam::GenCamImgRatio>(j));
@@ -399,6 +402,8 @@ namespace cam {
 						coders[i][j].setCfaBayerType(static_cast<int>(camInfos[i].bayerPattern));
 						coders[i][j].setWBRawType(camInfos[i].isWBRaw);
 						coders[i][j].setWhiteBalanceGain(camInfos[i].redGain, camInfos[i].greenGain, camInfos[i].blueGain);
+
+						this->resizedDebayerImgs_cuda[i][j].create(size.height, size.width, CV_8UC3);
 					}
 				}
 			}

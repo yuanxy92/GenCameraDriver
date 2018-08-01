@@ -24,6 +24,7 @@ namespace cam {
 			std::vector<cv::Mat> bufferImgs_host;
 		    std::vector<cv::cuda::GpuMat> bufferImgs_cuda;
 		    std::vector<cv::cuda::GpuMat> dabayerImgs_cuda;
+            std::vector<std::vector<cv::cuda::GpuMat>> resizedDebayerImgs_cuda;
 
             // threads to capture images
 		    std::vector<std::thread> ths; 

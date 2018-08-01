@@ -223,13 +223,19 @@ namespace cam {
 	@param cam::GenCamImgRatio ratio: input resize ratio
 	@return cv::Size: even size (NPP only accept even size)
 	*/
-	cv::Size GenCamera::makeDoubleSize(cv::Size size, cam::GenCamImgRatio ratio) {
+	cv::Size GenCamera::makeDoubleSize(cv::Size size, cam::GenCamImgRatio ratio) 
+	{
 		cv::Size out;
-		float r = 1.0f / powf(2.0f, static_cast<int>(ratio));
-		out.width = static_cast<int>(size.width * r);
-		out.height = static_cast<int>(size.height * r);
-		out.width += (out.width % 2);
-		out.height += (out.height % 2);
+		if(ratio == GenCamImgRatio::Full)
+			out = size;
+		else
+		{
+			float r = 1.0f / powf(2.0f, static_cast<int>(ratio));
+			out.width = static_cast<int>(size.width * r);
+			out.height = static_cast<int>(size.height * r);
+			out.width += (out.width % 2);
+			out.height += (out.height % 2);
+		}
 		return out;
 	}
 
