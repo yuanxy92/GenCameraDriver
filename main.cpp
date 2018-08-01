@@ -93,6 +93,7 @@ int record_server(int argc, char* argv[]) {
     serv_addr.sin_port = htons(portno);
     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) 
     	error("ERROR on binding");
+	listen(sockfd, 5);
 
 	// 
 	std::vector<cam::GenCamInfo> camInfos;
@@ -122,7 +123,6 @@ int record_server(int argc, char* argv[]) {
 
 	// add socket code here to set variable to start capturing 
 	printf("Waiting for action command !\n");
-	listen(sockfd, 5);
 	newsockfd = accept(sockfd, 
                 (struct sockaddr *) &cli_addr, 
                 &clilen);
