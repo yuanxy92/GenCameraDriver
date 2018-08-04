@@ -13,7 +13,7 @@ Examples are in main.cpp
 1. OpenCV 3.4.0 with CUDA 9.1
 2. Intel MKL (Math Kernel Library), optional but recommended
 3. CUDA 9.1
-4. Visual Studio 2015
+4. Visual Studio 2015 / GCC
 5. CMake >= 3.10 (FindCUDA in low version can not work for CUDA 9.1 since NPP library has changed a lot in CUDA 9)
 6. Spinnaker SDK for PointGrey cameras
 7. XIMEA SDK for XIMEA cameras
