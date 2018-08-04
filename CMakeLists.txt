@@ -61,6 +61,8 @@ project ( ${name} )
 # c++ version
 set (CMAKE_CXX_STANDARD 11)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
 # opencv 
 if ( WIN32 )
     set(OpenCV_DIR "E:/libs/OpenCV/x64/vc14/lib")
