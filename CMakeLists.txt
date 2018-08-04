@@ -134,6 +134,7 @@ set(MY_SOURCE_FILES
     Stereo/StereoCamera.cpp
     Stereo/StereoRectify.cpp
     Stereo/ExposureFusion.cpp
+	Stereo/ExposureFusion.cu
     # C++ source file
     NPPJpegCoder.cpp
     # generic camera driver
@@ -162,6 +163,7 @@ source_group("Stereo" FILES
     Stereo/StereoRectify.cpp
     Stereo/ExposureFusion.h
     Stereo/ExposureFusion.cpp
+	Stereo/ExposureFusion.cu
 )
 
 source_group("FileCamera" FILES
@@ -169,10 +171,10 @@ source_group("FileCamera" FILES
     FileCamera/FileCamera.cpp
 )
 
-source_group("cuda" FILES
-    cuda/NPPJpegCoderKernel.h
-    cuda/NPPJpegCoderKernel.cu
-)
+#source_group("cuda" FILES
+#    cuda/NPPJpegCoderKernel.h
+#    cuda/NPPJpegCoderKernel.cu
+#)
 
 include_directories(
 	${PROJECT_SOURCE_DIR}	

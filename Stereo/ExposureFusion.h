@@ -187,6 +187,9 @@ private:
 	int original_height;
 	const int resized_width = 4096;
 	const int resized_height = 4096;
+
+	int radius;
+
 public:
 
 private:
@@ -207,6 +210,11 @@ public:
 	*/
 	int fusion(cv::cuda::GpuMat dark, cv::cuda::GpuMat light, 
 		cv::cuda::GpuMat & fusion);
+
+	int Raman_fusion(cv::cuda::GpuMat &img1, cv::cuda::GpuMat &img2,
+		cv::cuda::GpuMat & fusion);
+
+	int Raman_init_filter(int height, int radius = 1);
 
 };
 
