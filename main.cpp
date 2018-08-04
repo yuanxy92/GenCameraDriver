@@ -107,6 +107,8 @@ int record(int argc, char* argv[]) {
     }
 	cameraPtr->stopCaptureThreads();
 	cameraPtr->release();
+
+	getchar();
 	return 0;
 }
 

@@ -439,7 +439,7 @@ namespace cam {
 		//}
 
 		//pair_infos[camInd].ef.fusion(pair_infos[camInd][1].gpu_remap_img, pair_infos[camInd][0].gpu_rec_img, pair_infos[camInd].fusioned_img);
-		pair_infos[camInd].ef.fusion(pair_infos[camInd][1].gpu_remap_img, pair_infos[camInd][0].gpu_rec_img, pair_infos[camInd].fusioned_img);
+		pair_infos[camInd].ef.Raman_fusion(pair_infos[camInd][1].gpu_remap_img, pair_infos[camInd][0].gpu_rec_img, pair_infos[camInd].fusioned_img);
 
 		//cv::Mat m1, m2, m3;
 		//pair_infos[camInd][1].gpu_rec_img.download(m1);
