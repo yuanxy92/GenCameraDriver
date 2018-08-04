@@ -133,7 +133,7 @@ namespace cam {
 			pair_infos[i][1].wbTwist[2][2] = sub_camInfos[idx].blueGain;
 
 			//fusion bool
-			pair_infos[i].isFusionInit = false;
+			//pair_infos[i].isFusionInit = false;
 
 			//prepare warping mat
 			pair_infos[i].warp_x = cv::imread(pair_infos[i].warp_x_path, cv::IMREAD_ANYDEPTH);
@@ -145,6 +145,9 @@ namespace cam {
 
 			//prepare rectify class
 			pair_infos[i].sr.init(pair_infos[i].int_path, pair_infos[i].ext_path, cv::Size(sub_camInfos[idx].width, sub_camInfos[idx].height));
+
+			//prepare fusion filter kernal
+			pair_infos[i].ef.Raman_init_filter(sub_camInfos[idx].height);
 
 			//prepare raw img space
 			size_t length = sizeof(uchar) * sub_camInfos[idx].width * sub_camInfos[idx].height;
@@ -308,7 +311,7 @@ namespace cam {
 			{
 				this->sub_cameraPtr->setAutoExposureLevel(pair_infos[i][0].index, level + EXPOSURE_DIFF);
 				this->sub_cameraPtr->setAutoExposureLevel(pair_infos[i][1].index, level - EXPOSURE_DIFF);
-				pair_infos[i].isFusionInit = false;
+				//pair_infos[i].isFusionInit = false;
 			}
 		}
 		else
@@ -316,7 +319,7 @@ namespace cam {
 			//TODO : now will affect 2 real cameras
 			this->sub_cameraPtr->setAutoExposureLevel(pair_infos[camInd][0].index, level + EXPOSURE_DIFF);
 			this->sub_cameraPtr->setAutoExposureLevel(pair_infos[camInd][1].index, level - EXPOSURE_DIFF);
-			pair_infos[camInd].isFusionInit = false;
+			//pair_infos[camInd].isFusionInit = false;
 		}
 		return 0;
 	}
@@ -426,15 +429,16 @@ namespace cam {
 			pair_infos[camInd].gpu_warp_x, pair_infos[camInd].gpu_warp_y, cv::INTER_LINEAR, cv::BORDER_REFLECT); //cv::BORDER_TRANSPARENT is now not supported in cuda version
 
 
-		if (pair_infos[camInd].isFusionInit == false)
-		{
-			cv::Mat cpu_master_tmp, cpu_slave_tmp;
-			pair_infos[camInd][0].gpu_rec_img.download(cpu_master_tmp);
-			pair_infos[camInd][1].gpu_remap_img.download(cpu_slave_tmp);
-			pair_infos[camInd].ef.calcWeight(cpu_slave_tmp, cpu_master_tmp);
-			pair_infos[camInd].isFusionInit = true;
-		}
+		//if (pair_infos[camInd].isFusionInit == false)
+		//{
+		//	cv::Mat cpu_master_tmp, cpu_slave_tmp;
+		//	pair_infos[camInd][0].gpu_rec_img.download(cpu_master_tmp);
+		//	pair_infos[camInd][1].gpu_remap_img.download(cpu_slave_tmp);
+		//	pair_infos[camInd].ef.calcWeight(cpu_slave_tmp, cpu_master_tmp);
+		//	pair_infos[camInd].isFusionInit = true;
+		//}
 
+		//pair_infos[camInd].ef.fusion(pair_infos[camInd][1].gpu_remap_img, pair_infos[camInd][0].gpu_rec_img, pair_infos[camInd].fusioned_img);
 		pair_infos[camInd].ef.fusion(pair_infos[camInd][1].gpu_remap_img, pair_infos[camInd][0].gpu_rec_img, pair_infos[camInd].fusioned_img);
 
 		//cv::Mat m1, m2, m3;

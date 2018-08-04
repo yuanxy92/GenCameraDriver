@@ -84,7 +84,7 @@ namespace cam {
  			}
 			StereoRectify sr;
 			ExposureFusion ef;
-			int isFusionInit;
+			//int isFusionInit;
 			cv::cuda::GpuMat fusioned_img;
 		};
 	private:
