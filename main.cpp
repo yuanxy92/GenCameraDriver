@@ -69,7 +69,7 @@ int record(int argc, char* argv[]) {
 	cameraPtr->init();
 	// set camera setting
 	cameraPtr->startCapture();
-	cameraPtr->setFPS(-1, 10);
+	cameraPtr->setFPS(-1, 20);
 	cameraPtr->setAutoExposure(-1, cam::Status::on);
 	cameraPtr->setAutoExposureLevel(-1, 30);
 	//cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
@@ -79,7 +79,7 @@ int record(int argc, char* argv[]) {
 	// set capturing setting
 	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
 	cameraPtr->setJPEGQuality(90, 0.75);
-	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
+	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 200);
 	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
 	//cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
 	//cameraPtr->setJPEGQuality(90, 0.25);
@@ -108,7 +108,7 @@ int record(int argc, char* argv[]) {
 	cameraPtr->stopCaptureThreads();
 	cameraPtr->release();
 
-	getchar();
+	//getchar();
 	return 0;
 }
 
