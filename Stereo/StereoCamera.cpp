@@ -382,8 +382,11 @@ namespace cam {
 		sub_cameraPtr->captureFrame(raw_imgs);
 		int cols = sub_camInfos[pair_infos[camInd][0].index].width;
 		int rows = sub_camInfos[pair_infos[camInd][0].index].height;
-		memcpy(pair_infos[camInd][0].cpu_raw_img.data, raw_imgs[pair_infos[camInd][0].index].data, cols * rows * sizeof(uchar));
-		memcpy(pair_infos[camInd][1].cpu_raw_img.data, raw_imgs[pair_infos[camInd][1].index].data, cols * rows * sizeof(uchar));
+		//memcpy(pair_infos[camInd][0].cpu_raw_img.data, raw_imgs[pair_infos[camInd][0].index].data, cols * rows * sizeof(uchar));
+		//memcpy(pair_infos[camInd][1].cpu_raw_img.data, raw_imgs[pair_infos[camInd][1].index].data, cols * rows * sizeof(uchar));
+
+		pair_infos[camInd][0].cpu_raw_img.data = reinterpret_cast<unsigned char *>(raw_imgs[pair_infos[camInd][0].index].data);
+		pair_infos[camInd][1].cpu_raw_img.data = reinterpret_cast<unsigned char *>(raw_imgs[pair_infos[camInd][1].index].data);
 
 		pair_infos[camInd][0].gpu_raw_img.upload(pair_infos[camInd][0].cpu_raw_img);
 		pair_infos[camInd][1].gpu_raw_img.upload(pair_infos[camInd][1].cpu_raw_img);
