@@ -150,11 +150,6 @@ source_group("FileCamera" FILES
     FileCamera/FileCamera.cpp
 )
 
-source_group("cuda" FILES
-    cuda/NPPJpegCoderKernel.h
-    cuda/NPPJpegCoderKernel.cu
-)
-
 include_directories(
 	${PROJECT_SOURCE_DIR}	
 	${PROJECT_SOURCE_DIR}/cuda	

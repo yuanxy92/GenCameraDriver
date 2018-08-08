@@ -614,7 +614,7 @@ namespace cam {
 				bayerPattern = GenCamBayerPattern::BayerGBRG;
 			}
 			else if (bayerPatternStr.compare("EnumEntry_PixelColorFilter_BayerGR") == 0) {
-				bayerPattern = GenCamBayerPattern::BayerGBRG;
+				bayerPattern = GenCamBayerPattern::BayerGRBG;
 			}
 		}
 		catch (Spinnaker::Exception &e) {

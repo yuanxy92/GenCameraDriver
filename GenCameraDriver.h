@@ -222,7 +222,7 @@ namespace cam {
 		size_t maxLength; // max malloced memory size
 		size_t length; // jpeg data length
 
-		Imagedata(): data(NULL) {}
+		Imagedata(): data(NULL), length(0) {}
 		~Imagedata() {}
 
 		/**
