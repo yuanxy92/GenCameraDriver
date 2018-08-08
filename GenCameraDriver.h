@@ -499,6 +499,13 @@ namespace cam {
 		*/
 		int setCapturePurpose(GenCamCapturePurpose camPurpose);
 
+		/**
+		@brief get capture purpose
+		@param GenCamCapturePurpose camPurpose: purpose, for streaming or recording
+		@return int
+		*/
+		GenCamCapturePurpose getCapturePurpose();
+
 		/*************************************************************/
 		/*        function to save capture images to files           */
 		/*************************************************************/

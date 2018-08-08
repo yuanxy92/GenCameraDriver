@@ -65,6 +65,15 @@ namespace cam {
 		return 0;
 	}
 
+	/**
+	@brief get capture purpose
+	@param GenCamCapturePurpose camPurpose: purpose, for streaming or recording
+	@return int
+	*/
+	GenCamCapturePurpose GenCamera::getCapturePurpose() {
+		return this->camPurpose;
+	}
+
 	/*************************************************************/
 	/*        function to save capture images to files           */
 	/*************************************************************/
