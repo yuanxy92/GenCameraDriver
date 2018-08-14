@@ -25,6 +25,8 @@ namespace cam {
 		std::vector<cv::VideoCapture> readers;
 		// pre-define bayer pattern
 		GenCamBayerPattern bayerPattern;
+		// video start index
+		int startFrameInd;
 
 	public:
 
