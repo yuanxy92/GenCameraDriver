@@ -14,6 +14,7 @@ namespace cam {
 		this->camModel = cam::CameraModel::File;
 		this->camPurpose = cam::GenCamCapturePurpose::Streaming;
 		this->dir = dir;
+		this->startFrameInd = 0;
 	}
 	GenCameraFile::~GenCameraFile() {}
 
