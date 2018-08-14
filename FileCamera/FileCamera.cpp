@@ -63,7 +63,7 @@ namespace cam {
 			(*it)["serialnum"] >> filenames[ind];
 			ind++;
 		}
-		fs["startFrameInd"] >> startFrameInd;
+		fs["StartFrameInd"] >> this->startFrameInd;
 		fs.release();
 		// get camera infos
 		camInfos.resize(this->cameraNum);
@@ -88,10 +88,18 @@ namespace cam {
 			height = camInfos[i].height;
 			size_t length = width * height;
 			for (size_t j = 0; j < bufferSize; j++) {
-				this->bufferImgs[j][i].data = new char[length];
-				this->bufferImgs[j][i].length = length * sizeof(uchar);
-				this->bufferImgs[j][i].maxLength = length * sizeof(uchar);
-				this->bufferImgs[j][i].type = this->bufferType;
+				if (this->camPurpose != cam::GenCamCapturePurpose::FileCameraRecording) {
+					this->bufferImgs[j][i].data = new char[length];
+					this->bufferImgs[j][i].length = length * sizeof(uchar);
+					this->bufferImgs[j][i].maxLength = length * sizeof(uchar);
+					this->bufferImgs[j][i].type = this->bufferType;
+				}
+				else {
+					this->bufferImgs[j][i].data = new char[length * 3];
+					this->bufferImgs[j][i].length = length * 3 * sizeof(uchar);
+					this->bufferImgs[j][i].maxLength = length * 3 * sizeof(uchar);
+					this->bufferImgs[j][i].type = this->bufferType;
+				}
 			}
 		}
 		// read images from videos
@@ -110,10 +118,17 @@ namespace cam {
 				for (size_t j = 0; j < bufferSize; j++) {
 					readers[i] >> img;
 					cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
-					bayerImg = colorBGR2BayerRG(smallImg);
-					this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
-					memcpy(this->bufferImgs[j][i].data, bayerImg.data,
-						this->bufferImgs[j][i].length);
+					if (this->camPurpose != cam::GenCamCapturePurpose::FileCameraRecording) {
+						bayerImg = colorBGR2BayerRG(smallImg);
+						this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
+						memcpy(this->bufferImgs[j][i].data, bayerImg.data,
+							this->bufferImgs[j][i].length);
+					}
+					else {
+						this->bufferImgs[j][i].length = sizeof(uchar) * smallImg.rows * smallImg.cols * 3;
+						memcpy(this->bufferImgs[j][i].data, smallImg.data,
+							this->bufferImgs[j][i].length);
+					}
 				}
 				if (this->camPurpose != cam::GenCamCapturePurpose::FileCameraRecording) {
 					readers[i].release();
@@ -125,10 +140,19 @@ namespace cam {
 				cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
 				bayerImg = colorBGR2BayerRG(smallImg);
 				// assign to buffer
-				for (size_t j = 0; j < bufferSize; j++) {
-					this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
-					memcpy(this->bufferImgs[j][i].data, bayerImg.data,
-						this->bufferImgs[j][i].length);
+				if (this->camPurpose != cam::GenCamCapturePurpose::FileCameraRecording) {
+					for (size_t j = 0; j < bufferSize; j++) {
+						this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
+						memcpy(this->bufferImgs[j][i].data, bayerImg.data,
+							this->bufferImgs[j][i].length);
+					}
+				}
+				else {
+					for (size_t j = 0; j < bufferSize; j++) {
+						this->bufferImgs[j][i].length = sizeof(uchar) * smallImg.rows * smallImg.cols;
+						memcpy(this->bufferImgs[j][i].data, smallImg.data,
+							this->bufferImgs[j][i].length);
+					}
 				}
 			}
 			else {
@@ -287,10 +311,13 @@ namespace cam {
 			int j = 0;
 			readers[i] >> img;
 			if (img.rows > 0) {
-				cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
-				bayerImg = colorBGR2BayerRG(smallImg);
-				this->bufferImgs[j][i].length = sizeof(uchar) * bayerImg.rows * bayerImg.cols;
-				memcpy(this->bufferImgs[j][i].data, bayerImg.data,
+				if (img.rows != camInfos[i].height || img.cols != camInfos[i].width) {
+					cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
+				}
+				else smallImg = img;
+				//bayerImg = colorBGR2BayerRG(smallImg);
+				this->bufferImgs[j][i].length = sizeof(uchar) * smallImg.rows * smallImg.cols * 3;
+				memcpy(this->bufferImgs[j][i].data, smallImg.data,
 					this->bufferImgs[j][i].length);
 			}
 			else {
