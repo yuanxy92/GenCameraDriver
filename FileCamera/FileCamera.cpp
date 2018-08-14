@@ -62,6 +62,7 @@ namespace cam {
 			(*it)["serialnum"] >> filenames[ind];
 			ind++;
 		}
+		fs["startFrameInd"] >> startFrameInd;
 		fs.release();
 		// get camera infos
 		camInfos.resize(this->cameraNum);
@@ -94,6 +95,7 @@ namespace cam {
 		}
 		// read images from videos
 		videonames.resize(this->cameraNum);
+		// get video start frame index
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			SysUtil::infoOutput("Buffer video " + filenames[i]);
 			char videoname[1024];
@@ -102,6 +104,7 @@ namespace cam {
 			std::string fileExtension = filenames[i].substr(filenames[i].find_last_of(".") + 1);
 			if (fileExtension.compare("avi") == 0 || fileExtension.compare("mp4") == 0) {
 				readers[i].open(videoname);
+				readers[i].set(CV_CAP_PROP_POS_FRAMES, startFrameInd);
 				cv::Mat img, smallImg, bayerImg;
 				for (size_t j = 0; j < bufferSize; j++) {
 					readers[i] >> img;
