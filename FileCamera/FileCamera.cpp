@@ -4,10 +4,20 @@ Implementation of file camera
 @author Shane Yuan
 @date Mar 29, 2018
 */
-
+#ifdef _WIN32
+#include <io.h> 
+#define access    _access_s
+#else
+#include <unistd.h>
+#endif
 #include "FileCamera.h"
 
 namespace cam {
+
+	inline bool isFileExists(const std::string &Filename) {
+		return access(Filename.c_str(), 0) == 0;
+	}
+
 	// constructor
 	GenCameraFile::GenCameraFile() {}
 	GenCameraFile::GenCameraFile(std::string dir) {
@@ -104,15 +114,28 @@ namespace cam {
 		}
 		// read images from videos
 		videonames.resize(this->cameraNum);
+		// get exist filenames
+		cv::String path = this->dir;
+		std::vector<cv::String> dirFiles;
+		cv::glob(path, dirFiles);
 		// get video start frame index
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			SysUtil::infoOutput("Buffer video " + filenames[i]);
 			char videoname[1024];
 			sprintf(videoname, "%s/%s", this->dir.c_str(), filenames[i].c_str());
 			videonames[i] = std::string(videoname);
-			std::string fileExtension = filenames[i].substr(filenames[i].find_last_of(".") + 1);
+			if (!isFileExists(videonames[i])) {
+				for (size_t k = 0; k < dirFiles.size(); k++) {
+					std::size_t found = dirFiles[k].find(filenames[i]);
+					if (found != std::string::npos) {
+						videonames[i] = dirFiles[k];
+						break;
+					}
+				}
+			}
+			std::string fileExtension = videonames[i].substr(videonames[i].find_last_of(".") + 1);
 			if (fileExtension.compare("avi") == 0 || fileExtension.compare("mp4") == 0) {
-				readers[i].open(videoname);
+				readers[i].open(videonames[i]);
 				readers[i].set(CV_CAP_PROP_POS_FRAMES, startFrameInd);
 				cv::Mat img, smallImg, bayerImg;
 				for (size_t j = 0; j < bufferSize; j++) {
@@ -135,7 +158,7 @@ namespace cam {
 				}
 			}
 			else if (fileExtension.compare("jpg") == 0 || fileExtension.compare("png") == 0) {
-				cv::Mat img = cv::imread(videoname);
+				cv::Mat img = cv::imread(videonames[i]);
 				cv::Mat smallImg, bayerImg;
 				cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
 				bayerImg = colorBGR2BayerRG(smallImg);
