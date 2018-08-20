@@ -75,6 +75,26 @@ namespace cam {
 		}
 		fs["StartFrameInd"] >> this->startFrameInd;
 		fs.release();
+		// get real file name
+		videonames.resize(this->cameraNum);
+		// get exist filenames
+		cv::String path = this->dir;
+		std::vector<cv::String> dirFiles;
+		cv::glob(path, dirFiles);
+		for (size_t i = 0; i < this->cameraNum; i++) {
+			char videoname[1024];
+			sprintf(videoname, "%s/%s", this->dir.c_str(), filenames[i].c_str());
+			videonames[i] = std::string(videoname);
+			if (!isFileExists(videonames[i])) {
+				for (size_t k = 0; k < dirFiles.size(); k++) {
+					std::size_t found = dirFiles[k].find(filenames[i]);
+					if (found != std::string::npos) {
+						videonames[i] = dirFiles[k];
+						break;
+					}
+				}
+			}
+		}
 		// get camera infos
 		camInfos.resize(this->cameraNum);
 		this->getCamInfos(camInfos);
@@ -112,27 +132,9 @@ namespace cam {
 				}
 			}
 		}
-		// read images from videos
-		videonames.resize(this->cameraNum);
-		// get exist filenames
-		cv::String path = this->dir;
-		std::vector<cv::String> dirFiles;
-		cv::glob(path, dirFiles);
 		// get video start frame index
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			SysUtil::infoOutput("Buffer video " + filenames[i]);
-			char videoname[1024];
-			sprintf(videoname, "%s/%s", this->dir.c_str(), filenames[i].c_str());
-			videonames[i] = std::string(videoname);
-			if (!isFileExists(videonames[i])) {
-				for (size_t k = 0; k < dirFiles.size(); k++) {
-					std::size_t found = dirFiles[k].find(filenames[i]);
-					if (found != std::string::npos) {
-						videonames[i] = dirFiles[k];
-						break;
-					}
-				}
-			}
 			std::string fileExtension = videonames[i].substr(videonames[i].find_last_of(".") + 1);
 			if (fileExtension.compare("avi") == 0 || fileExtension.compare("mp4") == 0) {
 				readers[i].open(videonames[i]);
@@ -232,9 +234,7 @@ namespace cam {
 			camInfos[i].autoExposure = cam::Status::off;
 			camInfos[i].bayerPattern = GenCamBayerPattern::BayerGRBG;
 			// read width and height from video file
-			char videoname[1024];
-			sprintf(videoname, "%s/%s", this->dir.c_str(), filenames[i].c_str());
-			cv::VideoCapture reader(videoname);
+			cv::VideoCapture reader(videonames[i]);
 			camInfos[i].fps = reader.get(CV_CAP_PROP_FPS);
 			camInfos[i].width = reader.get(CV_CAP_PROP_FRAME_WIDTH) 
 				* this->bufferScale;
