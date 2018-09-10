@@ -139,6 +139,8 @@ namespace cam {
 			if (fileExtension.compare("avi") == 0 || fileExtension.compare("mp4") == 0) {
 				readers[i].open(videonames[i]);
 				readers[i].set(CV_CAP_PROP_POS_FRAMES, startFrameInd);
+				SysUtil::infoOutput(cv::format("Video %s, start buffering from index %d ...",
+					videonames[i].c_str(), startFrameInd));
 				cv::Mat img, smallImg, bayerImg;
 				for (size_t j = 0; j < bufferSize; j++) {
 					readers[i] >> img;
