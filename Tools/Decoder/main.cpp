@@ -30,61 +30,116 @@ inline bool isFileExists(const std::string &Filename) {
 	return access(Filename.c_str(), 0) == 0;
 }
 
-int main(int argc, char* argv[]) {
-	std::string input_dir(argv[1]);
-	std::string serialnum(argv[2]);
-	std::string output(argv[3]);
-	std::string videoname;
-
-	// get exist filenames
-	cv::String path = input_dir;
-	std::vector<cv::String> dirFiles;
-	cv::glob(path, dirFiles);
-	for (size_t k = 0; k < dirFiles.size(); k++) {
-		std::size_t found = dirFiles[k].find(serialnum);
-		if (found != std::string::npos) {
-			videoname = dirFiles[k];
-			break;
-		}
+int main(int argc, char* argv[]) 
+{
+	if(argc < 2)
+	{
+		printf("usage: Decoder input.bin output.avi");
+		return 0;
 	}
+	else if(argc < 3)
+	{
+		std::string videoname(argv[1]);
+		std::string output(argv[2]);
+		std::cout << cv::format("Find bin file: %s", videoname.c_str()) << std::endl;
 
-	std::cout << cv::format("Find bin file: %s", videoname.c_str()) << std::endl;
+		int frameNum;
+		int quality;
+		int width;
+		int height;
 
-	int frameNum;
-	int quality;
-	int width;
-	int height;
+		cv::VideoWriter writer;
+		npp::NPPJpegCoder coder;
 
-	cv::VideoWriter writer;
-	npp::NPPJpegCoder coder;
+		FILE* fp = fopen(videoname.c_str(), "rb");
 
-	FILE* fp = fopen(videoname.c_str(), "rb");
+		fread(&frameNum, sizeof(unsigned int), 1, fp);
+		fread(&width, sizeof(int), 1, fp);
+		fread(&height, sizeof(int), 1, fp);
+		fread(&quality, sizeof(int), 1, fp);
 
-	fread(&frameNum, sizeof(unsigned int), 1, fp);
-	fread(&width, sizeof(int), 1, fp);
-	fread(&height, sizeof(int), 1, fp);
-	fread(&quality, sizeof(int), 1, fp);
-
-	unsigned int length;
-	char* data = new char[width * height];
-	cv::cuda::GpuMat img(height, width, CV_8UC3);
-	cv::Mat img_h;
-	for (size_t i = 0; i < frameNum; i++) {
-		printf("Decode frame %d, total %d frames.\n", i, frameNum);
-		fread(&length, sizeof(unsigned int), 1, fp);
-		fread(data, length, 1, fp);
-		if (i == 0) {
-			coder.init(width, height, quality);
-			writer.open(output.c_str(), cv::VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, cv::Size(width, height));
+		unsigned int length;
+		char* data = new char[width * height];
+		cv::cuda::GpuMat img(height, width, CV_8UC3);
+		cv::Mat img_h;
+		for (size_t i = 0; i < frameNum; i++) {
+			//printf("Decode frame %d, total %d frames.\n", i, frameNum);
+			printf("\rFrame:%d, Total:%d", i, frameNum);
+			fread(&length, sizeof(unsigned int), 1, fp);
+			fread(data, length, 1, fp);
+			if (i == 0) {
+				coder.init(width, height, quality);
+				writer.open(output.c_str(), cv::VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, cv::Size(width, height));
+			}
+			coder.decode(reinterpret_cast<unsigned char*>(data), length, img, 0);
+			img.download(img_h);
+			writer << img_h;
 		}
-		coder.decode(reinterpret_cast<unsigned char*>(data), length, img, 0);
-		img.download(img_h);
-		writer << img_h;
+
+		fclose(fp);
+		writer.release();
+		coder.release();
+		return 0;
 	}
+	else
+	{
 
-	fclose(fp);
-	writer.release();
-	coder.release();
 
-	return 0;
+		std::string input_dir(argv[1]);
+		std::string serialnum(argv[2]);
+		std::string output(argv[3]);
+		std::string videoname;
+
+		// get exist filenames
+		cv::String path = input_dir;
+		std::vector<cv::String> dirFiles;
+		cv::glob(path, dirFiles);
+		for (size_t k = 0; k < dirFiles.size(); k++) {
+			std::size_t found = dirFiles[k].find(serialnum);
+			if (found != std::string::npos) {
+				videoname = dirFiles[k];
+				break;
+			}
+		}
+
+		std::cout << cv::format("Find bin file: %s", videoname.c_str()) << std::endl;
+
+		int frameNum;
+		int quality;
+		int width;
+		int height;
+
+		cv::VideoWriter writer;
+		npp::NPPJpegCoder coder;
+
+		FILE* fp = fopen(videoname.c_str(), "rb");
+
+		fread(&frameNum, sizeof(unsigned int), 1, fp);
+		fread(&width, sizeof(int), 1, fp);
+		fread(&height, sizeof(int), 1, fp);
+		fread(&quality, sizeof(int), 1, fp);
+
+		unsigned int length;
+		char* data = new char[width * height];
+		cv::cuda::GpuMat img(height, width, CV_8UC3);
+		cv::Mat img_h;
+		for (size_t i = 0; i < frameNum; i++) {
+			printf("Decode frame %d, total %d frames.\n", i, frameNum);
+			fread(&length, sizeof(unsigned int), 1, fp);
+			fread(data, length, 1, fp);
+			if (i == 0) {
+				coder.init(width, height, quality);
+				writer.open(output.c_str(), cv::VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, cv::Size(width, height));
+			}
+			coder.decode(reinterpret_cast<unsigned char*>(data), length, img, 0);
+			img.download(img_h);
+			writer << img_h;
+		}
+
+		fclose(fp);
+		writer.release();
+		coder.release();
+
+		return 0;
+	}
 }
