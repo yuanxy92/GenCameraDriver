@@ -3,5 +3,5 @@ do
     #echo $i
     filename=${i%.*}
     echo $filename
-    Decoder $i "$filename.avi"
+    ./Decoder $i "$filename.avi"
 done

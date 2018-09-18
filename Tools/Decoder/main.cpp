@@ -32,12 +32,12 @@ inline bool isFileExists(const std::string &Filename) {
 
 int main(int argc, char* argv[]) 
 {
-	if(argc < 2)
+	if(argc < 3)
 	{
-		printf("usage: Decoder input.bin output.avi");
+		printf("usage: Decoder input.bin output.avi\n");
 		return 0;
 	}
-	else if(argc < 3)
+	else if(argc <= 3)
 	{
 		std::string videoname(argv[1]);
 		std::string output(argv[2]);
