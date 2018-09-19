@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 		//std::string output(argv[2]);
 
 		int dot_pos = videoname.find_last_of('.');
-		std::string output = videoname.substr(0, dot_pos-1) + ".avi";
+		std::string output = videoname.substr(0, dot_pos) + ".avi";
 
 		std::cout << cv::format("Find bin file: %s\n", videoname.c_str()) << std::endl;
 
