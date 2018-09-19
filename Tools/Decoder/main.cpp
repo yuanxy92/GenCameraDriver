@@ -32,16 +32,20 @@ inline bool isFileExists(const std::string &Filename) {
 
 int main(int argc, char* argv[]) 
 {
-	if(argc < 3)
+	if(argc < 2)
 	{
 		printf("usage: Decoder input.bin output.avi\n");
 		return 0;
 	}
-	else if(argc <= 3)
+	else if(argc <= 2)
 	{
 		std::string videoname(argv[1]);
-		std::string output(argv[2]);
-		std::cout << cv::format("Find bin file: %s", videoname.c_str()) << std::endl;
+		//std::string output(argv[2]);
+
+		int dot_pos = videoname.find_last_of('.');
+		std::string output = videoname.substr(0, dot_pos-1) + ".avi";
+
+		std::cout << cv::format("Find bin file: %s\n", videoname.c_str()) << std::endl;
 
 		int frameNum;
 		int quality;
@@ -64,7 +68,8 @@ int main(int argc, char* argv[])
 		cv::Mat img_h;
 		for (size_t i = 0; i < frameNum; i++) {
 			//printf("Decode frame %d, total %d frames.\n", i, frameNum);
-			printf("\rFrame:%d, Total:%d", i, frameNum);
+			if(i % 50 == 0)
+				printf("%s : Frame:%d, Total:%d\n",videoname.c_str(), i, frameNum);
 			fread(&length, sizeof(unsigned int), 1, fp);
 			fread(data, length, 1, fp);
 			if (i == 0) {
@@ -79,7 +84,52 @@ int main(int argc, char* argv[])
 		fclose(fp);
 		writer.release();
 		coder.release();
-		return 0;
+		//return 0;
+	}
+	else if(argc <= 3)
+	{
+		std::string videoname(argv[1]);
+		std::string output(argv[2]);
+		std::cout << cv::format("Find bin file: %s\n", videoname.c_str()) << std::endl;
+
+		int frameNum;
+		int quality;
+		int width;
+		int height;
+
+		cv::VideoWriter writer;
+		npp::NPPJpegCoder coder;
+
+		FILE* fp = fopen(videoname.c_str(), "rb");
+
+		fread(&frameNum, sizeof(unsigned int), 1, fp);
+		fread(&width, sizeof(int), 1, fp);
+		fread(&height, sizeof(int), 1, fp);
+		fread(&quality, sizeof(int), 1, fp);
+
+		unsigned int length;
+		char* data = new char[width * height];
+		cv::cuda::GpuMat img(height, width, CV_8UC3);
+		cv::Mat img_h;
+		for (size_t i = 0; i < frameNum; i++) {
+			//printf("Decode frame %d, total %d frames.\n", i, frameNum);
+			if(i % 50 == 0)
+				printf("Frame:%d, Total:%d\n", i, frameNum);
+			fread(&length, sizeof(unsigned int), 1, fp);
+			fread(data, length, 1, fp);
+			if (i == 0) {
+				coder.init(width, height, quality);
+				writer.open(output.c_str(), cv::VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, cv::Size(width, height));
+			}
+			coder.decode(reinterpret_cast<unsigned char*>(data), length, img, 0);
+			img.download(img_h);
+			writer << img_h;
+		}
+
+		fclose(fp);
+		writer.release();
+		coder.release();
+		//return 0;
 	}
 	else
 	{
@@ -124,7 +174,8 @@ int main(int argc, char* argv[])
 		cv::cuda::GpuMat img(height, width, CV_8UC3);
 		cv::Mat img_h;
 		for (size_t i = 0; i < frameNum; i++) {
-			printf("Decode frame %d, total %d frames.\n", i, frameNum);
+			if(i % 50 == 0)
+				printf("Decode frame %d, total %d frames.\n", i, frameNum);
 			fread(&length, sizeof(unsigned int), 1, fp);
 			fread(data, length, 1, fp);
 			if (i == 0) {
@@ -140,6 +191,8 @@ int main(int argc, char* argv[])
 		writer.release();
 		coder.release();
 
-		return 0;
+		//return 0;
 	}
+	printf("\n");
+	return 0;
 }
