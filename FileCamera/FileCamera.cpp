@@ -64,6 +64,7 @@ namespace cam {
 		this->cameraNum = camNum;
 		fs["BufferScale"] >> this->bufferScale;
 		filenames.resize(this->cameraNum);
+		frameshifts.resize(this->cameraNum);
 		// read detail information of file cameras
 		cv::FileNodeIterator it;
 		cv::FileNode node = fs["CamParams"];
@@ -71,6 +72,7 @@ namespace cam {
 		for (it = node.begin(); it != node.end(); ++it) {
 			// read serialnum
 			(*it)["serialnum"] >> filenames[ind];
+			(*it)["frameshift"] >> frameshifts[ind];
 			ind++;
 		}
 		fs["StartFrameInd"] >> this->startFrameInd;
@@ -138,9 +140,9 @@ namespace cam {
 			std::string fileExtension = videonames[i].substr(videonames[i].find_last_of(".") + 1);
 			if (fileExtension.compare("avi") == 0 || fileExtension.compare("mp4") == 0) {
 				readers[i].open(videonames[i]);
-				readers[i].set(CV_CAP_PROP_POS_FRAMES, startFrameInd);
+				readers[i].set(CV_CAP_PROP_POS_FRAMES, startFrameInd + frameshifts[i]);
 				SysUtil::infoOutput(cv::format("Video %s, start buffering from index %d ...",
-					videonames[i].c_str(), startFrameInd));
+					videonames[i].c_str(), startFrameInd + frameshifts[i]));
 				cv::Mat img, smallImg, bayerImg;
 				for (size_t j = 0; j < bufferSize; j++) {
 					readers[i] >> img;
