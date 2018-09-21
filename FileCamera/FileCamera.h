@@ -21,6 +21,7 @@ namespace cam {
 		float bufferScale;
 		std::vector<std::string> videonames;
 		std::vector<std::string> filenames;
+		std::vector<int> frameshifts;
 		std::vector<size_t> frameCounts;
 		std::vector<cv::VideoCapture> readers;
 		// pre-define bayer pattern
