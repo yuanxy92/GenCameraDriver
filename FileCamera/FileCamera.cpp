@@ -157,7 +157,7 @@ namespace cam {
 						//stream.waitForCompletion();
 
 						std::vector<int> param = std::vector<int>(2);
-						param[0] = CV_IMWRITE_JPEG_QUALITY;
+						param[0] = cv::IMWRITE_JPEG_QUALITY;//CV_IMWRITE_JPEG_QUALITY;
 						param[1] = 85;//default(95) 0-100
 						std::vector<uchar> buff;
 						cv::imencode(".jpg", smallImg, buff, param);
@@ -273,12 +273,12 @@ namespace cam {
 			char videoname[1024];
 			sprintf(videoname, "%s/%s", this->dir.c_str(), filenames[i].c_str());
 			cv::VideoCapture reader(videoname);
-			camInfos[i].fps = reader.get(CV_CAP_PROP_FPS);
-			camInfos[i].width = reader.get(CV_CAP_PROP_FRAME_WIDTH) 
+			camInfos[i].fps = reader.get(cv::CAP_PROP_FPS);
+			camInfos[i].width = reader.get(cv::CAP_PROP_FRAME_WIDTH) 
 				* this->bufferScale;
-			camInfos[i].height = reader.get(CV_CAP_PROP_FRAME_HEIGHT)
+			camInfos[i].height = reader.get(cv::CAP_PROP_FRAME_HEIGHT)
 				* this->bufferScale;
-			frameCounts[i] = reader.get(CV_CAP_PROP_FRAME_COUNT);
+			frameCounts[i] = reader.get(cv::CAP_PROP_FRAME_COUNT);
 			reader.release();
 		}
 		return 0;
