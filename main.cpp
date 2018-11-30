@@ -60,55 +60,134 @@ int preview(int argc, char* argv[]) {
 }
 
 int record(int argc, char* argv[]) {
-	std::vector<cam::GenCamImgRatio> imgRatios;
-	std::vector<cam::GenCamInfo> camInfos;
-	std::shared_ptr<cam::GenCamera> cameraPtr
-		//= cam::createCamera(cam::CameraModel::Stereo);
-		//= cam::createCamera(cam::CameraModel::PointGrey_u3);
-		= cam::createCamera(cam::CameraModel::XIMEA_xiC);
-	cameraPtr->init();
-	// set camera setting
-	cameraPtr->startCapture();
-	cameraPtr->setFPS(-1, 10);
-	cameraPtr->setAutoExposure(-1, cam::Status::on);
-	cameraPtr->setAutoExposureLevel(-1, 30);
-	//cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
-	//cameraPtr->setAutoWhiteBalance(-1);
-	cameraPtr->setWhiteBalance(-1, 2.0, 1.0, 2.0);
-	cameraPtr->makeSetEffective();
-	// set capturing setting
-	cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
-	cameraPtr->setJPEGQuality(90, 0.75);
-	cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 200);
-	cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
-	//cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
-	//cameraPtr->setJPEGQuality(90, 0.25);
-	//cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 2000);
-	cameraPtr->setVerbose(false);
-	cameraPtr->makeSetEffective();
-    cameraPtr->getCamInfos(camInfos);
-	cam::SysUtil::sleep(1000);
-	// set image ratios
-	imgRatios.resize(camInfos.size());
-	for (size_t i = 0; i < camInfos.size(); i++) {
-		imgRatios[i] = static_cast<cam::GenCamImgRatio>(0);
-		//imgRatios[i] = cam::GenCamImgRatio::Octopus;
-	}
-	cameraPtr->setImageRatios(imgRatios);
+	        std::vector<std::vector<cam::GenCamInfo>> A_camInfos;
+        std::vector<std::shared_ptr<cam::GenCamera>> A_cameraPtr;
+        //std::vector<std::string> list;
+        if(argc == 1)
+        {
+                //list.push_back(std::string("x"));
+                A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::XIMEA_xiC));
+        }
+        else
+        {
+                for(int i = 0;i < argc - 1;i++)
+                {
+                        std::string t = std::string(argv[i+1]);
+                        if(t == "XIMEA" || t == "x")
+                                A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::XIMEA_xiC));
+                        else if(t == "PTGREY" || t == "PointGrey" || t == "p")
+                                A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::PointGrey_u3));
+                        else if(t == "Stereo" || t == "STEREO" || t == "s")
+                                A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::Stereo));
+                }
+        }
+        for(int i = 0;i < A_cameraPtr.size();i++)
+        {
+                std::vector<cam::GenCamImgRatio> imgRatios;
+                std::vector<cam::GenCamInfo> camInfos;
+                std::shared_ptr<cam::GenCamera> cameraPtr = A_cameraPtr[i];
+                cameraPtr->init();
+                // set camera setting
+                cameraPtr->startCapture();
+                cameraPtr->setFPS(-1, 10);
+                cameraPtr->setAutoExposure(-1, cam::Status::on);
+                cameraPtr->setAutoExposureLevel(-1, 30);
+                //cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
+                //cameraPtr->setAutoWhiteBalance(-1);
+                cameraPtr->setWhiteBalance(-1, 2.0, 1.0, 2.0);
+                cameraPtr->makeSetEffective();
+                // set capturing setting
+                cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
+                cameraPtr->setJPEGQuality(90, 0.75);
+                cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 20);
+                cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
+                //cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
+                //cameraPtr->setJPEGQuality(90, 0.25);
+                //cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 2000);
+                cameraPtr->setVerbose(false);
+                cameraPtr->makeSetEffective();
+                cameraPtr->getCamInfos(camInfos);
+ 
+                A_camInfos.push_back(camInfos);
+ 
+                cam::SysUtil::sleep(1000);
+                // set image ratios
+                imgRatios.resize(camInfos.size());
+                for (size_t i = 0; i < camInfos.size(); i++) {
+                        imgRatios[i] = static_cast<cam::GenCamImgRatio>(0);
+                        //imgRatios[i] = cam::GenCamImgRatio::Octopus;
+                }
+                cameraPtr->setImageRatios(imgRatios);
+        }
+ 
+        // std::vector<cam::GenCamImgRatio> imgRatios;
+        // std::vector<cam::GenCamInfo> camInfos;
+        // std::shared_ptr<cam::GenCamera> cameraPtr
+        //      //= cam::createCamera(cam::CameraModel::Stereo);
+        //      //= cam::createCamera(cam::CameraModel::PointGrey_u3);
+        //      = cam::createCamera(cam::CameraModel::XIMEA_xiC);
+        // cameraPtr->init();
+        // // set camera setting
+        // cameraPtr->startCapture();
+        // cameraPtr->setFPS(-1, 10);
+        // cameraPtr->setAutoExposure(-1, cam::Status::on);
+        // cameraPtr->setAutoExposureLevel(-1, 30);
+        // //cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
+        // //cameraPtr->setAutoWhiteBalance(-1);
+        // cameraPtr->setWhiteBalance(-1, 2.0, 1.0, 2.0);
+        // cameraPtr->makeSetEffective();
+        // // set capturing setting
+        // cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
+        // cameraPtr->setJPEGQuality(90, 0.75);
+        // cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 200);
+        // cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
+        // //cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
+        // //cameraPtr->setJPEGQuality(90, 0.25);
+        // //cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 2000);
+        // cameraPtr->setVerbose(false);
+        // cameraPtr->makeSetEffective();
+     // cameraPtr->getCamInfos(camInfos);
+        // cam::SysUtil::sleep(1000);
+        // // set image ratios
+        // imgRatios.resize(camInfos.size());
+        // for (size_t i = 0; i < camInfos.size(); i++) {
+        //      imgRatios[i] = static_cast<cam::GenCamImgRatio>(0);
+        //      //imgRatios[i] = cam::GenCamImgRatio::Octopus;
+        // }
+        // cameraPtr->setImageRatios(imgRatios);
+ 
+        for(int i = 0;i < A_cameraPtr.size();i++)
+        {
+                std::vector<cam::GenCamInfo> camInfos  = A_camInfos[i];
+                std::shared_ptr<cam::GenCamera> cameraPtr = A_cameraPtr[i];
+                cameraPtr->startCaptureThreads();
+        }
+        for(int i = 0;i < A_cameraPtr.size();i++)
+        {
+                std::vector<cam::GenCamInfo> camInfos  = A_camInfos[i];
+                std::shared_ptr<cam::GenCamera> cameraPtr = A_cameraPtr[i];
+                cameraPtr->waitForRecordFinish();
+                cameraPtr->saveImages("test_img");
+                for(int i = 0; i < camInfos.size();i++) {
+        		printf("%d:%s\n",i, camInfos[i].sn.c_str());
+                printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
 
-	cameraPtr->startCaptureThreads();
-	// wait for recoding to finish
-	cameraPtr->waitForRecordFinish();
-	cameraPtr->saveImages("test_img");
-	//cameraPtr->saveVideos("saved");
-    for(int i = 0; i < camInfos.size();i++) {
-        printf("%d:%s\n",i, camInfos[i].sn.c_str());
-		printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
-    }
-	cameraPtr->stopCaptureThreads();
-	cameraPtr->release();
-
-	//getchar();
+                }
+                cameraPtr->stopCaptureThreads();
+                cameraPtr->release();
+        }
+ 
+        //cameraPtr->startCaptureThreads();
+        // wait for recoding to finish
+        // cameraPtr->waitForRecordFinish();
+        // cameraPtr->saveImages("test_img");
+        //cameraPtr->saveVideos("saved");
+     // for(int i = 0; i < camInfos.size();i++) {
+     //     printf("%d:%s\n",i, camInfos[i].sn.c_str());
+        //      printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
+     // }
+        // cameraPtr->stopCaptureThreads();
+        // cameraPtr->release();
 	return 0;
 }
 

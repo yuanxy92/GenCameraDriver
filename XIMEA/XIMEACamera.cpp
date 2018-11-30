@@ -62,6 +62,9 @@ namespace cam {
 		PDWORD num = new DWORD;
 		checkXIMEAErrors(xiGetNumberDevices(num));
 		this->cameraNum = static_cast<size_t>(*num);
+
+ 		SysUtil::infoOutput(cv::format("GenCameraXIMEA::init %d XIMEA cameras detected", *num));
+
 		if (cameraNum < 1) {
 			SysUtil::errorOutput("No XIMEA cameras detected !");
 			return -1;	
