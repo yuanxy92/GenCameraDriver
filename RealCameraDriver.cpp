@@ -82,6 +82,7 @@ namespace cam {
 				}
 			}
 			// wait some time
+			
 			if (waitTime > 0) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<long long>(waitTime)));
 			}
@@ -180,6 +181,7 @@ namespace cam {
 					camInd, static_cast<long long>(waitTime));
 			}
 			float stat_pass_time = static_cast<double>(end_time - stat_last_time) / CLOCKS_PER_SEC * 1000;
+			SysUtil::infoOutput(cv::format("stat_pass_time = %f", stat_pass_time));
 			if(stat_pass_time > STAT_FPS_OUTPUT_MS && STAT_FPS_OUTPUT_MS > 0)
 			{
 				float stat_fps = (float)stat_frame_count / stat_pass_time * 1000.0f;
@@ -187,8 +189,10 @@ namespace cam {
 				stat_frame_count = 0;
 				stat_last_time = end_time;
 			}
+			//SysUtil::infoOutput(cv::format("wait time = %d", static_cast<int>(waitTime)));
 			if (waitTime > 0) {
-				SysUtil::sleep(waitTime);
+				SysUtil::infoOutput(cv::format("wait time = %d", static_cast<int>(waitTime)));
+				SysUtil::sleep(static_cast<int>(waitTime));
 			}
 		}
 		char info[256];

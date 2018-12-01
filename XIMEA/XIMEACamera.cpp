@@ -71,6 +71,10 @@ namespace cam {
 		}
 		delete num;
 		// set parameter
+
+
+
+
 		// open cameras
 		hcams.resize(this->cameraNum);
 		for (size_t i = 0; i < this->cameraNum; i++) {
@@ -89,6 +93,14 @@ namespace cam {
 		for (size_t i = 0; i < this->cameraNum; i++) {
 			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LUT_EN, 1));
 		}
+
+		for (size_t i = 0; i < this->cameraNum; i++) {
+			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_AUTO_BANDWIDTH_CALCULATION, XI_OFF));
+			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LIMIT_BANDWIDTH_MODE, XI_OFF));
+			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LIMIT_BANDWIDTH, 120*8));
+			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LIMIT_BANDWIDTH_MODE, XI_ON));
+		}
+
 		// init images
 		xiImages.resize(this->cameraNum);
 		for (size_t i = 0; i < this->cameraNum; i++) {
