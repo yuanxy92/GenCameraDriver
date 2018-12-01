@@ -33,6 +33,8 @@
 #else
 #define DELTA_EPOCH_IN_MICROSECS 11644473600000000ULL
 #endif
+#else
+#include<sys/time.h>
 #endif
 
 namespace cam {

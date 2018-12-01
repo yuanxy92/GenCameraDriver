@@ -71,10 +71,6 @@ namespace cam {
 		}
 		delete num;
 		// set parameter
-
-
-
-
 		// open cameras
 		hcams.resize(this->cameraNum);
 		for (size_t i = 0; i < this->cameraNum; i++) {
@@ -94,12 +90,12 @@ namespace cam {
 			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LUT_EN, 1));
 		}
 
-		for (size_t i = 0; i < this->cameraNum; i++) {
-			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_AUTO_BANDWIDTH_CALCULATION, XI_OFF));
-			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LIMIT_BANDWIDTH_MODE, XI_OFF));
-			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LIMIT_BANDWIDTH, 120*8));
-			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LIMIT_BANDWIDTH_MODE, XI_ON));
-		}
+		// for (size_t i = 0; i < this->cameraNum; i++) {
+		// 	checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_AUTO_BANDWIDTH_CALCULATION, XI_OFF));
+		// 	checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LIMIT_BANDWIDTH_MODE, XI_OFF));
+		// 	checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LIMIT_BANDWIDTH, 120*8));
+		// 	checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LIMIT_BANDWIDTH_MODE, XI_ON));
+		// }
 
 		// init images
 		xiImages.resize(this->cameraNum);
@@ -199,17 +195,46 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraXIMEA::setFPS(int camInd, float fps, float exposureUpperLimitRatio) {
+
+		if(this->isCapture)
+		{
+			SysUtil::warningOutput("GenCameraXIMEA::setFPS Calling setFPS after StartCapture, framerate limit may not work");
+		}
+
 		// calculate max exposure time
 		float maxExposureTime = 1000000.0f / fps * exposureUpperLimitRatio;
+
 		if (camInd == -1) {
 			for (size_t i = 0; i < this->cameraNum; i++) {
-				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_FRAMERATE, fps));
+				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_ACQ_TIMING_MODE, XI_ACQ_TIMING_MODE_FRAME_RATE_LIMIT));
+				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_FRAMERATE, 
+				static_cast<int>(fps * XIMEA_CAMERA_BANDWITH_REDUN)));
 				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_AE_MAX_LIMIT, maxExposureTime));
+
+				// int width, height;
+				// checkXIMEAErrors(xiGetParamInt(hcams[i], XI_PRM_WIDTH, &width));
+				// checkXIMEAErrors(xiGetParamInt(hcams[i], XI_PRM_HEIGHT, &height));
+				// checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_AUTO_BANDWIDTH_CALCULATION, XI_OFF));
+				// checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LIMIT_BANDWIDTH_MODE, XI_OFF));
+				// checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LIMIT_BANDWIDTH,
+				//  static_cast<int>(width * height * fps * 8 / 1024.0 / 1024.0 * XIMEA_CAMERA_BANDWITH_REDUN)));
+				// checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_LIMIT_BANDWIDTH_MODE, XI_ON));
 			}
 		}
 		else {
-			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_FRAMERATE, fps));
+			checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_ACQ_TIMING_MODE, XI_ACQ_TIMING_MODE_FRAME_RATE_LIMIT));
+			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_FRAMERATE, 
+				static_cast<int>(fps * XIMEA_CAMERA_BANDWITH_REDUN)));
 			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_AE_MAX_LIMIT, maxExposureTime));
+
+			// int width, height;
+			// checkXIMEAErrors(xiGetParamInt(hcams[camInd], XI_PRM_WIDTH, &width));
+			// checkXIMEAErrors(xiGetParamInt(hcams[camInd], XI_PRM_HEIGHT, &height));
+			// checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_AUTO_BANDWIDTH_CALCULATION, XI_OFF));
+			// checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_LIMIT_BANDWIDTH_MODE, XI_OFF));
+			// checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_LIMIT_BANDWIDTH,
+			// 	 static_cast<int>(width * height * fps * 8 / 1024.0 / 1024.0 * XIMEA_CAMERA_BANDWITH_REDUN)));
+			// checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_LIMIT_BANDWIDTH_MODE, XI_ON));
 		}
 		return 0;
 	}

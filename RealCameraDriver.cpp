@@ -181,7 +181,7 @@ namespace cam {
 					camInd, static_cast<long long>(waitTime));
 			}
 			float stat_pass_time = static_cast<double>(end_time - stat_last_time) / CLOCKS_PER_SEC * 1000;
-			SysUtil::infoOutput(cv::format("stat_pass_time = %f", stat_pass_time));
+			//SysUtil::infoOutput(cv::format("stat_pass_time = %f", stat_pass_time));
 			if(stat_pass_time > STAT_FPS_OUTPUT_MS && STAT_FPS_OUTPUT_MS > 0)
 			{
 				float stat_fps = (float)stat_frame_count / stat_pass_time * 1000.0f;
@@ -191,12 +191,12 @@ namespace cam {
 			}
 			//SysUtil::infoOutput(cv::format("wait time = %d", static_cast<int>(waitTime)));
 			if (waitTime > 0) {
-				SysUtil::infoOutput(cv::format("wait time = %d", static_cast<int>(waitTime)));
+				//SysUtil::infoOutput(cv::format("wait time = %d", static_cast<int>(waitTime)));
 				SysUtil::sleep(static_cast<int>(waitTime));
 			}
 		}
 		char info[256];
-		sprintf(info, "Capturing thread for camera %02d finish, exit successfully !", camInd);
+		sprintf(info, "Capturing thread for caemera %02d finish, exit successfully !", camInd);
 		SysUtil::infoOutput(info);
 	}
 

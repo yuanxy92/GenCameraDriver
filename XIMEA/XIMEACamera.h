@@ -19,6 +19,8 @@ Implementation of XIMEA camera
 #include "GenCameraDriver.h"
 #include "RealCameraDriver.h"
 
+#define XIMEA_CAMERA_BANDWITH_REDUN 1.0
+
 namespace cam {
 
 	// function to check XIMEA function error
