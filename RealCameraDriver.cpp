@@ -55,12 +55,12 @@ namespace cam {
 		}
 
 		clock_t begin_time, end_time;
-		clock_t stat_last_time = clock();
+		clock_t stat_last_time = SysUtil::getCurrentTimeMicroSecond();
 		int stat_frame_count = 0;
 		double time = 1000.0 / static_cast<double>(camInfos[camInd].fps);
 		thStatus[camInd] = 1;
 		for (;;) {
-			begin_time = clock();
+			begin_time = SysUtil::getCurrentTimeMicroSecond();
 			// check status
 			if (thexit == 1)
 				break;
@@ -69,7 +69,7 @@ namespace cam {
 			// capture image
 			this->captureFrame(camInd, bufferImgs[thBufferInds[camInd]][camInd]);
 			stat_frame_count++;
-			end_time = clock();
+			end_time = SysUtil::getCurrentTimeMicroSecond();
 			float waitTime = time - static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
 			// increase index
 			if (camPurpose == GenCamCapturePurpose::Streaming)
@@ -121,14 +121,14 @@ namespace cam {
 	*/
 	void RealCamera::capture_thread_JPEG_(int camInd) {
 		clock_t begin_time, end_time;
-		clock_t stat_last_time = clock();
+		clock_t stat_last_time = SysUtil::getCurrentTimeMicroSecond();
 		int stat_frame_count = 0;
 		double time = 1000.0 / static_cast<double>(camInfos[camInd].fps);
 		thStatus[camInd] = 1;
 		cv::cuda::Stream cvstream; 
 		for (;;) {
 			// begin time
-			begin_time = clock();
+			begin_time = SysUtil::getCurrentTimeMicroSecond();
 			// check status
 			if (thexit == 1)
 				break;
@@ -168,7 +168,7 @@ namespace cam {
 				this->dabayerImgs_cuda[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data);
 			}
 			// end time
-			end_time = clock();
+			end_time = SysUtil::getCurrentTimeMicroSecond();
 			float waitTime = time - static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
 			// set status to 2, wait for compress
 			if (thexit == 1)
@@ -205,7 +205,7 @@ namespace cam {
 	*/
 	void RealCamera::compress_thread_JPEG_() {
 		clock_t begin_time, end_time;
-		clock_t stat_last_time = clock();
+		clock_t stat_last_time = SysUtil::getCurrentTimeMicroSecond();
 		int stat_frame_count = 0;
 		cv::cuda::Stream stream;
 		bool hasFrame;
@@ -242,7 +242,7 @@ namespace cam {
 				if (thexit == 1)
 					break;
 				// begin time
-				begin_time = clock();
+				begin_time = SysUtil::getCurrentTimeMicroSecond();
 
 				//TODO (SHADOWK) : added ratio control code here (also more coder is needed)
 				int ratioInd = static_cast<int>(imgRatios[camInd]);
@@ -279,7 +279,7 @@ namespace cam {
 				stream.waitForCompletion();
 				stat_frame_count++;
 				// end time
-				end_time = clock();
+				end_time = SysUtil::getCurrentTimeMicroSecond();
 				if (isVerbose) {
 					float costTime = static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
 					char info[256];
