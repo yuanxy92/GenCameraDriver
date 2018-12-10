@@ -29,6 +29,14 @@ namespace cam {
 		// video start index
 		int startFrameInd;
 
+		// sync file
+		bool hasSyncFile;
+		std::string syncfile;
+		std::vector<std::vector<int>> frameInds;
+		std::vector<std::vector<uint64_t>> timeStamps;
+		int syncInd;
+		int syncIndNext;
+
 	public:
 
 	private:

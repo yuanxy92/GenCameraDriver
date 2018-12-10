@@ -19,7 +19,7 @@ namespace cam {
 	}
 
 	// constructor
-	GenCameraFile::GenCameraFile() {}
+	GenCameraFile::GenCameraFile() : hasSyncFile(false) {}
 	GenCameraFile::GenCameraFile(std::string dir) {
 		this->camModel = cam::CameraModel::File;
 		this->camPurpose = cam::GenCamCapturePurpose::Streaming;
@@ -100,6 +100,34 @@ namespace cam {
 		// get camera infos
 		camInfos.resize(this->cameraNum);
 		this->getCamInfos(camInfos);
+
+		// check if sync file is existed
+		syncfile = cv::format("%s/sync.txt", dir.c_str());
+		std::replace(syncfile.begin(), syncfile.end(), '/', '\\');
+		if (isFileExists(syncfile)) {
+			frameInds.resize(camNum);
+			timeStamps.resize(camNum);
+			hasSyncFile = true;
+			std::fstream fsync(syncfile.c_str(), std::ios::in);
+			int trueInd = 0;
+			for (;;) {
+				int readInd;
+				int frameInd;
+				uint64_t timeStamp;
+				fsync >> readInd;
+				if (readInd != trueInd) {
+					break;
+				}
+				for (int j = 0; j < camNum; j++) {
+					fsync >> frameInd;
+					fsync >> timeStamp;
+					frameInds[j].push_back(frameInd);
+					timeStamps[j].push_back(timeStamp);
+				}
+				trueInd++;
+			}
+			fsync.close();
+		}
 		return 0;
 	}
 
@@ -108,6 +136,8 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraFile::bufferImageData() {
+		syncInd = 0;
+		syncIndNext = syncInd + 1;
 		this->bufferImgs.resize(this->bufferSize);
 		this->readers.resize(this->cameraNum);
 		for (size_t i = 0; i < bufferSize; i++) {
@@ -140,12 +170,31 @@ namespace cam {
 			std::string fileExtension = videonames[i].substr(videonames[i].find_last_of(".") + 1);
 			if (fileExtension.compare("avi") == 0 || fileExtension.compare("mp4") == 0) {
 				readers[i].open(videonames[i]);
-				readers[i].set(CV_CAP_PROP_POS_FRAMES, startFrameInd + frameshifts[i]);
-				SysUtil::infoOutput(cv::format("Video %s, start buffering from index %d ...",
-					videonames[i].c_str(), startFrameInd + frameshifts[i]));
+				if (hasSyncFile == false) {
+					readers[i].set(CV_CAP_PROP_POS_FRAMES, startFrameInd + frameshifts[i]);
+					SysUtil::infoOutput(cv::format("Video %s, start buffering from index %d ...",
+						videonames[i].c_str(), startFrameInd + frameshifts[i]));
+				}
+				else {
+					readers[i].set(CV_CAP_PROP_POS_FRAMES, frameInds[i][syncInd]);
+					SysUtil::infoOutput(cv::format("Video %s, start buffering from index %d ...",
+						videonames[i].c_str(), frameInds[i][syncInd]));
+				}
 				cv::Mat img, smallImg, bayerImg;
 				for (size_t j = 0; j < bufferSize; j++) {
-					readers[i] >> img;
+					if (hasSyncFile == false || j == 0) {
+						readers[i] >> img;
+					}
+					else {
+						int frameNum = frameInds[i][syncIndNext + j] - frameInds[i][syncInd + j - 1];
+						for (int k = 0; k < frameNum; k++) {
+							readers[i] >> img;
+						}
+						//syncInd++;
+						//syncIndNext++;
+						//if (syncIndNext >= frameInds[i].size())
+						//	syncIndNext = 0;
+					}
 					cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
 					if (this->camPurpose != cam::GenCamCapturePurpose::FileCameraRecording) {
 						bayerImg = colorBGR2BayerRG(smallImg);
@@ -336,7 +385,15 @@ namespace cam {
 			//SysUtil::infoOutput("Buffer next frame of video " + filenames[i]);
 			cv::Mat img, smallImg, bayerImg;
 			int j = 0;
-			readers[i] >> img;
+			if (hasSyncFile == false) {
+				readers[i] >> img;
+			}
+			else {
+				int frameNum = frameInds[i][syncIndNext] - frameInds[i][syncInd];
+				for (int k = 0; k < frameNum; k++) {
+					readers[i] >> img;
+				}
+			}
 			if (img.rows > 0) {
 				if (img.rows != camInfos[i].height || img.cols != camInfos[i].width) {
 					cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
@@ -351,6 +408,11 @@ namespace cam {
 				isFinalFrame = true;
 				break;
 			}
+		}
+		syncInd++;
+		syncIndNext++;
+		if (syncIndNext >= frameInds[0].size()) {
+			isFinalFrame = true;
 		}
 		if (isFinalFrame) {
 			for (size_t i = 0; i < this->cameraNum; i++)
