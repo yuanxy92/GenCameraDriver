@@ -20,7 +20,7 @@ namespace cam {
 
 	// constructor
 	GenCameraFile::GenCameraFile() : hasSyncFile(false) {}
-	GenCameraFile::GenCameraFile(std::string dir) {
+	GenCameraFile::GenCameraFile(std::string dir) : hasSyncFile(false) {
 		this->camModel = cam::CameraModel::File;
 		this->camPurpose = cam::GenCamCapturePurpose::Streaming;
 		this->dir = dir;
@@ -409,10 +409,12 @@ namespace cam {
 				break;
 			}
 		}
-		syncInd++;
-		syncIndNext++;
-		if (syncIndNext >= frameInds[0].size()) {
-			isFinalFrame = true;
+		if (hasSyncFile) {
+			syncInd++;
+			syncIndNext++;
+			if (syncIndNext >= frameInds[0].size()) {
+				isFinalFrame = true;
+			}
 		}
 		if (isFinalFrame) {
 			for (size_t i = 0; i < this->cameraNum; i++)
