@@ -70,7 +70,7 @@ namespace cam {
 			this->captureFrame(camInd, bufferImgs[thBufferInds[camInd]][camInd]);
 			stat_frame_count++;
 			end_time = SysUtil::getCurrentTimeMicroSecond();
-			float waitTime = time - static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
+			float waitTime = time - static_cast<double>(end_time - begin_time) / 1000;
 			// increase index
 			if (camPurpose == GenCamCapturePurpose::Streaming)
 				thBufferInds[camInd] = (thBufferInds[camInd] + 1) % bufferSize;
@@ -90,7 +90,7 @@ namespace cam {
 				printf("Camera %d captures one frame, wait %lld milliseconds for next frame ...\n",
 					camInd, static_cast<long long>(waitTime));
 			}
-			float stat_pass_time = static_cast<double>(end_time - stat_last_time) / CLOCKS_PER_SEC * 1000;
+			float stat_pass_time = static_cast<double>(end_time - stat_last_time) / 1000;
 			if(stat_pass_time > STAT_FPS_OUTPUT_MS && STAT_FPS_OUTPUT_MS > 0)
 			{
 				float stat_fps = (float)stat_frame_count / stat_pass_time * 1000.0f;
@@ -170,7 +170,7 @@ namespace cam {
 			}
 			// end time
 			end_time = SysUtil::getCurrentTimeMicroSecond();
-			float waitTime = time - static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
+			float waitTime = time - static_cast<double>(end_time - begin_time) / 1000;
 			// set status to 2, wait for compress
 			if (thexit == 1)
 				break;
@@ -180,7 +180,7 @@ namespace cam {
 				printf("Camera %d captures one frame, wait %lld milliseconds for next frame ...\n",
 					camInd, static_cast<long long>(waitTime));
 			}
-			float stat_pass_time = static_cast<double>(end_time - stat_last_time) / CLOCKS_PER_SEC * 1000;
+			float stat_pass_time = static_cast<double>(end_time - stat_last_time) / 1000;
 			//SysUtil::infoOutput(cv::format("stat_pass_time = %f", stat_pass_time));
 			if(stat_pass_time > STAT_FPS_OUTPUT_MS && STAT_FPS_OUTPUT_MS > 0)
 			{
@@ -285,13 +285,13 @@ namespace cam {
 				// end time
 				end_time = SysUtil::getCurrentTimeMicroSecond();
 				if (isVerbose) {
-					float costTime = static_cast<double>(end_time - begin_time) / CLOCKS_PER_SEC * 1000;
+					float costTime = static_cast<double>(end_time - begin_time) / 1000;
 					char info[256];
 					sprintf(info, "Camera %d compress one frame, buffer to index %d, cost %f miliseconds ...", camInd,
 						thBufferInds[camInd], costTime);
 					SysUtil::infoOutput(info);
 				}
-				float stat_pass_time = static_cast<double>(end_time - stat_last_time) / CLOCKS_PER_SEC * 1000;
+				float stat_pass_time = static_cast<double>(end_time - stat_last_time) / 1000;
 				if(stat_pass_time > STAT_FPS_OUTPUT_MS && STAT_FPS_OUTPUT_MS > 0)
 				{
 					float stat_fps = (float)stat_frame_count / stat_pass_time * 1000.0f;
