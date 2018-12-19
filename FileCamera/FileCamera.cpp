@@ -171,12 +171,12 @@ namespace cam {
 			if (fileExtension.compare("avi") == 0 || fileExtension.compare("mp4") == 0) {
 				readers[i].open(videonames[i]);
 				if (hasSyncFile == false) {
-					readers[i].set(CV_CAP_PROP_POS_FRAMES, startFrameInd + frameshifts[i]);
+					readers[i].set(cv::CAP_PROP_POS_FRAMES, startFrameInd + frameshifts[i]);
 					SysUtil::infoOutput(cv::format("Video %s, start buffering from index %d ...",
 						videonames[i].c_str(), startFrameInd + frameshifts[i]));
 				}
 				else {
-					readers[i].set(CV_CAP_PROP_POS_FRAMES, frameInds[i][syncInd]);
+					readers[i].set(cv::CAP_PROP_POS_FRAMES, frameInds[i][syncInd]);
 					SysUtil::infoOutput(cv::format("Video %s, start buffering from index %d ...",
 						videonames[i].c_str(), frameInds[i][syncInd]));
 				}
@@ -288,12 +288,12 @@ namespace cam {
 			camInfos[i].bayerPattern = GenCamBayerPattern::BayerGRBG;
 			// read width and height from video file
 			cv::VideoCapture reader(videonames[i]);
-			camInfos[i].fps = reader.get(CV_CAP_PROP_FPS);
-			camInfos[i].width = reader.get(CV_CAP_PROP_FRAME_WIDTH) 
+			camInfos[i].fps = reader.get(cv::CAP_PROP_FPS);
+			camInfos[i].width = reader.get(cv::CAP_PROP_FRAME_WIDTH) 
 				* this->bufferScale;
-			camInfos[i].height = reader.get(CV_CAP_PROP_FRAME_HEIGHT)
+			camInfos[i].height = reader.get(cv::CAP_PROP_FRAME_HEIGHT)
 				* this->bufferScale;
-			frameCounts[i] = reader.get(CV_CAP_PROP_FRAME_COUNT);
+			frameCounts[i] = reader.get(cv::CAP_PROP_FRAME_COUNT);
 			reader.release();
 		}
 		return 0;
