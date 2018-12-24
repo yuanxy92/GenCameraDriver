@@ -164,10 +164,13 @@ namespace cam {
 			{
 				this->bufferImgs_cuda[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data);
 			}
-			else
+			else if(bufferImgs_data_ptr[camInd].isJpegCompressd == false)
 			{
 				this->dabayerImgs_cuda[camInd].data = reinterpret_cast<uchar*>(bufferImgs_data_ptr[camInd].data);
 			}
+
+
+
 			// end time
 			end_time = SysUtil::getCurrentTimeMicroSecond();
 			float waitTime = time - static_cast<double>(end_time - begin_time) / 1000;
@@ -248,6 +251,8 @@ namespace cam {
 				// begin time
 				begin_time = SysUtil::getCurrentTimeMicroSecond();
 
+
+
 				//TODO (SHADOWK) : added ratio control code here (also more coder is needed)
 				int ratioInd = static_cast<int>(imgRatios[camInd]);
 				// debayer
@@ -262,7 +267,7 @@ namespace cam {
 				//	this->dabayerImgs_cuda[camInd] = this->bufferImgs_cuda[camInd];
 				//}
 				// resize
-				if (ratioInd != 0) {
+				if (ratioInd != 0 && bufferImgs_data_ptr[camInd].isJpegCompressd == false) {
 					cv::cuda::resize(this->dabayerImgs_cuda[camInd], this->resizedDebayerImgs_cuda[camInd][ratioInd],//this->dabayerImgs_cuda[camInd],
 						coders[camInd][ratioInd].getImageSize(), cv::INTER_LINEAR);
 				}
@@ -271,16 +276,27 @@ namespace cam {
 				//cv::Mat tmp;
 				//dabayerImgs_cuda[camInd].download(tmp);
 
+				if (bufferImgs_data_ptr[camInd].isJpegCompressd == false)
+				{
+					coders[camInd][ratioInd].encode_rgb(
+						((ratioInd == 0) ? this->dabayerImgs_cuda[camInd] : this->resizedDebayerImgs_cuda[camInd][ratioInd]),
+						reinterpret_cast<uchar*>(bufferImgs[thBufferInds[camInd]][camInd].data),
+						&bufferImgs[thBufferInds[camInd]][camInd].length,
+						bufferImgs[thBufferInds[camInd]][camInd].maxLength,
+						stream);
+					bufferImgs[thBufferInds[camInd]][camInd].ratio = static_cast<cam::GenCamImgRatio>(ratioInd);
+					//cudaStreamSynchronize(stream);
+					stream.waitForCompletion();
+				}
+				else
+				{
+					bufferImgs[thBufferInds[camInd]][camInd] = bufferImgs_data_ptr[camInd].deepCopy();
+					bufferImgs[thBufferInds[camInd]][camInd].ratio = cam::GenCamImgRatio::Full;
+				}
 
-				coders[camInd][ratioInd].encode_rgb(
-					((ratioInd == 0) ? this->dabayerImgs_cuda[camInd] : this->resizedDebayerImgs_cuda[camInd][ratioInd]),
-					reinterpret_cast<uchar*>(bufferImgs[thBufferInds[camInd]][camInd].data),
-					&bufferImgs[thBufferInds[camInd]][camInd].length,
-					bufferImgs[thBufferInds[camInd]][camInd].maxLength,
-					stream);
-				bufferImgs[thBufferInds[camInd]][camInd].ratio = static_cast<cam::GenCamImgRatio>(ratioInd);
-				//cudaStreamSynchronize(stream);
-				stream.waitForCompletion();
+
+
+
 				stat_frame_count++;
 				// end time
 				end_time = SysUtil::getCurrentTimeMicroSecond();

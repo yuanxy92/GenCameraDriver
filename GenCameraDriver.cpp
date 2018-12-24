@@ -79,31 +79,43 @@ namespace cam {
 			this->getCamInfos(_camInfos);
 			SysUtil::mkdir(dir);
 			for (size_t i = 0; i < this->cameraNum; i++) {
-				// init npp jpeg coder
-				// init npp jpeg coder
-				std::vector<npp::NPPJpegCoder> coder(4);
-				for (size_t k = 0; k < 4; k++) {
-					cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
-						static_cast<cam::GenCamImgRatio>(k));
-					coder[k].init(size.width, size.height, JPEGQuality);
+				if (camInfos[i].sn.substr(0, 4) == "RAW_")
+				{
+					cv::Mat img(camInfos[i].height, camInfos[i].width, CV_16UC1);
+					for (size_t j = 0; j < this->bufferSize; j++) {
+						char outname[256];
+						img.data = reinterpret_cast<uchar*>(this->bufferImgs[j][i].data);
+						sprintf(outname, "%s/%s_%02d_%05d.png", dir.c_str(), _camInfos[i].sn.c_str(), i, j);
+						cv::imwrite(outname, img);
+					}
 				}
-				cv::Mat img(camInfos[i].height, camInfos[i].width, CV_8UC3);
-				for (size_t j = 0; j < this->bufferSize; j++) {
-					char outname[256];
-					int ratioInd = static_cast<int>(this->bufferImgs[j][i].ratio);
-					cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
-						static_cast<cam::GenCamImgRatio>(ratioInd));
-					cv::cuda::GpuMat img_d(size, CV_8UC3);
-					coder[ratioInd].decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data),
-						this->bufferImgs[j][i].length,
-						img_d, 0);
-					img_d.download(img);
-					sprintf(outname, "%s/%s_%02d_%05d.jpg", dir.c_str(), _camInfos[i].sn.c_str(), i, j);
-					cv::imwrite(outname, img);
-				}
-				// release npp jpeg coder
-				for (size_t k = 0; k < 4; k++) {
-					coder[k].release();
+				else
+				{
+					// init npp jpeg coder
+					std::vector<npp::NPPJpegCoder> coder(4);
+					for (size_t k = 0; k < 4; k++) {
+						cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
+							static_cast<cam::GenCamImgRatio>(k));
+						coder[k].init(size.width, size.height, JPEGQuality);
+					}
+					cv::Mat img(camInfos[i].height, camInfos[i].width, CV_8UC3);
+					for (size_t j = 0; j < this->bufferSize; j++) {
+						char outname[256];
+						int ratioInd = static_cast<int>(this->bufferImgs[j][i].ratio);
+						cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
+							static_cast<cam::GenCamImgRatio>(ratioInd));
+						cv::cuda::GpuMat img_d(size, CV_8UC3);
+						coder[ratioInd].decode(reinterpret_cast<uchar*>(this->bufferImgs[j][i].data),
+							this->bufferImgs[j][i].length,
+							img_d, 0);
+						img_d.download(img);
+						sprintf(outname, "%s/%s_%02d_%05d.jpg", dir.c_str(), _camInfos[i].sn.c_str(), i, j);
+						cv::imwrite(outname, img);
+					}
+					// release npp jpeg coder
+					for (size_t k = 0; k < 4; k++) {
+						coder[k].release();
+					}
 				}
 			}
 		}

@@ -21,9 +21,21 @@ Implementation of Stereo camera
 #include "Stereo/StereoRectify.h"
 #include "ExposureFusion.h"
 
-#define EXPOSURE_DIFF 12
+#define EXPOSURE_DIFF 0
+#define DEPTH_MAP_WIDTH 1000
+#define DEPTH_MAP_HEIGHT 750
 
 namespace cam {
+
+
+	/*Arrange:
+	MIX_CAMERA_0
+	MIX_CAMERA_1
+	...
+	DEPTH_CAMERA_0
+	DEPTH_CAMERA_1
+	...
+	*/
 
 	class GenCameraStereo : public RealCamera {
 	private:
@@ -39,7 +51,8 @@ namespace cam {
 			cv::cuda::GpuMat gpu_raw_img;
 			cv::cuda::GpuMat gpu_rgb_img;
 			cv::cuda::GpuMat gpu_rec_img;
-			cv::cuda::GpuMat gpu_remap_img;
+			//cv::cuda::GpuMat gpu_remap_img;
+			
 			Npp32f wbTwist[3][4] = {
 				{ 1.0, 0.0, 0.0, 0.0 },
 				{ 0.0, 1.0, 0.0, 0.0 },
@@ -71,21 +84,23 @@ namespace cam {
 			SubCamera master, slave;
 			std::string int_path;
 			std::string ext_path;
-			std::string warp_x_path;
-			std::string warp_y_path;
-			cv::Mat warp_x;
-			cv::Mat warp_y;
-			cv::cuda::GpuMat gpu_warp_x;
-			cv::cuda::GpuMat gpu_warp_y;
+			cv::Mat depth_img;
+			cv::cuda::GpuMat gpu_depth_img;
+			//std::string warp_x_path;
+			//std::string warp_y_path;
+			//cv::Mat warp_x;
+			//cv::Mat warp_y;
+			//cv::cuda::GpuMat gpu_warp_x;
+			//cv::cuda::GpuMat gpu_warp_y;
 			bool inv; // Tell whether we have to change the order to do the rectify
 			SubCamera& operator[](int i)
 			{
 				return (i == 0) ? master : slave;
  			}
 			StereoRectify sr;
-			ExposureFusion ef;
+			//ExposureFusion ef;
 			//int isFusionInit;
-			cv::cuda::GpuMat fusioned_img;
+			//cv::cuda::GpuMat fusioned_img;
 		};
 	private:
 		std::string config_file_path;

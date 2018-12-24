@@ -310,7 +310,9 @@ namespace cam {
 		size_t maxLength; // max malloced memory size
 		size_t length; // jpeg data length
 
-		Imagedata(): data(NULL), ratio(GenCamImgRatio::Full), length(0) {}
+		bool isJpegCompressd;
+
+		Imagedata() : isJpegCompressd(false), data(NULL), ratio(GenCamImgRatio::Full), length(0) {}
 		~Imagedata() {}
 
 		/**
@@ -322,6 +324,8 @@ namespace cam {
 			out.type = this->type;
 			out.length = this->length;
 			out.maxLength = this->maxLength;
+			out.ratio = this->ratio;
+			out.isJpegCompressd = this->isJpegCompressd;
 			// malloc memory
 			out.data = new char[out.maxLength];
 			memcpy(out.data, this->data, out.length);

@@ -40,8 +40,8 @@ namespace cam {
 			sp[1] = reader.Get(stridx, "slave_sn", "default_slave_sn");
 			sp.int_path = reader.Get(stridx, "int_path", "default_int_path");
 			sp.ext_path = reader.Get(stridx, "ext_path", "default_ext_path");
-			sp.warp_x_path = reader.Get(stridx, "warp_x_path", "default_warp_x_path");
-			sp.warp_y_path = reader.Get(stridx, "warp_y_path", "default_warp_y_path");
+			//sp.warp_x_path = reader.Get(stridx, "warp_x_path", "default_warp_x_path");
+			//sp.warp_y_path = reader.Get(stridx, "warp_y_path", "default_warp_y_path");
 			sp.inv = reader.GetBoolean(stridx, "inv", false);
 			this->pair_infos.push_back(sp);
 		}
@@ -136,18 +136,18 @@ namespace cam {
 			//pair_infos[i].isFusionInit = false;
 
 			//prepare warping mat
-			pair_infos[i].warp_x = cv::imread(pair_infos[i].warp_x_path, cv::IMREAD_ANYDEPTH);
-			pair_infos[i].warp_x.convertTo(pair_infos[i].warp_x, CV_32FC1);
-			pair_infos[i].warp_y = cv::imread(pair_infos[i].warp_y_path, cv::IMREAD_ANYDEPTH);
-			pair_infos[i].warp_y.convertTo(pair_infos[i].warp_y, CV_32FC1);
-			pair_infos[i].gpu_warp_x.upload(pair_infos[i].warp_x);
-			pair_infos[i].gpu_warp_y.upload(pair_infos[i].warp_y);
+			//pair_infos[i].warp_x = cv::imread(pair_infos[i].warp_x_path, cv::IMREAD_ANYDEPTH);
+			//pair_infos[i].warp_x.convertTo(pair_infos[i].warp_x, CV_32FC1);
+			//pair_infos[i].warp_y = cv::imread(pair_infos[i].warp_y_path, cv::IMREAD_ANYDEPTH);
+			//pair_infos[i].warp_y.convertTo(pair_infos[i].warp_y, CV_32FC1);
+			//pair_infos[i].gpu_warp_x.upload(pair_infos[i].warp_x);
+			//pair_infos[i].gpu_warp_y.upload(pair_infos[i].warp_y);
 
 			//prepare rectify class
 			pair_infos[i].sr.init(pair_infos[i].int_path, pair_infos[i].ext_path, cv::Size(sub_camInfos[idx].width, sub_camInfos[idx].height));
 
 			//prepare fusion filter kernal
-			pair_infos[i].ef.Raman_init_filter(sub_camInfos[idx].height);
+			//pair_infos[i].ef.Raman_init_filter(sub_camInfos[idx].height);
 
 			//prepare raw img space
 			size_t length = sizeof(uchar) * sub_camInfos[idx].width * sub_camInfos[idx].height;
@@ -171,11 +171,11 @@ namespace cam {
 			pair_infos[i][0].gpu_rec_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
 			pair_infos[i][1].gpu_rec_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
 
-			pair_infos[i][0].gpu_remap_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
-			pair_infos[i][1].gpu_remap_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
+			//pair_infos[i][0].gpu_remap_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
+			//pair_infos[i][1].gpu_remap_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
 			
 		}
-		cameraNum = pair_infos.size();
+		cameraNum = pair_infos.size() * 2; //Now added a EXTRA camera for each pair (depth & mask)
 		ths.resize(cameraNum);
 		thStatus.resize(cameraNum);
 		isInit = true;
@@ -229,12 +229,11 @@ namespace cam {
 		camInfos.resize(cameraNum);
 		sub_cameraPtr->getCamInfos(sub_camInfos);
 		//each pair info = master.info
-		for (size_t i = 0; i < this->cameraNum; i++)
+		for (size_t i = 0; i < this->cameraNum / 2; i++)
 		{
 			camInfos[i] = sub_camInfos[pair_infos[i][0].index];
 			camInfos[i].sn = "MIX_" + sub_camInfos[pair_infos[i][0].index].sn + "_" + sub_camInfos[pair_infos[i][1].index].sn;
 			camInfos[i].isWBRaw = true;
-
 			//set twist
 			for (int j = 0; j < 2; j++)
 			{
@@ -242,6 +241,17 @@ namespace cam {
 				pair_infos[i][j].wbTwist[1][1] = sub_camInfos[pair_infos[i][j].index].greenGain;
 				pair_infos[i][j].wbTwist[2][2] = sub_camInfos[pair_infos[i][j].index].blueGain;
 			}
+		}
+		for (size_t i = this->cameraNum / 2; i < this->cameraNum; i++)
+		{
+			GenCamInfo tmp_info = sub_camInfos[pair_infos[i - this->cameraNum / 2][1].index];
+			tmp_info.height = DEPTH_MAP_HEIGHT;
+			tmp_info.width = DEPTH_MAP_WIDTH;
+			tmp_info.isWBRaw = true;
+			tmp_info.sn = "RAW_DEPTH_MIX_" + 
+				sub_camInfos[pair_infos[i - this->cameraNum / 2][0].index].sn + 
+				"_" + sub_camInfos[pair_infos[i - this->cameraNum / 2][1].index].sn;
+			camInfos[i] = tmp_info;
 		}
 		return 0;
 	}
@@ -251,7 +261,7 @@ namespace cam {
 		{
 			this->sub_cameraPtr->setFPS(camInd, fps, exposureUpperLimitRatio);
 		}
-		else 
+		else if(camInd < this->cameraNum / 2)
 		{
 			//TODO : now will affect 2 real cameras
 			this->sub_cameraPtr->setFPS(pair_infos[camInd][0].index, fps, exposureUpperLimitRatio);
@@ -265,7 +275,7 @@ namespace cam {
 		{
 			this->sub_cameraPtr->setAutoWhiteBalance(camInd);
 		}
-		else
+		else if (camInd < this->cameraNum / 2)
 		{
 			//TODO : now will affect 2 real cameras
 			this->sub_cameraPtr->setAutoWhiteBalance(pair_infos[camInd][0].index);
@@ -280,7 +290,7 @@ namespace cam {
 		{
 			this->sub_cameraPtr->setWhiteBalance(camInd, redGain, greenGain, blueGain);
 		}
-		else
+		else if (camInd < this->cameraNum / 2)
 		{
 			//TODO : now will affect 2 real cameras
 			this->sub_cameraPtr->setWhiteBalance(pair_infos[camInd][0].index, redGain, greenGain, blueGain);
@@ -294,7 +304,7 @@ namespace cam {
 		{
 			this->sub_cameraPtr->setAutoExposure(camInd, autoExposure);
 		}
-		else
+		else if (camInd < this->cameraNum / 2)
 		{
 			//TODO : now will affect 2 real cameras
 			this->sub_cameraPtr->setAutoExposure(pair_infos[camInd][0].index, autoExposure);
@@ -307,14 +317,14 @@ namespace cam {
 		if (camInd == -1)
 		{
 			//this->sub_cameraPtr->setAutoExposureLevel(camInd, level);
-			for (int i = 0; i < this->cameraNum; i++)
+			for (int i = 0; i < this->cameraNum / 2; i++)
 			{
 				this->sub_cameraPtr->setAutoExposureLevel(pair_infos[i][0].index, level + EXPOSURE_DIFF);
 				this->sub_cameraPtr->setAutoExposureLevel(pair_infos[i][1].index, level - EXPOSURE_DIFF);
 				//pair_infos[i].isFusionInit = false;
 			}
 		}
-		else
+		else if (camInd < this->cameraNum / 2)
 		{
 			//TODO : now will affect 2 real cameras
 			this->sub_cameraPtr->setAutoExposureLevel(pair_infos[camInd][0].index, level + EXPOSURE_DIFF);
@@ -330,7 +340,7 @@ namespace cam {
 		{
 			this->sub_cameraPtr->setAutoExposureCompensation(camInd, status, relativeEV);
 		}
-		else
+		else if (camInd < this->cameraNum / 2)
 		{
 			//TODO : now will affect 2 real cameras
 			this->sub_cameraPtr->setAutoExposureCompensation(pair_infos[camInd][0].index, status, relativeEV);
@@ -344,7 +354,7 @@ namespace cam {
 		{
 			this->sub_cameraPtr->adjustBrightness(camInd, brightness);
 		}
-		else
+		else if (camInd < this->cameraNum / 2)
 		{
 			//TODO : now will affect 2 real cameras
 			this->sub_cameraPtr->adjustBrightness(pair_infos[camInd][0].index, brightness);
@@ -358,7 +368,7 @@ namespace cam {
 		{
 			this->sub_cameraPtr->setExposure(camInd, time);
 		}
-		else
+		else if (camInd < this->cameraNum / 2)
 		{
 			//TODO : now will affect 2 real cameras
 			this->sub_cameraPtr->setExposure(pair_infos[camInd][0].index, time);
@@ -368,7 +378,8 @@ namespace cam {
 	}
 
 	int GenCameraStereo::getBayerPattern(int camInd, GenCamBayerPattern & bayerPattern) {
-		this->sub_cameraPtr->getBayerPattern(pair_infos[camInd][0].index, bayerPattern);
+		if (camInd < this->cameraNum / 2)
+			this->sub_cameraPtr->getBayerPattern(pair_infos[camInd][0].index, bayerPattern);
 		return 0;
 	}
 
@@ -379,98 +390,64 @@ namespace cam {
 
 	int GenCameraStereo::captureFrame(int camInd, Imagedata & img) 
 	{
-		sub_cameraPtr->captureFrame(raw_imgs);
-		int cols = sub_camInfos[pair_infos[camInd][0].index].width;
-		int rows = sub_camInfos[pair_infos[camInd][0].index].height;
-		//memcpy(pair_infos[camInd][0].cpu_raw_img.data, raw_imgs[pair_infos[camInd][0].index].data, cols * rows * sizeof(uchar));
-		//memcpy(pair_infos[camInd][1].cpu_raw_img.data, raw_imgs[pair_infos[camInd][1].index].data, cols * rows * sizeof(uchar));
-
-		pair_infos[camInd][0].cpu_raw_img.data = reinterpret_cast<unsigned char *>(raw_imgs[pair_infos[camInd][0].index].data);
-		pair_infos[camInd][1].cpu_raw_img.data = reinterpret_cast<unsigned char *>(raw_imgs[pair_infos[camInd][1].index].data);
-
-		pair_infos[camInd][0].gpu_raw_img.upload(pair_infos[camInd][0].cpu_raw_img);
-		pair_infos[camInd][1].gpu_raw_img.upload(pair_infos[camInd][1].cpu_raw_img);
-
-		cv::cuda::demosaicing(pair_infos[camInd][0].gpu_raw_img, pair_infos[camInd][0].gpu_rgb_img,
-			npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
-				static_cast<int>(camInfos[camInd].bayerPattern))));
-		cv::cuda::demosaicing(pair_infos[camInd][1].gpu_raw_img, pair_infos[camInd][1].gpu_rgb_img,
-			npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
-				static_cast<int>(camInfos[camInd].bayerPattern))));
-
-		if (pair_infos[camInd].inv == false)
+		if (camInd < this->cameraNum / 2)
 		{
-			pair_infos[camInd].sr.rectify(
-				pair_infos[camInd][0].gpu_rgb_img,
-				pair_infos[camInd][0].gpu_rec_img,
-				pair_infos[camInd][1].gpu_rgb_img,
-				pair_infos[camInd][1].gpu_rec_img);
+			sub_cameraPtr->captureFrame(raw_imgs);
+			int cols = sub_camInfos[pair_infos[camInd][0].index].width;
+			int rows = sub_camInfos[pair_infos[camInd][0].index].height;
+
+			pair_infos[camInd][0].cpu_raw_img.data = reinterpret_cast<unsigned char *>(raw_imgs[pair_infos[camInd][0].index].data);
+			pair_infos[camInd][1].cpu_raw_img.data = reinterpret_cast<unsigned char *>(raw_imgs[pair_infos[camInd][1].index].data);
+
+			pair_infos[camInd][0].gpu_raw_img.upload(pair_infos[camInd][0].cpu_raw_img);
+			pair_infos[camInd][1].gpu_raw_img.upload(pair_infos[camInd][1].cpu_raw_img);
+
+			cv::cuda::demosaicing(pair_infos[camInd][0].gpu_raw_img, pair_infos[camInd][0].gpu_rgb_img,
+				npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+					static_cast<int>(camInfos[camInd].bayerPattern))));
+			cv::cuda::demosaicing(pair_infos[camInd][1].gpu_raw_img, pair_infos[camInd][1].gpu_rgb_img,
+				npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+					static_cast<int>(camInfos[camInd].bayerPattern))));
+
+			if (pair_infos[camInd].inv == false)
+			{
+				pair_infos[camInd].sr.rectify(
+					pair_infos[camInd][0].gpu_rgb_img,
+					pair_infos[camInd][0].gpu_rec_img,
+					pair_infos[camInd][1].gpu_rgb_img,
+					pair_infos[camInd][1].gpu_rec_img);
+			}
+			else
+			{
+				pair_infos[camInd].sr.rectify(
+					pair_infos[camInd][1].gpu_rgb_img,
+					pair_infos[camInd][1].gpu_rec_img,
+					pair_infos[camInd][0].gpu_rgb_img,
+					pair_infos[camInd][0].gpu_rec_img);
+			}
+
+			//Twist
+			for (int i = 0; i < 2; i++)
+			{
+				NppiSize osize;
+				osize.width = sub_camInfos[pair_infos[camInd][i].index].width;
+				osize.height = sub_camInfos[pair_infos[camInd][i].index].height;
+				NPP_CHECK_NPP(nppiColorTwist32f_8u_C3IR(pair_infos[camInd][i].gpu_rec_img.data, pair_infos[camInd][i].gpu_rec_img.step, osize, pair_infos[camInd][i].wbTwist));
+			}
+			img.data = reinterpret_cast<char*>(pair_infos[camInd][0].gpu_rec_img.data);
 		}
 		else
 		{
-			pair_infos[camInd].sr.rectify(
-				pair_infos[camInd][1].gpu_rgb_img,
-				pair_infos[camInd][1].gpu_rec_img,
-				pair_infos[camInd][0].gpu_rgb_img,
-				pair_infos[camInd][0].gpu_rec_img);
+			cv::Mat depth_temp;
+			depth_temp.create(DEPTH_MAP_HEIGHT, DEPTH_MAP_WIDTH, CV_16UC1);
+			depth_temp.setTo(cv::Scalar(0));
+			depth_temp.at<uint16_t>(10, 10) = 64000;
+			pair_infos[camInd - cameraNum / 2].depth_img = depth_temp;
+			pair_infos[camInd - cameraNum / 2].gpu_depth_img.upload(depth_temp);
+			img.data = reinterpret_cast<char*>(pair_infos[camInd - cameraNum / 2].depth_img.data);
+			img.length = DEPTH_MAP_HEIGHT * DEPTH_MAP_WIDTH * 2;
+			img.isJpegCompressd = true;
 		}
-
-		//Twist
-		for (int i = 0; i < 2; i++)
-		{
-			NppiSize osize;
-			osize.width = sub_camInfos[pair_infos[camInd][i].index].width;
-			osize.height = sub_camInfos[pair_infos[camInd][i].index].height;
-			NPP_CHECK_NPP(nppiColorTwist32f_8u_C3IR(pair_infos[camInd][i].gpu_rec_img.data, pair_infos[camInd][i].gpu_rec_img.step, osize, pair_infos[camInd][i].wbTwist));
-		}
-
-		//cv::Mat tmp;
-		//pair_infos[camInd][1].gpu_rec_img.download(tmp);
-
-		cv::cuda::remap(
-			pair_infos[camInd][1].gpu_rec_img, pair_infos[camInd][1].gpu_remap_img,
-			pair_infos[camInd].gpu_warp_x, pair_infos[camInd].gpu_warp_y, cv::INTER_LINEAR, cv::BORDER_REFLECT); //cv::BORDER_TRANSPARENT is now not supported in cuda version
-
-
-		//if (pair_infos[camInd].isFusionInit == false)
-		//{
-		//	cv::Mat cpu_master_tmp, cpu_slave_tmp;
-		//	pair_infos[camInd][0].gpu_rec_img.download(cpu_master_tmp);
-		//	pair_infos[camInd][1].gpu_remap_img.download(cpu_slave_tmp);
-		//	pair_infos[camInd].ef.calcWeight(cpu_slave_tmp, cpu_master_tmp);
-		//	pair_infos[camInd].isFusionInit = true;
-		//}
-
-		//pair_infos[camInd].ef.fusion(pair_infos[camInd][1].gpu_remap_img, pair_infos[camInd][0].gpu_rec_img, pair_infos[camInd].fusioned_img);
-		pair_infos[camInd].ef.Raman_fusion(pair_infos[camInd][1].gpu_remap_img, pair_infos[camInd][0].gpu_rec_img, pair_infos[camInd].fusioned_img);
-
-		//cv::Mat m1, m2, m3;
-		//pair_infos[camInd][1].gpu_rec_img.download(m1);
-		//pair_infos[camInd][0].gpu_rec_img.download(m2);
-		//pair_infos[camInd].fusioned_img.download(m3);
-
-		//img.data = reinterpret_cast<char*>(pair_infos[camInd][0].gpu_rec_img.data);
-		img.data = reinterpret_cast<char*>(pair_infos[camInd].fusioned_img.data);
-
-		////test only
-		//cv::Mat m, s, opt;
-		//int cols = sub_camInfos[pair_infos[camInd][0].index].width;
-		//int rows = sub_camInfos[pair_infos[camInd][0].index].height;
-		//m.create(rows, cols, CV_8U);
-		//s.create(rows, cols, CV_8U);
-		//opt.create(rows, cols, CV_8U);
-		//memcpy(m.data, raw_imgs[pair_infos[camInd][0].index].data, cols * rows * sizeof(uchar));
-		//memcpy(s.data, raw_imgs[pair_infos[camInd][1].index].data, cols * rows * sizeof(uchar));
-		//cv::Rect r1(0, 0, cols / 2, rows);
-		//cv::Rect r2(cols / 2, 0, cols / 2, rows);
-		//cv::Mat tmp;
-		//tmp.create(rows, cols / 2, CV_8U);
-		//cv::Mat mask = cv::Mat::ones(rows, cols / 2, CV_8U);
-		//cv::resize(m, tmp, cv::Size(cols / 2, rows));
-		//tmp.copyTo(opt(r1), mask);
-		//cv::resize(s, tmp, cv::Size(cols / 2, rows));
-		//tmp.copyTo(opt(r2), mask);
-		//memcpy(img.data, opt.data, cols * rows * sizeof(uchar));
 		return 0;
 	}
 
