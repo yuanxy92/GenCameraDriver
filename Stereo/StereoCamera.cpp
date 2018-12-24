@@ -446,6 +446,7 @@ namespace cam {
 			pair_infos[camInd - cameraNum / 2].gpu_depth_img.upload(depth_temp);
 			img.data = reinterpret_cast<char*>(pair_infos[camInd - cameraNum / 2].depth_img.data);
 			img.length = DEPTH_MAP_HEIGHT * DEPTH_MAP_WIDTH * 2;
+			img.maxLength = DEPTH_MAP_HEIGHT * DEPTH_MAP_WIDTH * 2;
 			img.isJpegCompressd = true;
 		}
 		return 0;

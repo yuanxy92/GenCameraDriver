@@ -290,7 +290,8 @@ namespace cam {
 				}
 				else
 				{
-					bufferImgs[thBufferInds[camInd]][camInd] = bufferImgs_data_ptr[camInd].deepCopy();
+					bufferImgs[thBufferInds[camInd]][camInd].length = bufferImgs_data_ptr[camInd].length;
+					memcpy(bufferImgs[thBufferInds[camInd]][camInd].data, bufferImgs_data_ptr[camInd].data, bufferImgs_data_ptr[camInd].length);
 					bufferImgs[thBufferInds[camInd]][camInd].ratio = cam::GenCamImgRatio::Full;
 				}
 
@@ -385,7 +386,11 @@ namespace cam {
 				// pre-malloc jpeg data
 				for (size_t i = 0; i < this->cameraNum; i++) {
 					// pre-calculate compressed jpeg data size
-					size_t maxLength = static_cast<size_t>(camInfos[i].width * camInfos[i].height * this->sizeRatio);
+					size_t maxLength;
+					if (this->camModel == cam::CameraModel::Stereo && i >= this->cameraNum / 2)
+						maxLength = static_cast<size_t>(camInfos[i].width * camInfos[i].height * 2);
+					else
+						maxLength = static_cast<size_t>(camInfos[i].width * camInfos[i].height * this->sizeRatio);
 					for (size_t j = 0; j < bufferSize; j++) {
 						this->bufferImgs[j][i].data = new char[maxLength];
 						this->bufferImgs[j][i].maxLength = maxLength;
