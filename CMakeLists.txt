@@ -111,7 +111,45 @@ else ()
 endif()
 include_directories(${XIMEA_SDK_INCLUDE_DIR})
 
+#Stereo RealtimeDepth
+if ( NOT WIN32 )
+    FIND_PACKAGE(Eigen3 REQUIRED) 
+    include_directories(${EIGEN3_INCLUDE_DIR})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wno-unknown-pragmas -std=c++11 -msse4")  #-Wall
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -Wno-unknown-pragmas -msse4")  #-Wall
+    include_directories(${PROJECT_SOURCE_DIR}/Stereo/RealTimeDepth)
+    set(MY_HEADER_FILES
+        ${MY_HEADER_FILES}
+        Stereo/RealTimeDepth/FDF1.0.1/image.h
+        Stereo/RealTimeDepth/FDF1.0.1/opticalflow_aux.h
+        Stereo/RealTimeDepth/FDF1.0.1/solver.h
+        Stereo/RealTimeDepth/depthmap.h
+        Stereo/RealTimeDepth/GhostElemer.h
+        Stereo/RealTimeDepth/patchgrid.h
+        Stereo/RealTimeDepth/refine_variational.h
+        Stereo/RealTimeDepth/DepthMapUpdater.h
+        Stereo/RealTimeDepth/oflow.h
+        Stereo/RealTimeDepth/patch.h
+    )
+    set(MY_SOURCE_FILES 
+        ${MY_SOURCE_FILES}
+        Stereo/RealTimeDepth/FDF1.0.1/image.c
+        Stereo/RealTimeDepth/FDF1.0.1/opticalflow_aux.c
+        Stereo/RealTimeDepth/FDF1.0.1/solver.c
+        Stereo/RealTimeDepth/depthmap.cpp
+        Stereo/RealTimeDepth/GhostElemer.cpp
+        Stereo/RealTimeDepth/patch.cpp
+        Stereo/RealTimeDepth/refine_variational.cpp
+        Stereo/RealTimeDepth/DepthMapUpdater.cpp
+        Stereo/RealTimeDepth/oflow.cpp
+        Stereo/RealTimeDepth/patchgrid.cpp 
+    )
+    
+endif()
+
+
 set(MY_HEADER_FILES
+    ${MY_HEADER_FILES}
     Exceptions.h
     helper_cuda.h
     helper_string.h
@@ -129,9 +167,11 @@ set(MY_HEADER_FILES
     Stereo/INIReader.h
     Stereo/StereoRectify.h
     Stereo/ExposureFusion.h
+    Stereo/DisparityProcessor.h
 )
 
 set(MY_SOURCE_FILES 
+    ${MY_SOURCE_FILES}
     # point grey camera
     PointGrey/PointGreyCamera.cpp
     # XIMEA camera
@@ -140,6 +180,7 @@ set(MY_SOURCE_FILES
     FileCamera/FileCamera.cpp
     # Stereo camera
     Stereo/StereoCamera.cpp
+    Stereo/DisparityProcessor.cu
     Stereo/StereoRectify.cpp
     Stereo/ExposureFusion.cpp
 	Stereo/ExposureFusion.cu

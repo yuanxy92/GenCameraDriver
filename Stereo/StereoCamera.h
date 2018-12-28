@@ -10,9 +10,6 @@ Implementation of Stereo camera
 
 #ifdef WIN32
 #include <windows.h>
-#include "xiApi.h"       // Windows
-#else
-#include <m3api/xiApi.h> // Linux, OSX
 #endif
 #include <memory.h>
 
@@ -20,10 +17,17 @@ Implementation of Stereo camera
 #include "RealCameraDriver.h"
 #include "Stereo/StereoRectify.h"
 #include "ExposureFusion.h"
+#include "DisparityProcessor.h"
+
+#ifndef CUFILE
+#include "DepthMapUpdater.h"
+#endif
 
 #define EXPOSURE_DIFF 0
-#define DEPTH_MAP_WIDTH 1000
-#define DEPTH_MAP_HEIGHT 750
+
+
+#define DEPTH_MAP_WIDTH JIANING_WIDTH
+#define DEPTH_MAP_HEIGHT JIANING_HEIGHT
 
 namespace cam {
 
@@ -84,23 +88,37 @@ namespace cam {
 			SubCamera master, slave;
 			std::string int_path;
 			std::string ext_path;
-			cv::Mat depth_img;
-			cv::cuda::GpuMat gpu_depth_img;
-			//std::string warp_x_path;
-			//std::string warp_y_path;
-			//cv::Mat warp_x;
-			//cv::Mat warp_y;
-			//cv::cuda::GpuMat gpu_warp_x;
-			//cv::cuda::GpuMat gpu_warp_y;
+			cv::Mat depth_img,disparity_img;
+			cv::cuda::GpuMat _gpu_depth_img,_gpu_disparity_img;
+
+			DepthMapUpdater dUpdater;
+			/*
+			CameraMatrixK = (make sure that b/d stands for the half height/width of the image)
+			[
+				a 0 width/2
+				0 c height/2
+				0 0 1
+			]
+			CameraMatrixK^-1=
+			[
+				A 0 B
+				0 C D
+				0 0 1
+			]
+			DepthCoef = (E)
+			MaxDepth = 50000 (definded)
+
+			Mat Ki = [A,B,C,D,E]
+			*/
+			cv::Mat Ki;
+			cv::cuda::GpuMat _gpu_Ki;
+
 			bool inv; // Tell whether we have to change the order to do the rectify
 			SubCamera& operator[](int i)
 			{
 				return (i == 0) ? master : slave;
- 			}
+			}
 			StereoRectify sr;
-			//ExposureFusion ef;
-			//int isFusionInit;
-			//cv::cuda::GpuMat fusioned_img;
 		};
 	private:
 		std::string config_file_path;
@@ -116,6 +134,8 @@ namespace cam {
 		int search_camera(std::string sn,std::vector<GenCamInfo> list);
 
 		int search_pair(std::string sn, std::vector<StereoPair> list);
+
+		int process_disparity_with_mask(cv::cuda::GpuMat &disparity, cv::cuda::GpuMat &Ki, cv::cuda::GpuMat &depth);
 
 	public:
 		GenCameraStereo();

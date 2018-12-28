@@ -1,8 +1,8 @@
 /**
 @brief Generic Camera Driver Class
-Implementation of XIMEA camera
-@author Shane Yuan
-@date Dec 29, 2017
+Implementation of Stereo camera
+@author zhu-ty
+@date 2018
 */
 
 #include "StereoCamera.h"
@@ -43,6 +43,39 @@ namespace cam {
 			//sp.warp_x_path = reader.Get(stridx, "warp_x_path", "default_warp_x_path");
 			//sp.warp_y_path = reader.Get(stridx, "warp_y_path", "default_warp_y_path");
 			sp.inv = reader.GetBoolean(stridx, "inv", false);
+			std::string strmp,strsp,strdp;
+			cv::Mat matmp, matsp, matdp;
+			strmp = reader.Get(stridx, "master_color", "./master.jpg");
+			strsp = reader.Get(stridx, "slave_color", "./slave.jpg");
+			strdp = reader.Get(stridx, "depth", "./depth.jpg");
+			matmp = cv::imread(strmp);
+			matsp = cv::imread(strsp);
+			matdp =	cv::imread(strdp,cv::IMREAD_UNCHANGED);
+			//SysUtil::infoOutput("dUpdater before init done");
+			sp.dUpdater.init(matmp,matsp,matdp);
+			//SysUtil::infoOutput("dUpdater init done");
+
+			double a,b,c,d,E,A,B,C,D,K;
+			a = reader.GetReal(stridx, "a", 1000.0);
+			b = reader.GetReal(stridx, "b", 1000.0);
+			c = reader.GetReal(stridx, "c", 1000.0);
+			d = reader.GetReal(stridx, "d", 1000.0);
+			E = reader.GetReal(stridx, "E", 1000.0);
+			K = JIANING_WIDTH / (2 * b);
+			A = 1 / (K * a);
+			B = - b / a;
+			C = 1 / (K * c);
+			D = - c / d;
+			sp.Ki.create(1, 5, CV_32FC1);
+			//SysUtil::infoOutput("Create Ki CPU done");
+			sp.Ki.at<float>(0, 0) = A;
+			sp.Ki.at<float>(0, 1) = B;
+			sp.Ki.at<float>(0, 2) = C;
+			sp.Ki.at<float>(0, 3) = D;
+			sp.Ki.at<float>(0, 4) = E;
+			sp._gpu_Ki.upload(sp.Ki);
+			//SysUtil::infoOutput("upload Ki GPU done");
+
 			this->pair_infos.push_back(sp);
 		}
 		return 0;
@@ -438,13 +471,26 @@ namespace cam {
 		}
 		else
 		{
-			cv::Mat depth_temp;
-			depth_temp.create(DEPTH_MAP_HEIGHT, DEPTH_MAP_WIDTH, CV_16UC1);
-			depth_temp.setTo(cv::Scalar(0));
-			depth_temp.at<uint16_t>(10, 10) = 64000;
-			pair_infos[camInd - cameraNum / 2].depth_img = depth_temp;
-			pair_infos[camInd - cameraNum / 2].gpu_depth_img.upload(depth_temp);
-			img.data = reinterpret_cast<char*>(pair_infos[camInd - cameraNum / 2].depth_img.data);
+			// cv::Mat depth_temp;
+			// depth_temp.create(DEPTH_MAP_HEIGHT, DEPTH_MAP_WIDTH, CV_16UC1);
+			// depth_temp.setTo(cv::Scalar(0));
+			// depth_temp.at<uint16_t>(10, 10) = 64000;
+
+			StereoPair *pair = &pair_infos[camInd - cameraNum / 2];
+
+			pair->dUpdater.update(pair->master.gpu_rec_img, pair->slave.gpu_rec_img, pair->disparity_img);
+			pair->_gpu_disparity_img.upload(pair->disparity_img);
+			DisparityProcessor::process_disparity_with_mask(pair->_gpu_disparity_img, pair->_gpu_Ki, pair->_gpu_depth_img);
+			pair->_gpu_depth_img.download(pair->depth_img);
+
+			//update(cv::Mat& masterMat, cv::Mat& slaveMat, cv::Mat& depthWithMask);
+
+
+			// pair_infos[camInd - cameraNum / 2].depth_img = depth_temp;
+			// pair_infos[camInd - cameraNum / 2]._gpu_depth_img.upload(depth_temp);
+
+
+			img.data = reinterpret_cast<char*>(pair->depth_img.data);
 			img.length = DEPTH_MAP_HEIGHT * DEPTH_MAP_WIDTH * 2;
 			img.maxLength = DEPTH_MAP_HEIGHT * DEPTH_MAP_WIDTH * 2;
 			img.isJpegCompressd = true;
