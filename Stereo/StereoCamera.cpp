@@ -208,6 +208,9 @@ namespace cam {
 			pair_infos[i][0].gpu_rec_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
 			pair_infos[i][1].gpu_rec_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
 
+			pair_infos[i][0].gpu_final_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
+			pair_infos[i][1].gpu_final_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
+
 			//pair_infos[i][0].gpu_remap_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
 			//pair_infos[i][1].gpu_remap_img.create(sub_camInfos[idx].height, sub_camInfos[idx].width, CV_8UC3);
 			
@@ -474,8 +477,10 @@ namespace cam {
 					pair_infos[camInd][i].gpu_rec_img.data, 
 					pair_infos[camInd][i].gpu_rec_img.step, 
 					osize, pair_infos[camInd][i].wbTwist));
+				pair_infos[camInd][i].gpu_final_img = pair_infos[camInd][i].gpu_rec_img;
 			}
-			img.data = reinterpret_cast<char*>(pair_infos[camInd][0].gpu_rec_img.data);
+			
+			img.data = reinterpret_cast<char*>(pair_infos[camInd][0].gpu_final_img.data);
 			pair_infos[camInd].isFirstPairCaptured = true;
 			//SysUtil::infoOutput("camInd < this->cameraNum / 2 work well and returned");
 		}
@@ -485,13 +490,15 @@ namespace cam {
 #ifndef WIN32
 			if(pair->isFirstPairCaptured == true)
 			{
-				pair->dUpdater.update(pair->master.gpu_rec_img, pair->slave.gpu_rec_img, pair->disparity_img);
+				pair->dUpdater.update(pair->master.gpu_final_img, pair->slave.gpu_final_img, pair->disparity_img);
 
-#ifdef OUTPUT_MIDIAN_RESULAT
-				//cv::Mat dis_16;
-				//pair->disparity_img.convertTo(dis_16, CV_16UC1);
-				cv::imwrite(cv::format("disparity_%d.tiff",pair->dUpdater.getFrameCount()),pair->disparity_img);
-#endif
+// #ifdef OUTPUT_MIDIAN_RESULAT
+// 				//cv::Mat dis_16;
+// 				//pair->disparity_img.convertTo(dis_16, CV_16UC1);
+// 				cv::imwrite(cv::format("disparity_%d.tiff",pair->dUpdater.getFrameCount()),pair->disparity_img);
+// #endif
+				//std::cout << pair->disparity_img <<std::endl;
+
 				pair->_gpu_disparity_img.upload(pair->disparity_img);
 				//SysUtil::infoOutput("process dis start");
 				DisparityProcessor::process_disparity_with_mask(pair->_gpu_disparity_img, pair->_gpu_Ki, pair->_gpu_depth_img);

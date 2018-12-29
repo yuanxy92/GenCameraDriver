@@ -20,16 +20,18 @@ __global__ void calculate_depth(
 
 	if (x < width && y < height) 
 	{
-		float dis = disparity.ptr(y)[x];
+		float dis = abs(disparity.ptr(y)[x]);
 		float A = Ki.ptr(0)[0];
 		float B = Ki.ptr(0)[1];
 		float C = Ki.ptr(0)[2];
 		float D = Ki.ptr(0)[3];
 		float E = Ki.ptr(0)[4];
+		//printf("A = %f, B = %f, C = %f, D = %f, E = %f, dis = %f\n", A,B,C,D,E,dis);
 		if(dis < 1) //very close to 0
 			depth.ptr(y)[x] = 0;
 		else
 		{
+			//printf("A = %f, B = %f, C = %f, D = %f, E = %f, dis = %f\n", A,B,C,D,E,dis);
 			float divdis = 1.0f / dis;
 			float3 vec;
 			vec.x = A * divdis * x + B * divdis;

@@ -58,6 +58,7 @@ namespace cam {
 			cv::cuda::GpuMat gpu_raw_img;
 			cv::cuda::GpuMat gpu_rgb_img;
 			cv::cuda::GpuMat gpu_rec_img;
+			cv::cuda::GpuMat gpu_final_img;
 			//cv::cuda::GpuMat gpu_remap_img;
 			
 			Npp32f wbTwist[3][4] = {
@@ -73,6 +74,7 @@ namespace cam {
 				this->gpu_raw_img = another.gpu_raw_img;
 				this->gpu_rgb_img = another.gpu_rgb_img;
 				this->gpu_rec_img = another.gpu_rec_img;
+				this->gpu_final_img = another.gpu_final_img;
 				return *this;
 			}
 			int& operator=(const int& infoIDX)

@@ -31,7 +31,7 @@ class for depth map update
 
 #define JIANING_WIDTH 1000
 #define JIANING_HEIGHT 750
-#define OUTPUT_MIDIAN_RESULAT
+//#define OUTPUT_MIDIAN_RESULAT
 
 class DepthMapUpdater
 {

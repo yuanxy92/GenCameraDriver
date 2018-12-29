@@ -71,10 +71,18 @@ int DepthMapUpdater::update(cv::cuda::GpuMat& masterMat, cv::cuda::GpuMat& slave
 	//std::cout << "DepthMapUpdater::update mog & gauss done" << std::endl;
 	_gpu_mask.download(_mask);
 	_depth = _dep.get_depth(_m, _s);
+
 	//std::cout << "DepthMapUpdater::update get_depth done" << std::endl;
 	cv::Mat diff_mask = _elem.refine_mask(_backMaster, _m, _mask);
 	depthWithMask = _dep.update_depth_robust(_depth, diff_mask);
 	//std::cout << "DepthMapUpdater::update update_depth_robust done" << std::endl;
+#ifdef OUTPUT_MIDIAN_RESULAT
+	cv::imwrite(cv::format("test_mask_%d.jpg",_frameCount),_mask);
+	// cv::Mat dis_16;
+	// _depth.convertTo(dis_16, CV_16UC1);
+	// cv::imwrite(cv::format("test_disparity_16bit_%d.png",_frameCount),dis_16);
+	_dep.SavePFMFile(depthWithMask,cv::format("test_disparity_all_pfm_%d.pfm",_frameCount).c_str());
+#endif
 	_frameCount++;
     return 0;
 }
