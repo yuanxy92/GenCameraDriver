@@ -49,27 +49,27 @@ int DepthMapUpdater::update(cv::Mat& masterMat, cv::Mat& slaveMat, cv::Mat& dept
 
 int DepthMapUpdater::update(cv::cuda::GpuMat& masterMat, cv::cuda::GpuMat& slaveMat, cv::Mat& depthWithMask)
 {
-	std::cout << "into DepthMapUpdater::update GpuMat" << std::endl;
+	//std::cout << "into DepthMapUpdater::update GpuMat" << std::endl;
 	cv::Mat _m, _s;
 	cv::cuda::GpuMat _gpu_m,_gpu_s;
-	std::cout << "master Mat .row .col "<< masterMat.cols << " " << masterMat.rows << std::endl;
-	std::cout << "slave Mat .row .col "<< slaveMat.cols << " " << slaveMat.rows << std::endl;
+	//std::cout << "master Mat .row .col "<< masterMat.cols << " " << masterMat.rows << std::endl;
+	//std::cout << "slave Mat .row .col "<< slaveMat.cols << " " << slaveMat.rows << std::endl;
 	cv::cuda::resize(masterMat, _gpu_m, cv::Size(JIANING_WIDTH, JIANING_HEIGHT));
 	cv::cuda::resize(slaveMat, _gpu_s, cv::Size(JIANING_WIDTH, JIANING_HEIGHT));
 	_gpu_m.download(_m);
 	_gpu_s.download(_s);
 	//cv::imwrite("test_m.jpg",_m);
 	//cv::imwrite("test_s.jpg",_s);
-	std::cout << "DepthMapUpdater::update resize & download done" << std::endl;
+	//std::cout << "DepthMapUpdater::update resize & download done" << std::endl;
 	_mog->apply(_gpu_m, _gpu_mask, 0.01);
 	_gauss->apply(_gpu_mask, _gpu_mask);
-	std::cout << "DepthMapUpdater::update mog & gauss done" << std::endl;
+	//std::cout << "DepthMapUpdater::update mog & gauss done" << std::endl;
 	_gpu_mask.download(_mask);
 	_depth = _dep.get_depth(_m, _s);
-	std::cout << "DepthMapUpdater::update get_depth done" << std::endl;
+	//std::cout << "DepthMapUpdater::update get_depth done" << std::endl;
 	cv::Mat diff_mask = _elem.refine_mask(_backMaster, _m, _mask);
 	depthWithMask = _dep.update_depth_robust(_depth, diff_mask);
-	std::cout << "DepthMapUpdater::update update_depth_robust done" << std::endl;
+	//std::cout << "DepthMapUpdater::update update_depth_robust done" << std::endl;
 	_frameCount++;
     return 0;
 }

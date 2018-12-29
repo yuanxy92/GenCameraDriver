@@ -1336,8 +1336,8 @@ int StereoRectify::init(std::string intfile, std::string extfile, cv::Size imgsi
 	fs2["P2"] >> P2;
 	fs2["Q"] >> Q;
 	fs2.release();
-	std::cout << "R : " << R <<std::endl;
-	std::cout << "T : " << T <<std::endl;
+	//std::cout << "R : " << R <<std::endl;
+	//std::cout << "T : " << T <<std::endl;
 
 	this->imgsize = imgsize;
 #if (CV_MAJOR_VERSION >= 4)
@@ -1381,13 +1381,13 @@ int StereoRectify::rectify(cv::Mat & leftImg, cv::Mat & rightImg) {
 int StereoRectify::rectify(cv::cuda::GpuMat & srcImg0, cv::cuda::GpuMat & dstImg0, cv::cuda::GpuMat & srcImg1, cv::cuda::GpuMat & dstImg1)
 {
 	cv::cuda::remap(srcImg0, dstImg0, gpu_rmap[0][0], gpu_rmap[0][1], cv::INTER_LINEAR);
-	std::cout << "cv::cuda::remap done" << std::endl;
+	//std::cout << "cv::cuda::remap done" << std::endl;
 	cv::cuda::GpuMat tmp_dst0;
 	dstImg0(rect).copyTo(tmp_dst0);
-	std::cout << "cv::cuda::GpuMat::copyTo done" << std::endl;
-	std::cout << "size = " << tmp_dst0.cols << " " << tmp_dst0.rows << std::endl;
+	//std::cout << "cv::cuda::GpuMat::copyTo done" << std::endl;
+	//std::cout << "size = " << tmp_dst0.cols << " " << tmp_dst0.rows << std::endl;
 	cv::cuda::resize(tmp_dst0, dstImg0, cv::Size(srcImg0.cols, srcImg0.rows));
-	std::cout << "cv::cuda::resize done" << std::endl;
+	//std::cout << "cv::cuda::resize done" << std::endl;
 
 	cv::cuda::remap(srcImg1, dstImg1, gpu_rmap[1][0], gpu_rmap[1][1], cv::INTER_LINEAR);
 	cv::cuda::GpuMat tmp_dst1;

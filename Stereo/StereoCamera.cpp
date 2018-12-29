@@ -427,7 +427,7 @@ namespace cam {
 
 	int GenCameraStereo::captureFrame(int camInd, Imagedata & img) 
 	{
-		SysUtil::infoOutput(cv::format("GenCameraStereo::captureFrame camInd = %d", camInd));
+		//SysUtil::infoOutput(cv::format("GenCameraStereo::captureFrame camInd = %d", camInd));
 		if (camInd < this->cameraNum / 2)
 		{
 			sub_cameraPtr->captureFrame(raw_imgs);
@@ -477,36 +477,36 @@ namespace cam {
 			}
 			img.data = reinterpret_cast<char*>(pair_infos[camInd][0].gpu_rec_img.data);
 			pair_infos[camInd].isFirstPairCaptured = true;
-			SysUtil::infoOutput("camInd < this->cameraNum / 2 work well and returned");
+			//SysUtil::infoOutput("camInd < this->cameraNum / 2 work well and returned");
 		}
 		else
 		{
 			StereoPair *pair = &pair_infos[camInd - cameraNum / 2];
-			//if(pair->isFirstPairCaptured == false)
-			//{
+			if(pair->isFirstPairCaptured == false)
+			{
 				cv::Mat depth_temp;
 				depth_temp.create(DEPTH_MAP_HEIGHT, DEPTH_MAP_WIDTH, CV_16UC1);
 				depth_temp.setTo(cv::Scalar(0));
 				depth_temp.at<uint16_t>(10, 10) = 64000;
 				pair->depth_img = depth_temp;
 				pair->_gpu_depth_img.upload(depth_temp);
-			//}
-			//else
-			//{
-				// pair->dUpdater.update(pair->master.gpu_rec_img, pair->slave.gpu_rec_img, pair->disparity_img);
-				// pair->_gpu_disparity_img.upload(pair->disparity_img);
+			}
+			else
+			{
+				pair->dUpdater.update(pair->master.gpu_rec_img, pair->slave.gpu_rec_img, pair->disparity_img);
+				pair->_gpu_disparity_img.upload(pair->disparity_img);
 
-				// SysUtil::infoOutput("process dis start");
-				// DisparityProcessor::process_disparity_with_mask(pair->_gpu_disparity_img, pair->_gpu_Ki, pair->_gpu_depth_img);
-				// SysUtil::infoOutput("process dis done");
+				//SysUtil::infoOutput("process dis start");
+				DisparityProcessor::process_disparity_with_mask(pair->_gpu_disparity_img, pair->_gpu_Ki, pair->_gpu_depth_img);
+				//SysUtil::infoOutput("process dis done");
 
-				// pair->_gpu_depth_img.download(pair->depth_img);
-			//}
+				pair->_gpu_depth_img.download(pair->depth_img);
+			}
 			img.data = reinterpret_cast<char*>(pair->depth_img.data);
 			img.length = DEPTH_MAP_HEIGHT * DEPTH_MAP_WIDTH * 2;
 			img.maxLength = DEPTH_MAP_HEIGHT * DEPTH_MAP_WIDTH * 2;
 			img.isJpegCompressd = true;
-			SysUtil::infoOutput("camInd >= this->cameraNum / 2 work well and returned");
+			//SysUtil::infoOutput("camInd >= this->cameraNum / 2 work well and returned");
 		}
 		return 0;
 	}
