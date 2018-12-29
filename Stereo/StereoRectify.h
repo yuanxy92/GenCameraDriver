@@ -71,14 +71,7 @@ public:
 	*/
 	int rectify(cv::cuda::GpuMat & srcImg0, cv::cuda::GpuMat & dstImg0, cv::cuda::GpuMat & srcImg1, cv::cuda::GpuMat & dstImg1);
 private:
-	void openCV3_4_0stereoRectify(cv::Mat _cameraMatrix1, cv::Mat _distCoeffs1,
-		cv::Mat _cameraMatrix2, cv::Mat _distCoeffs2,
-		cv::Size imageSize, cv::Mat _Rmat, cv::Mat _Tmat,
-		cv::Mat &_Rmat1, cv::Mat & _Rmat2,
-		cv::Mat & _Pmat1, cv::Mat & _Pmat2,
-		cv::Mat & _Qmat, int flags,
-		double alpha, cv::Size newImageSize,
-		cv::Rect* validPixROI1, cv::Rect* validPixROI2);
+	
 };
 
 #endif
