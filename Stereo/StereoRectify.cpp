@@ -34,13 +34,14 @@ int StereoRectify::init(std::string intfile, std::string extfile, cv::Size imgsi
 	this->intfile = intfile;
 	this->extfile = extfile;
 
+	std::cout << "int File: " <<this->intfile <<std::endl;
 	cv::FileStorage fs1(this->intfile, cv::FileStorage::READ);
 	fs1["M1"] >> M1;
 	fs1["D1"] >> D1;
 	fs1["M2"] >> M2;
 	fs1["D2"] >> D2;
 	fs1.release();
-
+	std::cout << "ext File: " <<this->extfile <<std::endl;
 	cv::FileStorage fs2(this->extfile, cv::FileStorage::READ);
 	fs2["R"] >> R;
 	fs2["T"] >> T;
@@ -50,6 +51,8 @@ int StereoRectify::init(std::string intfile, std::string extfile, cv::Size imgsi
 	fs2["P2"] >> P2;
 	fs2["Q"] >> Q;
 	fs2.release();
+	std::cout << "R : " << R <<std::endl;
+	std::cout << "T : " << T <<std::endl;
 
 	this->imgsize = imgsize;
 
@@ -57,7 +60,7 @@ int StereoRectify::init(std::string intfile, std::string extfile, cv::Size imgsi
 		imgsize, R, T, R1, R2, P1, P2, Q,
 		cv::CALIB_ZERO_DISPARITY, 1, imgsize, &validRoi[0], &validRoi[1]);
 	rect = validRoi[0] & validRoi[1];
-
+	std::cout << "Rect : " << rect <<std::endl;
 	//Precompute maps for cv::remap()
 	initUndistortRectifyMap(M1, D1, R1, P1, imgsize, CV_32FC1, rmap[0][0], rmap[0][1]);
 	initUndistortRectifyMap(M2, D2, R2, P2, imgsize, CV_32FC1, rmap[1][0], rmap[1][1]);
@@ -88,9 +91,13 @@ int StereoRectify::rectify(cv::Mat & leftImg, cv::Mat & rightImg) {
 int StereoRectify::rectify(cv::cuda::GpuMat & srcImg0, cv::cuda::GpuMat & dstImg0, cv::cuda::GpuMat & srcImg1, cv::cuda::GpuMat & dstImg1)
 {
 	cv::cuda::remap(srcImg0, dstImg0, gpu_rmap[0][0], gpu_rmap[0][1], cv::INTER_LINEAR);
+	std::cout << "cv::cuda::remap done" << std::endl;
 	cv::cuda::GpuMat tmp_dst0;
 	dstImg0(rect).copyTo(tmp_dst0);
+	std::cout << "cv::cuda::GpuMat::copyTo done" << std::endl;
+	std::cout << "size = " << tmp_dst0.cols << " " << tmp_dst0.rows << std::endl;
 	cv::cuda::resize(tmp_dst0, dstImg0, cv::Size(srcImg0.cols, srcImg0.rows));
+	std::cout << "cv::cuda::resize done" << std::endl;
 
 	cv::cuda::remap(srcImg1, dstImg1, gpu_rmap[1][0], gpu_rmap[1][1], cv::INTER_LINEAR);
 	cv::cuda::GpuMat tmp_dst1;
