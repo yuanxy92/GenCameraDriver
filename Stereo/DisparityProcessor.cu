@@ -10,7 +10,7 @@ Implementation of Stereo Camera Cudapart
 #include "helper_cuda.h"
 
 __global__ void calculate_depth(
-	cv::cuda::PtrStep<ushort> disparity,
+	cv::cuda::PtrStep<float> disparity,
 	cv::cuda::PtrStep<float> Ki,
 	cv::cuda::PtrStep<ushort> depth,
 	int width, int height)
@@ -20,17 +20,17 @@ __global__ void calculate_depth(
 
 	if (x < width && y < height) 
 	{
-		ushort dis = disparity.ptr(y)[x];
+		float dis = disparity.ptr(y)[x];
 		float A = Ki.ptr(0)[0];
 		float B = Ki.ptr(0)[1];
 		float C = Ki.ptr(0)[2];
 		float D = Ki.ptr(0)[3];
 		float E = Ki.ptr(0)[4];
-		if(dis == 0)
+		if(dis < 1) //very close to 0
 			depth.ptr(y)[x] = 0;
 		else
 		{
-			float divdis = 1.0f / (float)dis;
+			float divdis = 1.0f / dis;
 			float3 vec;
 			vec.x = A * divdis * x + B * divdis;
 			vec.y = C * divdis * y + D * divdis;
@@ -40,7 +40,7 @@ __global__ void calculate_depth(
 			if(dep > MAX_DEPTH_VALUE)
 				depth.ptr(y)[x] = MAX_DEPTH_VALUE;
 			else
-				depth.ptr(y)[x] = dep;
+				depth.ptr(y)[x] = 	__float2uint_rd(dep);
 		}
 	}
 }

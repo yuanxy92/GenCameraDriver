@@ -446,7 +446,7 @@ namespace cam {
 			cv::cuda::demosaicing(pair_infos[camInd][1].gpu_raw_img, pair_infos[camInd][1].gpu_rgb_img,
 				npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
 					static_cast<int>(camInfos[camInd].bayerPattern))));
-			SysUtil::infoOutput("GenCameraStereo::captureFrame ready to rectify");
+			//SysUtil::infoOutput("GenCameraStereo::captureFrame ready to rectify");
 			if (pair_infos[camInd].inv == false)
 			{
 				pair_infos[camInd].sr.rectify(
@@ -463,7 +463,7 @@ namespace cam {
 					pair_infos[camInd][0].gpu_rgb_img,
 					pair_infos[camInd][0].gpu_rec_img);
 			}
-			SysUtil::infoOutput("GenCameraStereo::captureFrame rectify done");
+			//SysUtil::infoOutput("GenCameraStereo::captureFrame rectify done");
 			//Twist
 			for (int i = 0; i < 2; i++)
 			{
@@ -486,6 +486,12 @@ namespace cam {
 			if(pair->isFirstPairCaptured == true)
 			{
 				pair->dUpdater.update(pair->master.gpu_rec_img, pair->slave.gpu_rec_img, pair->disparity_img);
+
+#ifdef OUTPUT_MIDIAN_RESULAT
+				//cv::Mat dis_16;
+				//pair->disparity_img.convertTo(dis_16, CV_16UC1);
+				cv::imwrite(cv::format("disparity_%d.tiff",pair->dUpdater.getFrameCount()),pair->disparity_img);
+#endif
 				pair->_gpu_disparity_img.upload(pair->disparity_img);
 				//SysUtil::infoOutput("process dis start");
 				DisparityProcessor::process_disparity_with_mask(pair->_gpu_disparity_img, pair->_gpu_Ki, pair->_gpu_depth_img);

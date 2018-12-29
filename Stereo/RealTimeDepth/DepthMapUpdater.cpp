@@ -58,8 +58,13 @@ int DepthMapUpdater::update(cv::cuda::GpuMat& masterMat, cv::cuda::GpuMat& slave
 	cv::cuda::resize(slaveMat, _gpu_s, cv::Size(JIANING_WIDTH, JIANING_HEIGHT));
 	_gpu_m.download(_m);
 	_gpu_s.download(_s);
-	//cv::imwrite("test_m.jpg",_m);
-	//cv::imwrite("test_s.jpg",_s);
+#ifdef OUTPUT_MIDIAN_RESULAT
+	cv::Mat _m2, _s2;
+	cv::cvtColor(_m, _m2, cv::COLOR_RGB2BGR);
+	cv::cvtColor(_s, _s2, cv::COLOR_RGB2BGR);
+	cv::imwrite(cv::format("test_m_%d.jpg",_frameCount),_m2);
+	cv::imwrite(cv::format("test_s_%d.jpg",_frameCount),_s2);
+#endif
 	//std::cout << "DepthMapUpdater::update resize & download done" << std::endl;
 	_mog->apply(_gpu_m, _gpu_mask, 0.01);
 	_gauss->apply(_gpu_mask, _gpu_mask);
