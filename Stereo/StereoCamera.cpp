@@ -482,7 +482,18 @@ namespace cam {
 		else
 		{
 			StereoPair *pair = &pair_infos[camInd - cameraNum / 2];
-			if(pair->isFirstPairCaptured == false)
+#ifndef WIN32
+			if(pair->isFirstPairCaptured == true)
+			{
+				pair->dUpdater.update(pair->master.gpu_rec_img, pair->slave.gpu_rec_img, pair->disparity_img);
+				pair->_gpu_disparity_img.upload(pair->disparity_img);
+				//SysUtil::infoOutput("process dis start");
+				DisparityProcessor::process_disparity_with_mask(pair->_gpu_disparity_img, pair->_gpu_Ki, pair->_gpu_depth_img);
+				//SysUtil::infoOutput("process dis done");
+				pair->_gpu_depth_img.download(pair->depth_img);
+			}
+			else
+#endif
 			{
 				cv::Mat depth_temp;
 				depth_temp.create(DEPTH_MAP_HEIGHT, DEPTH_MAP_WIDTH, CV_16UC1);
@@ -490,17 +501,7 @@ namespace cam {
 				depth_temp.at<uint16_t>(10, 10) = 64000;
 				pair->depth_img = depth_temp;
 				pair->_gpu_depth_img.upload(depth_temp);
-			}
-			else
-			{
-				pair->dUpdater.update(pair->master.gpu_rec_img, pair->slave.gpu_rec_img, pair->disparity_img);
-				pair->_gpu_disparity_img.upload(pair->disparity_img);
-
-				//SysUtil::infoOutput("process dis start");
-				DisparityProcessor::process_disparity_with_mask(pair->_gpu_disparity_img, pair->_gpu_Ki, pair->_gpu_depth_img);
-				//SysUtil::infoOutput("process dis done");
-
-				pair->_gpu_depth_img.download(pair->depth_img);
+				
 			}
 			img.data = reinterpret_cast<char*>(pair->depth_img.data);
 			img.length = DEPTH_MAP_HEIGHT * DEPTH_MAP_WIDTH * 2;
