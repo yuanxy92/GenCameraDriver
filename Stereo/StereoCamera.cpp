@@ -52,7 +52,10 @@ namespace cam {
 			matsp = cv::imread(strsp);
 			matdp =	cv::imread(strdp,cv::IMREAD_UNCHANGED);
 			//SysUtil::infoOutput("dUpdater before init done");
-			sp.dUpdater.init(matmp,matsp,matdp);
+#ifndef WIN32
+			sp.dUpdater.init(matmp, matsp, matdp);
+#endif
+			
 			//SysUtil::infoOutput("dUpdater init done");
 
 			double a,b,c,d,E,A,B,C,D,K;

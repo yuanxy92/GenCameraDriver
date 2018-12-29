@@ -19,15 +19,18 @@ Implementation of Stereo camera
 #include "ExposureFusion.h"
 #include "DisparityProcessor.h"
 
-#ifndef CUFILE
+#ifndef WIN32
 #include "DepthMapUpdater.h"
+#else
+#define JIANING_WIDTH 1000
+#define JIANING_HEIGHT 750
 #endif
 
 #define EXPOSURE_DIFF 0
 
-
 #define DEPTH_MAP_WIDTH JIANING_WIDTH
 #define DEPTH_MAP_HEIGHT JIANING_HEIGHT
+
 
 namespace cam {
 
@@ -91,8 +94,9 @@ namespace cam {
 			std::string ext_path;
 			cv::Mat depth_img,disparity_img;
 			cv::cuda::GpuMat _gpu_depth_img,_gpu_disparity_img;
-
+#ifndef WIN32
 			DepthMapUpdater dUpdater;
+#endif
 			/*
 			CameraMatrixK = (make sure that b/d stands for the half height/width of the image)
 			[
