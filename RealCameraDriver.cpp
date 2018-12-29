@@ -226,7 +226,7 @@ namespace cam {
 			if (thexit == 1)
 				break;
 			if (sum == bufferSize * this->cameraNum)
- 				break;
+				break;
 			// compress images
 			for (size_t camInd = 0; camInd < this->cameraNum; camInd++) {
 				// check if all the images are captured

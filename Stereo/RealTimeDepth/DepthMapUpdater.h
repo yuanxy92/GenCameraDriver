@@ -26,8 +26,8 @@ class for depth map update
 #include "oflow.h"
 #include "GhostElemer.h"
 
-#define SELECTMODE 2
-#define SELECTCHANNEL 1
+// #define SELECTMODE 2
+// #define SELECTCHANNEL 1
 
 #define JIANING_WIDTH 1000
 #define JIANING_HEIGHT 750

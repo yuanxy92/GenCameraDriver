@@ -35,17 +35,17 @@ if ( WIN32 )
     set(CODEFILES ${CODEFILES} depthmap.h DepthMapUpdater.h GhostElemer.h oflow.h patch.h patchgrid.h refine_variational.h DepthMapUpdater.cpp)
 endif()
 
-# GrayScale, Optical Flow
-add_executable (run_OF_INT ${CODEFILES})
-set_target_properties (run_OF_INT PROPERTIES COMPILE_DEFINITIONS "SELECTMODE=1")
-set_property(TARGET run_OF_INT APPEND PROPERTY COMPILE_DEFINITIONS "SELECTCHANNEL=1") # use grey-valued image
-TARGET_LINK_LIBRARIES(run_OF_INT ${OpenCV_LIBS})
+## GrayScale, Optical Flow
+#add_executable (run_OF_INT ${CODEFILES})
+#set_target_properties (run_OF_INT PROPERTIES COMPILE_DEFINITIONS "SELECTMODE=1")
+#set_property(TARGET run_OF_INT APPEND PROPERTY COMPILE_DEFINITIONS "SELECTCHANNEL=1") # use grey-valued image
+#TARGET_LINK_LIBRARIES(run_OF_INT ${OpenCV_LIBS})
 
-# RGB, Optical Flow
-add_executable (run_OF_RGB ${CODEFILES})
-set_target_properties (run_OF_RGB PROPERTIES COMPILE_DEFINITIONS "SELECTMODE=1")
-set_property(TARGET run_OF_RGB APPEND PROPERTY COMPILE_DEFINITIONS "SELECTCHANNEL=3") # use RGB image
-TARGET_LINK_LIBRARIES(run_OF_RGB ${OpenCV_LIBS})
+## RGB, Optical Flow
+#add_executable (run_OF_RGB ${CODEFILES})
+#set_target_properties (run_OF_RGB PROPERTIES COMPILE_DEFINITIONS "SELECTMODE=1")
+#set_property(TARGET run_OF_RGB APPEND PROPERTY COMPILE_DEFINITIONS "SELECTCHANNEL=3") # use RGB image
+#TARGET_LINK_LIBRARIES(run_OF_RGB ${OpenCV_LIBS})
 
 # GrayScale, Depth from Stereo
 add_executable (run_DE_INT ${CODEFILES})
@@ -53,9 +53,9 @@ set_target_properties (run_DE_INT PROPERTIES COMPILE_DEFINITIONS "SELECTMODE=2")
 set_property(TARGET run_DE_INT APPEND PROPERTY COMPILE_DEFINITIONS "SELECTCHANNEL=1")
 TARGET_LINK_LIBRARIES(run_DE_INT ${OpenCV_LIBS})
 
-# RGB, Depth from Stereo
-add_executable (run_DE_RGB ${CODEFILES})
-set_target_properties (run_DE_RGB PROPERTIES COMPILE_DEFINITIONS "SELECTMODE=2")
-set_property(TARGET run_DE_RGB APPEND PROPERTY COMPILE_DEFINITIONS "SELECTCHANNEL=3")
-TARGET_LINK_LIBRARIES(run_DE_RGB ${OpenCV_LIBS})
+## RGB, Depth from Stereo
+#add_executable (run_DE_RGB ${CODEFILES})
+#set_target_properties (run_DE_RGB PROPERTIES COMPILE_DEFINITIONS "SELECTMODE=2")
+#set_property(TARGET run_DE_RGB APPEND PROPERTY COMPILE_DEFINITIONS "SELECTCHANNEL=3")
+#TARGET_LINK_LIBRARIES(run_DE_RGB ${OpenCV_LIBS})
 

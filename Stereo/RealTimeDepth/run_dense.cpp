@@ -16,7 +16,7 @@
 #include "oflow.h"
 #include "GhostElemer.h"
 
-#define filp 1
+#define rotate_req 0
 
 using namespace std;
 using namespace cv;
@@ -62,15 +62,15 @@ int main(int argc, char** argv)
     //------------------------------------------------------------parpare for DIS-----------------------------------------------------------
     int rpyrtype, nochannels, incoltype;
     //different version
-    #if (SELECTCHANNEL==1 | SELECTCHANNEL==2) // use Intensity or Gradient image      
+    //#if (SELECTCHANNEL==1 | SELECTCHANNEL==2) // use Intensity or Gradient image      
     incoltype = IMREAD_GRAYSCALE;      
     rpyrtype = CV_32FC1;
     nochannels = 1;
-    #elif (SELECTCHANNEL==3) // use RGB image
-    incoltype = IMREAD_COLOR;
-    rpyrtype = CV_32FC3;
-    nochannels = 3;      
-    #endif
+    // #elif (SELECTCHANNEL==3) // use RGB image
+    // incoltype = IMREAD_COLOR;
+    // rpyrtype = CV_32FC3;
+    // nochannels = 3;      
+    // #endif
   // *** Parse rest of parameters, See oflow.h for definitions.
     if(frame.empty()||frame2.empty())
     {
@@ -78,10 +78,10 @@ int main(int argc, char** argv)
         return -1;
     }
     depthmap dep(rpyrtype,nochannels,incoltype);
-    if(flip)
+    if(rotate_req)
 	{
-		dep.flip(frame);
-		dep.flip(frame2);
+		dep.rotate_(frame);
+		dep.rotate_(frame2);
 	}
 	GpuMat d_frame(frame);
 	bg_depth = dep.init_depth(frame,frame2);//should use the output of A stage,just test
@@ -99,10 +99,10 @@ int main(int argc, char** argv)
 			break;
 		cv::resize(frame, frame, Size(1000, 750));
 		cv::resize(frame2,frame2,Size(1000,750));
-		if(flip)
+		if(rotate_req)
 		{
-			dep.flip(frame);
-			dep.flip(frame2);
+			dep.rotate_(frame);
+			dep.rotate_(frame2);
 		}
 		//frame_o = frame.clone();
 		d_frame.upload(frame);
@@ -118,10 +118,10 @@ int main(int argc, char** argv)
 		diff_mask = elem.refine_mask(frame_init,frame,fgmask);
 		depth_mask = dep.update_depth_robust(depth_map,diff_mask);
 		dep.refine_depth(depth_mask,diff_mask,result,frame,frame2);//refine the depth and mask,abs here
-		if(flip)
+		if(rotate_req)
 		{
-			dep.flip_back(diff_mask);
-			dep.flip_back(depth_mask);
+			dep.rotate_back(diff_mask);
+			dep.rotate_back(depth_mask);
 		}
 		double fps = cv::getTickFrequency() / (cv::getTickCount() - start);
 		std::cout << "time : " << 1000/fps << std::endl;

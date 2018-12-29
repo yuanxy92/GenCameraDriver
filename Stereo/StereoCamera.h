@@ -85,6 +85,7 @@ namespace cam {
 		};
 		struct StereoPair
 		{
+			bool isFirstPairCaptured = false;
 			SubCamera master, slave;
 			std::string int_path;
 			std::string ext_path;

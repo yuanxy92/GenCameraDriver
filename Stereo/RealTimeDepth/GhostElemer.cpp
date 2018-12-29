@@ -178,10 +178,14 @@ vector<Rect> GhostElemer::Find_location(Mat& img)
 cv::Mat GhostElemer::refine_mask(cv::Mat frame_init,cv::Mat frame,cv::Mat mask)
 {
 	//frames gray scale
+	Mat frame_init_gray;
+	Mat frame_c_gray;
+	cvtColor(frame_init,frame_init_gray,COLOR_BGR2GRAY);
+	cvtColor(frame,frame_c_gray,COLOR_BGR2GRAY);
 	Mat mask_init;
-	frame_init.copyTo(mask_init,mask);
+	frame_init_gray.copyTo(mask_init,mask);
 	Mat mask_current;
-	frame.copyTo(mask_current,mask);
+	frame_c_gray.copyTo(mask_current,mask);
 	Mat diff;
 	cv::absdiff(mask_init,mask_current,diff);
 	cv::threshold(diff,diff, 15, 255.0, cv::THRESH_BINARY);

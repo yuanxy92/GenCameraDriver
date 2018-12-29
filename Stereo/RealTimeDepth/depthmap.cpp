@@ -38,13 +38,13 @@ depthmap::depthmap(int rpyrtypei,int nochannelsi,int incoltypei)
     verbosity = 0;
 
 }
-void depthmap::filp(Mat& m)
+void depthmap::rotate_(Mat& m)
 {
     cv::transpose(m,m);
     cv::flip(m,m,1);
 
 }
-void depthmap::filp_back(Mat& m)
+void depthmap::rotate_back(Mat& m)
 {
     cv::transpose(m,m);
     cv::flip(m,m,0);
@@ -169,7 +169,7 @@ int depthmap::AutoFirstScaleSelect(int imgwidth, int fratio, int patchsize)
     return std::max(0,(int)std::floor(log2((2.0f*(float)imgwidth) / ((float)fratio * (float)patchsize))));
 }
 
-Mat depthmap::get_depth(Mat& input1,Mat& input2)
+Mat depthmap::get_depth(Mat input1,Mat input2)
 {
   if(incoltype == IMREAD_GRAYSCALE)
     {
@@ -224,11 +224,9 @@ Mat depthmap::get_depth(Mat& input1,Mat& input2)
   
   //  *** Run main optical flow / depth algorithm
   float sc_fct = pow(2,lv_l);
-  #if (SELECTMODE==1)
-  cv::Mat flowout(sz.height / sc_fct , sz.width / sc_fct, CV_32FC2); // Optical Flow
-  #else
+  
   cv::Mat flowout(sz.height / sc_fct , sz.width / sc_fct, CV_32FC1); // Depth
-  #endif       
+       
   
   OFC::OFClass ofc(img_ao_pyr, img_ao_dx_pyr, img_ao_dy_pyr, 
                     img_bo_pyr, img_bo_dx_pyr, img_bo_dy_pyr, 
@@ -261,7 +259,7 @@ Mat depthmap::update_depth_robust(Mat& depth_map,Mat mask) //robust version
     return depth_mask;
 }
 
-Mat depthmap::init_depth(Mat& init1,Mat& init2)
+Mat depthmap::init_depth(Mat init1,Mat init2)
 {
     return get_depth(init1,init2);
 }
@@ -298,8 +296,8 @@ void depthmap::refine_depth(Mat& mask_depth,Mat& mask,vector<Rect> result,Mat& f
         Mat t_mask = mask(r);
         minMaxLoc(temp_depth,&minVal,&maxVal);
         Scalar mean_ = cv::mean(temp_depth,t_mask);
-        cout<<maxVal<<endl;
-        cout<<mean_[0]<<endl;
+        //cout<<maxVal<<endl;
+        //cout<<mean_[0]<<endl;
         if(mean_[0] < update_thresh)//do not update and change the mask
         {
             cv::rectangle(mask_depth,r,Scalar(0,0,0),-1);

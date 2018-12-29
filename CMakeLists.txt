@@ -239,6 +239,11 @@ cuda_add_executable(${name}
     ${MY_SOURCE_FILES}
 )
 
+if(NOT WIN32)
+    set_target_properties (${name} PROPERTIES COMPILE_DEFINITIONS "SELECTMODE=2")
+    set_target_properties (${name} PROPERTIES COMPILE_DEFINITIONS "SELECTCHANNEL=1")
+endif()
+
 target_link_libraries(${name}
     ${OpenCV_LIBS}
     ${CUDA_LIBRARY} 	
