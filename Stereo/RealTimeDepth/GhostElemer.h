@@ -1,6 +1,7 @@
 #ifndef _GHOSTELEMER_H_
 #define _GHOSTELEMER_H_
 #define Area 500
+
 #include <iostream>
 #include "opencv2/core.hpp"
 #include "opencv2/core/utility.hpp"
@@ -14,9 +15,10 @@ public:
     int num;
     float time1;
     float time2;
+    int flag;
     std::vector< std::vector<cv::Point> > record;
     std::vector<int> table;
-    GhostElemer(float thr = 4,size_t sz = 5, int num_ = 4, float t1 = 1.1,float t2 = 1.2):thresh(thr),size(sz),num(num_),time1(t1),time2(t2){}
+    GhostElemer(float thr = 4,size_t sz = 5, int num_ = 4, float t1 = 1.1,float t2 = 1.2,int f = 1):thresh(thr),size(sz),num(num_),time1(t1),time2(t2),flag(f){}
     void ghost_dele(std::vector<cv::Rect> &res_c);
     void ghost_elem_update(std::vector<cv::Rect> &res_c);
     /**
@@ -24,7 +26,7 @@ public:
     @param cv::Mat&img foreground image
     @return std::vector<cv::Rect> vector of the result rect, also the rectangle mask is getted (img)
     */
-    std::vector<cv::Rect> Find_location(cv::Mat& img);
+    std::vector<cv::Rect> Find_location(cv::Mat& img,cv::Mat& frame,cv::Mat& frame2);
     std::vector<cv::Mat> Mat_res(std::vector<cv::Rect> res_c,cv::Mat frame,cv::Mat frame2);
     /**
     @brief refine the mask, instead of rectangle, is the shape of the target
@@ -34,6 +36,11 @@ public:
     @return cv::Mat refined mask
     */
     cv::Mat refine_mask(cv::Mat frame_init,cv::Mat frame,cv::Mat mask);
+    void rotate_(cv::Mat& m);
+    void rotate_back(cv::Mat& m);
+    cv::Mat init_frame(cv::Mat img);
+    void res_out(cv::Mat& mask,cv::Mat& depth_mask);
+    
 private:
     bool ghost_range(cv::Point a, cv::Point b);
     void ghost_locate();

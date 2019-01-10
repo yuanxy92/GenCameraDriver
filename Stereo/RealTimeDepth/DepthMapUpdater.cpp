@@ -23,7 +23,7 @@ int DepthMapUpdater::init(cv::Mat& masterBackground, cv::Mat& slaveBackground, c
 #endif
 	if(_backMaster.empty() || _backSlave.empty())
 		std::cout<<"DepthMapUpdater::init empty mat!"<<std::endl;
-	_dep.init_depth(_backMaster, _backSlave);
+	_dep.init_depth(_backMaster, _backSlave, _elem.flag);
 
 	_mog->apply(_gpu_backMaster, _gpu_mask, 0.01);
     return 0;

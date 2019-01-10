@@ -47,8 +47,8 @@ int main(int argc, char** argv)
 	Mat frame2;
 	cap >> frame;
 	cap2 >> frame2; 
-	cv::resize(frame, frame, Size(1000, 750));
-	cv::resize(frame2,frame2,Size(1000,750));
+	//cv::resize(frame, frame, cv::Size(), .25, .25);
+	//cv::resize(frame2,frame2,cv::Size(), .25, .25);
 
 	
 	Ptr<BackgroundSubtractor> mog = cuda::createBackgroundSubtractorMOG(70);
@@ -78,16 +78,13 @@ int main(int argc, char** argv)
         return -1;
     }
     depthmap dep(rpyrtype,nochannels,incoltype);
-    if(rotate_req)
-	{
-		dep.rotate_(frame);
-		dep.rotate_(frame2);
-	}
+    
 	GpuMat d_frame(frame);
-	bg_depth = dep.init_depth(frame,frame2);//should use the output of A stage,just test
-	Mat frame_init = frame.clone();
-	//cout<<frame_init.type()<<endl;
-	// MOG:
+	//bg_depth = dep.init_depth(frame,frame2);//should use the output of A stage,just test
+	Mat init1 = frame.clone();
+	Mat init2 = frame2.clone();
+	Mat depth_init = dep.init_depth(init1,init2,elem.flag);
+	Mat frame_init = elem.init_frame(frame);
 	mog->apply(d_frame, d_fgmask, 0.01);
 	int count = 0;
 	Mat diff_mask;
@@ -97,13 +94,8 @@ int main(int argc, char** argv)
 		cap2 >> frame2;
 		if (frame.empty())
 			break;
-		cv::resize(frame, frame, Size(1000, 750));
-		cv::resize(frame2,frame2,Size(1000,750));
-		if(rotate_req)
-		{
-			dep.rotate_(frame);
-			dep.rotate_(frame2);
-		}
+		//cv::resize(frame, frame, cv::Size(), .25, .25);
+		//cv::resize(frame2,frame2,cv::Size(), .25, .25);
 		//frame_o = frame.clone();
 		d_frame.upload(frame);
 		int64 start = cv::getTickCount();
@@ -111,23 +103,26 @@ int main(int argc, char** argv)
 		mog->apply(d_frame, d_fgmask, 0.01);
 		gauss->apply(d_fgmask, d_fgmask);
 		d_fgmask.download(fgmask);
-		result = elem.Find_location(fgmask);//get vector<Rect> and mask
+		result = elem.Find_location(fgmask,frame,frame2);//get vector<Rect> and mask
 		
 		depth_map = dep.get_depth(frame,frame2);
 		//refine the mask
 		diff_mask = elem.refine_mask(frame_init,frame,fgmask);
 		depth_mask = dep.update_depth_robust(depth_map,diff_mask);
 		dep.refine_depth(depth_mask,diff_mask,result,frame,frame2);//refine the depth and mask,abs here
-		if(rotate_req)
-		{
-			dep.rotate_back(diff_mask);
-			dep.rotate_back(depth_mask);
-		}
+		elem.res_out(diff_mask,depth_mask);
+		//elem.res_out(fgmask,depth_map);
+		
 		double fps = cv::getTickFrequency() / (cv::getTickCount() - start);
 		std::cout << "time : " << 1000/fps << std::endl;
 		cout<<"depth update done!"<<endl;
 		result.clear();
 		count = count + 1;
+		if(count == 15)
+		{
+			imwrite("mask_15.png",diff_mask);
+			dep.SavePFMFile(depth_mask,"depth_mask_15.pfm");
+		}
 		int key = waitKey(10);
 		if (key == 27)
 			break;
