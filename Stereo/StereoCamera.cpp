@@ -137,6 +137,7 @@ namespace cam {
 
 
 		load_config(this->config_file_path);
+		SysUtil::infoOutput(cv::format("GenCameraStereo::init %d Stereo cameras detected", pair_infos.size()));
 		if (pair_infos.size() == 0)
 		{
 			SysUtil::errorOutput("GenCameraStereo::init failed! 0 pairs detected!");
@@ -477,7 +478,7 @@ namespace cam {
 					pair_infos[camInd][i].gpu_rec_img.data, 
 					pair_infos[camInd][i].gpu_rec_img.step, 
 					osize, pair_infos[camInd][i].wbTwist));
-				pair_infos[camInd][i].gpu_final_img = pair_infos[camInd][i].gpu_rec_img;
+				pair_infos[camInd][i].gpu_final_img = pair_infos[camInd][i].gpu_rec_img.clone();
 			}
 			
 			img.data = reinterpret_cast<char*>(pair_infos[camInd][0].gpu_final_img.data);
