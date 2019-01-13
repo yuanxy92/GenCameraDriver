@@ -31,7 +31,10 @@ class for depth map update
 
 #define JIANING_WIDTH 1000
 #define JIANING_HEIGHT 750
-#define OUTPUT_MIDIAN_RESULT
+
+//#define OUTPUT_MEDIAN_RESULT
+
+
 
 class DepthMapUpdater
 {
@@ -71,7 +74,7 @@ public:
 	*/
     int getFrameCount();
 private:
-#ifdef OUTPUT_MIDIAN_RESULT
+#ifdef OUTPUT_MEDIAN_RESULT
 	static int _updaterCount;
 	int _thisUpdaterID = 0;
 #endif

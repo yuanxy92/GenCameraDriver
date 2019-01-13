@@ -31,7 +31,7 @@ int DepthMapUpdater::init(cv::Mat& masterBackground, cv::Mat& slaveBackground, c
 	_dep.init_depth(_backMaster, _backSlave, _elem.flag);
 
 	_mog->apply(_gpu_backMaster, _gpu_mask, 0.01);
-#ifdef OUTPUT_MIDIAN_RESULT
+#ifdef OUTPUT_MEDIAN_RESULT
 	char command[256];
 	sprintf(command, "mkdir OUTPUT_MIDIAN_RESULT");
 	system(command);
@@ -71,12 +71,12 @@ int DepthMapUpdater::update(cv::cuda::GpuMat& masterMat, cv::cuda::GpuMat& slave
 	cv::cuda::resize(slaveMat, _gpu_s, cv::Size(JIANING_WIDTH, JIANING_HEIGHT));
 	_gpu_m.download(_m);
 	_gpu_s.download(_s);
-#ifdef OUTPUT_MIDIAN_RESULT
+#ifdef OUTPUT_MEDIAN_RESULT
 	cv::Mat _m2, _s2;
 	cv::cvtColor(_m, _m2, cv::COLOR_RGB2BGR);
 	cv::cvtColor(_s, _s2, cv::COLOR_RGB2BGR);
-	cv::imwrite(cv::format("OUTPUT_MIDIAN_RESULT/%d_test_m_%d.jpg",_thisUpdaterID,_frameCount),_m2);
-	cv::imwrite(cv::format("OUTPUT_MIDIAN_RESULT/%d_test_s_%d.jpg",_thisUpdaterID,_frameCount),_s2);
+	cv::imwrite(cv::format("OUTPUT_MEDIAN_RESULT/%d_test_m_%d.jpg",_thisUpdaterID,_frameCount),_m2);
+	cv::imwrite(cv::format("OUTPUT_MEDIAN_RESULT/%d_test_s_%d.jpg",_thisUpdaterID,_frameCount),_s2);
 #endif
 	//std::cout << "DepthMapUpdater::update resize & download done" << std::endl;
 	_mog->apply(_gpu_m, _gpu_mask, 0.01);
