@@ -152,9 +152,6 @@ namespace cam {
 			@return int
 			*/
 			int bufferNextFrame();
-
-
-
     };
 };
 

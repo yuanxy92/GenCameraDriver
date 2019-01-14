@@ -253,11 +253,13 @@ namespace cam {
 
 
 
-				//TODO (SHADOWK) : added ratio control code here (also more coder is needed)
 				int ratioInd = static_cast<int>(imgRatios[camInd]);
 				// debayer
 				if (this->isCapturedFrameDebayered == false)
 				{
+					//TODO(SHADOWK): brightness adjustment for lens here!
+
+
 					cv::cuda::demosaicing(this->bufferImgs_cuda[camInd], this->dabayerImgs_cuda[camInd],
 						npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
 							static_cast<int>(camInfos[camInd].bayerPattern))), -1, stream);

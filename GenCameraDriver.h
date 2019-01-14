@@ -362,6 +362,9 @@ namespace cam {
 		int bufferSize;
 		size_t cameraNum;
 
+		// brightness adjustment for each image (pre-processing)
+        std::vector<cv::cuda::GpuMat> brightness_cuda;
+
 		// capture model
 		GenCamCaptureMode captureMode;
 
@@ -684,6 +687,8 @@ namespace cam {
 			std::vector<Imagedata> & localImgs,
 			std::vector<int> refInds,
 			std::vector<int> localInds);
+
+		int setBrightnessAdjustment(std::vector<cv::cuda::GpuMat> adjustment);
 
 	};
 

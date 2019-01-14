@@ -386,6 +386,12 @@ namespace cam {
 		}
 		return 0;
 	}
+
+	int GenCamera::setBrightnessAdjustment(std::vector<cv::cuda::GpuMat> adjustment)
+	{
+		brightness_cuda = adjustment;
+		return 0;
+	}
 }
 
 
