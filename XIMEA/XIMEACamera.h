@@ -20,6 +20,7 @@ Implementation of XIMEA camera
 #include "RealCameraDriver.h"
 
 #define XIMEA_CAMERA_BANDWITH_REDUN 1.0
+#define XIMEA_CAMERA_GET_IMAGE_WAIT 1000
 
 namespace cam {
 

@@ -41,7 +41,7 @@ namespace cam {
 		}
 		for (size_t k = 0; k < 10; k++) {
 			for (size_t i = 0; i < this->cameraNum; i++) {
-				checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
+				checkXIMEAErrors(xiGetImage(hcams[i], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[i]));
 			}
 		}
 		return 0;
@@ -250,15 +250,15 @@ namespace cam {
 			for (size_t i = 0; i < this->cameraNum; i++) {
 				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_MANUAL_WB,
 					1));
-				checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
-				checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
+				checkXIMEAErrors(xiGetImage(hcams[i], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[i]));
+				checkXIMEAErrors(xiGetImage(hcams[i], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[i]));
 			}
 		}
 		else {
 			checkXIMEAErrors(xiSetParamInt(hcams[camInd], XI_PRM_AUTO_WB,
 				1));
-			checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
-			checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
+			checkXIMEAErrors(xiGetImage(hcams[camInd], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[camInd]));
+			checkXIMEAErrors(xiGetImage(hcams[camInd], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[camInd]));
 		}
 		return 0;
 	}
@@ -278,16 +278,16 @@ namespace cam {
 				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_WB_KR, redGain));
 				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_WB_KG, greenGain));
 				checkXIMEAErrors(xiSetParamFloat(hcams[i], XI_PRM_WB_KB, blueGain));
-				checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
-				checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
+				checkXIMEAErrors(xiGetImage(hcams[i], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[i]));
+				checkXIMEAErrors(xiGetImage(hcams[i], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[i]));
 			}
 		}
 		else {
 			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_WB_KR, redGain));
 			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_WB_KG, greenGain));
 			checkXIMEAErrors(xiSetParamFloat(hcams[camInd], XI_PRM_WB_KB, blueGain));
-			checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
-			checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
+			checkXIMEAErrors(xiGetImage(hcams[camInd], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[camInd]));
+			checkXIMEAErrors(xiGetImage(hcams[camInd], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[camInd]));
 		}
 		return 0;
 	}
@@ -330,7 +330,7 @@ namespace cam {
 			}
 			for (size_t frame = 0; frame < 2; frame++) {
 				for (size_t i = 0; i < this->cameraNum; i++) {
-					checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
+					checkXIMEAErrors(xiGetImage(hcams[i], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[i]));
 				}
 			}
 		}
@@ -341,13 +341,13 @@ namespace cam {
 			sprintf(info, "XIMEA camera %d, exposure level set to %f%%", camInd, level);
 			SysUtil::infoOutput(info);
 			for (size_t frame = 0; frame < 2; frame++) {
-				checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
+				checkXIMEAErrors(xiGetImage(hcams[camInd], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[camInd]));
 			}
 		}
 
 		// for (size_t frame = 0; frame < 2; frame++) {
 		// 	for (size_t i = 0; i < this->cameraNum; i++) {
-		// 		checkXIMEAErrors(xiGetImage(hcams[i], 500, &xiImages[i]));
+		// 		checkXIMEAErrors(xiGetImage(hcams[i], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[i]));
 		// 	}
 		// }
 		return 0;
@@ -444,7 +444,7 @@ namespace cam {
 	*/
 	int GenCameraXIMEA::captureFrame(int camInd, Imagedata & img) {
 		// capture images
-		checkXIMEAErrors(xiGetImage(hcams[camInd], 500, &xiImages[camInd]));
+		checkXIMEAErrors(xiGetImage(hcams[camInd], XIMEA_CAMERA_GET_IMAGE_WAIT, &xiImages[camInd]));
 		// copy to opencv mat
 		std::memcpy(img.data, xiImages[camInd].bp, sizeof(unsigned char) *
 			xiImages[camInd].width * xiImages[camInd].height);

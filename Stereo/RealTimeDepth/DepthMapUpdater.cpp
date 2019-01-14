@@ -1,6 +1,6 @@
 #include "DepthMapUpdater.h"
 
-#ifdef OUTPUT_MIDIAN_RESULT
+#ifdef OUTPUT_MEDIAN_RESULT
 int DepthMapUpdater::_updaterCount = 0;
 #endif
 
@@ -33,7 +33,7 @@ int DepthMapUpdater::init(cv::Mat& masterBackground, cv::Mat& slaveBackground, c
 	_mog->apply(_gpu_backMaster, _gpu_mask, 0.01);
 #ifdef OUTPUT_MEDIAN_RESULT
 	char command[256];
-	sprintf(command, "mkdir OUTPUT_MIDIAN_RESULT");
+	sprintf(command, "mkdir OUTPUT_MEDIAN_RESULT");
 	system(command);
 	_thisUpdaterID = _updaterCount;
 	_updaterCount++;
