@@ -140,14 +140,15 @@ namespace cam {
 		sub_cameraPtr->setCamBufferType(GenCamBufferType::Raw);
 		sub_cameraPtr->setCaptureMode(GenCamCaptureMode::Continous, 200);
 		sub_cameraPtr->setCapturePurpose(GenCamCapturePurpose::Streaming);
-
 		if (sub_cameraPtr->getCamModelString() == "   XIMEA_xiC" && cam::SysUtil::existFile("./mul_mat.tiff"))
 		{
+			//SysUtil::infoOutput("sub_cameraPtr->setBrightnessAdjustment");
 			cv::Mat mul = cv::imread("./mul_mat.tiff", cv::IMREAD_UNCHANGED);
-			cv::cuda::GpuMat mul_cuda_(mul);
-			std::vector<cv::cuda::GpuMat> muls(sub_camInfos.size(), mul_cuda_);
-			sub_cameraPtr->setBrightnessAdjustment(muls);
-
+			_gpu_sub_camera_brightness_adjustment.upload(mul);
+			// cv::cuda::GpuMat mul_cuda_(mul);
+			// std::vector<cv::cuda::GpuMat> muls(sub_camInfos.size(), mul_cuda_);
+			// sub_cameraPtr->setBrightnessAdjustment(muls);
+			//SysUtil::infoOutput(cv::format("sub_cameraPtr->setBrightnessAdjustment %d",muls.size() ));
 		}
 
 
@@ -453,18 +454,36 @@ namespace cam {
 			int cols = sub_camInfos[pair_infos[camInd][0].index].width;
 			int rows = sub_camInfos[pair_infos[camInd][0].index].height;
 
-			pair_infos[camInd][0].cpu_raw_img.data = reinterpret_cast<unsigned char *>(raw_imgs[pair_infos[camInd][0].index].data);
-			pair_infos[camInd][1].cpu_raw_img.data = reinterpret_cast<unsigned char *>(raw_imgs[pair_infos[camInd][1].index].data);
+			for(int i = 0;i < 2;i++)
+			{
+				pair_infos[camInd][i].cpu_raw_img.data = reinterpret_cast<unsigned char *>(raw_imgs[pair_infos[camInd][i].index].data);
+				pair_infos[camInd][i].gpu_raw_img.upload(pair_infos[camInd][i].cpu_raw_img);
 
-			pair_infos[camInd][0].gpu_raw_img.upload(pair_infos[camInd][0].cpu_raw_img);
-			pair_infos[camInd][1].gpu_raw_img.upload(pair_infos[camInd][1].cpu_raw_img);
+				if(!_gpu_sub_camera_brightness_adjustment.empty())
+				{
+					cv::cuda::GpuMat tmp, tmp2;
+					pair_infos[camInd][i].gpu_raw_img.convertTo(tmp, CV_32F);
+					cv::cuda::multiply(tmp, this->_gpu_sub_camera_brightness_adjustment, tmp2);
+					tmp2.convertTo(pair_infos[camInd][i].gpu_raw_img, CV_8U);
+				}
 
-			cv::cuda::demosaicing(pair_infos[camInd][0].gpu_raw_img, pair_infos[camInd][0].gpu_rgb_img,
-				npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
-					static_cast<int>(camInfos[camInd].bayerPattern))));
-			cv::cuda::demosaicing(pair_infos[camInd][1].gpu_raw_img, pair_infos[camInd][1].gpu_rgb_img,
-				npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
-					static_cast<int>(camInfos[camInd].bayerPattern))));
+				cv::cuda::demosaicing(pair_infos[camInd][i].gpu_raw_img, pair_infos[camInd][i].gpu_rgb_img,
+					npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+						static_cast<int>(camInfos[camInd].bayerPattern))));
+			}
+
+			// pair_infos[camInd][0].cpu_raw_img.data = reinterpret_cast<unsigned char *>(raw_imgs[pair_infos[camInd][0].index].data);
+			// pair_infos[camInd][1].cpu_raw_img.data = reinterpret_cast<unsigned char *>(raw_imgs[pair_infos[camInd][1].index].data);
+
+			// pair_infos[camInd][0].gpu_raw_img.upload(pair_infos[camInd][0].cpu_raw_img);
+			// pair_infos[camInd][1].gpu_raw_img.upload(pair_infos[camInd][1].cpu_raw_img);
+
+			// cv::cuda::demosaicing(pair_infos[camInd][0].gpu_raw_img, pair_infos[camInd][0].gpu_rgb_img,
+			// 	npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+			// 		static_cast<int>(camInfos[camInd].bayerPattern))));
+			// cv::cuda::demosaicing(pair_infos[camInd][1].gpu_raw_img, pair_infos[camInd][1].gpu_rgb_img,
+			// 	npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(
+			// 		static_cast<int>(camInfos[camInd].bayerPattern))));
 			//SysUtil::infoOutput("GenCameraStereo::captureFrame ready to rectify");
 			if (pair_infos[camInd].inv == false)
 			{

@@ -135,6 +135,8 @@ namespace cam {
 		std::vector<StereoPair> pair_infos;
 		std::vector<Imagedata> raw_imgs;
 
+		cv::cuda::GpuMat _gpu_sub_camera_brightness_adjustment;
+
 	private:
 		int load_config(std::string path);
 

@@ -110,14 +110,14 @@ int record(int argc, char* argv[]) {
                 cameraPtr->makeSetEffective();
                 cameraPtr->getCamInfos(camInfos);
 
-				if (cameraPtr->getCamModelString() == "   XIMEA_xiC" && cam::SysUtil::existFile("./mul_mat.tiff"))
-				{
-					cv::Mat mul = cv::imread("./mul_mat.tiff", cv::IMREAD_UNCHANGED);
-					cv::cuda::GpuMat mul_cuda_(mul);
-					std::vector<cv::cuda::GpuMat> muls(camInfos.size(), mul_cuda_);
-					cameraPtr->setBrightnessAdjustment(muls);
+                if (cameraPtr->getCamModelString() == "   XIMEA_xiC" && cam::SysUtil::existFile("./mul_mat.tiff"))
+                {
+                        cv::Mat mul = cv::imread("./mul_mat.tiff", cv::IMREAD_UNCHANGED);
+                        cv::cuda::GpuMat mul_cuda_(mul);
+                        std::vector<cv::cuda::GpuMat> muls(camInfos.size(), mul_cuda_);
+                        cameraPtr->setBrightnessAdjustment(muls);
 
-				}
+                }
  
                 A_camInfos.push_back(camInfos);
  

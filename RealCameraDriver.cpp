@@ -234,7 +234,7 @@ namespace cam {
 				// debayer
 				if (this->isCapturedFrameDebayered == false)
 				{
-					//TODO(SHADOWK): brightness adjustment for lens here!
+					//brightness adjustment for lens here! (Only valid in JPEG)
 					if (camInd < this->brightness_cuda.size())
 					{
 						cv::cuda::GpuMat tmp, tmp2;
