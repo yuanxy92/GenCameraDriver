@@ -392,6 +392,31 @@ namespace cam {
 		brightness_cuda = adjustment;
 		return 0;
 	}
+
+	/**
+	@brief get camera model string
+	@return std::string
+	*/
+	std::string GenCamera::getCamModelString()
+	{
+		// XIMEA_xiC = 0,
+		// PointGrey_u3 = 1,
+		// Network = 2,
+		// File = 3,
+		// Stereo = 4
+		if (this->camModel == CameraModel::XIMEA_xiC)
+			return "   XIMEA_xiC";
+		else if (this->camModel == CameraModel::PointGrey_u3)
+			return "PointGrey_u3";
+		else if (this->camModel == CameraModel::Network)
+			return "     Network";
+		else if (this->camModel == CameraModel::File)
+			return "        File";
+		else if (this->camModel == CameraModel::Stereo)
+			return "      Stereo";
+		else
+			return "   Undefined";
+	}
 }
 
 

@@ -88,6 +88,7 @@ int record(int argc, char* argv[]) {
                 std::shared_ptr<cam::GenCamera> cameraPtr = A_cameraPtr[i];
                 cameraPtr->init();
                 // set camera setting
+
                 cameraPtr->setFPS(-1, 10);
                 cameraPtr->startCapture();
                 //cameraPtr->setFPS(-1, 10);
@@ -100,7 +101,7 @@ int record(int argc, char* argv[]) {
                 // set capturing setting
                 cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
                 cameraPtr->setJPEGQuality(90, 0.75);
-                cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 400);
+                cameraPtr->setCaptureMode(cam::GenCamCaptureMode::Continous, 200);
                 cameraPtr->setCapturePurpose(cam::GenCamCapturePurpose::Recording);
                 //cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
                 //cameraPtr->setJPEGQuality(90, 0.25);
@@ -108,6 +109,15 @@ int record(int argc, char* argv[]) {
                 cameraPtr->setVerbose(false);
                 cameraPtr->makeSetEffective();
                 cameraPtr->getCamInfos(camInfos);
+
+				if (cameraPtr->getCamModelString() == "   XIMEA_xiC" && cam::SysUtil::existFile("./mul_mat.tiff"))
+				{
+					cv::Mat mul = cv::imread("./mul_mat.tiff", cv::IMREAD_UNCHANGED);
+					cv::cuda::GpuMat mul_cuda_(mul);
+					std::vector<cv::cuda::GpuMat> muls(camInfos.size(), mul_cuda_);
+					cameraPtr->setBrightnessAdjustment(muls);
+
+				}
  
                 A_camInfos.push_back(camInfos);
  

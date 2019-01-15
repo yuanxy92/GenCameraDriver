@@ -15,30 +15,7 @@ namespace cam {
 		isCompressThreadRunning(false), isCaptureModeSet(false), isCapturedFrameGpuPointer(false), isCapturedFrameDebayered(false){}
     RealCamera::~RealCamera() {}
 
-	/**
-	@brief get camera model string
-	@return std::string
-	*/
-	std::string RealCamera::getCamModelString()
-	{
-		// XIMEA_xiC = 0,
-		// PointGrey_u3 = 1,
-		// Network = 2,
-		// File = 3,
-		// Stereo = 4
-		if(this->camModel == CameraModel::XIMEA_xiC)
-			return "   XIMEA_xiC";
-		else if(this->camModel == CameraModel::PointGrey_u3)
-			return "PointGrey_u3";
-		else if(this->camModel == CameraModel::Network)
-			return "     Network";
-		else if(this->camModel == CameraModel::File)
-			return "        File";
-		else if(this->camModel == CameraModel::Stereo)
-			return "      Stereo";
-		else
-			return "   Undefined";
-	}
+
 
     /**
 	@brief multi-thread capturing function
@@ -258,7 +235,14 @@ namespace cam {
 				if (this->isCapturedFrameDebayered == false)
 				{
 					//TODO(SHADOWK): brightness adjustment for lens here!
-
+					if (camInd < this->brightness_cuda.size())
+					{
+						cv::cuda::GpuMat tmp, tmp2;
+						this->bufferImgs_cuda[camInd].convertTo(tmp, CV_32F);
+						cv::cuda::multiply(tmp, this->brightness_cuda[camInd], tmp2);
+						tmp2.convertTo(this->bufferImgs_cuda[camInd], CV_8U);
+					}
+						//this->bufferImgs_cuda[camInd] = this->bufferImgs_cuda[camInd].
 
 					cv::cuda::demosaicing(this->bufferImgs_cuda[camInd], this->dabayerImgs_cuda[camInd],
 						npp::bayerPatternNPP2CVRGB(static_cast<NppiBayerGridPosition>(

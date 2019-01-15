@@ -105,12 +105,6 @@ namespace cam {
             RealCamera();
             ~RealCamera(); 
 
-            /**
-            @brief get camera model string
-            @return std::string
-            */
-            std::string getCamModelString();
-
 			/**
 			@brief set capturing mode
 			@param GenCamCaptureMode captureMode: capture mode

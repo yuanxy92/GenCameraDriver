@@ -34,4 +34,8 @@ Pre-compiled windows libs: (Windows 10 + VS2015 + CUDA9.1 + MKL)
 
 link: https://pan.baidu.com/s/1dxhAGI passwd: sgw4
 
+Download one sample mul_mat here:
+
+link: https://pan.baidu.com/s/11zlwE3D0G51O4oKI1VQgbQ  passwd: n6hs 
+
 Good luck!

@@ -206,6 +206,16 @@ namespace cam {
 			gettimeofday(&tv, NULL);
 			return tv.tv_sec * (int64_t)1000000 + tv.tv_usec;
 		}
+
+		static inline bool existFile(const std::string& name) {
+			if (FILE *file = fopen(name.c_str(), "r")) {
+				fclose(file);
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
 	};
 
 	enum class Status {
@@ -689,6 +699,12 @@ namespace cam {
 			std::vector<int> localInds);
 
 		int setBrightnessAdjustment(std::vector<cv::cuda::GpuMat> adjustment);
+
+		/**
+		@brief get camera model string
+		@return std::string
+		*/
+		std::string getCamModelString();
 
 	};
 

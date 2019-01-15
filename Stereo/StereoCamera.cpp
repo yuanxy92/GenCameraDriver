@@ -135,6 +135,15 @@ namespace cam {
 		sub_cameraPtr->setCaptureMode(GenCamCaptureMode::Continous, 200);
 		sub_cameraPtr->setCapturePurpose(GenCamCapturePurpose::Streaming);
 
+		if (sub_cameraPtr->getCamModelString() == "   XIMEA_xiC" && cam::SysUtil::existFile("./mul_mat.tiff"))
+		{
+			cv::Mat mul = cv::imread("./mul_mat.tiff", cv::IMREAD_UNCHANGED);
+			cv::cuda::GpuMat mul_cuda_(mul);
+			std::vector<cv::cuda::GpuMat> muls(camInfos.size(), mul_cuda_);
+			sub_cameraPtr->setBrightnessAdjustment(muls);
+
+		}
+
 
 		load_config(this->config_file_path);
 		SysUtil::infoOutput(cv::format("GenCameraStereo::init %d Stereo cameras detected", pair_infos.size()));
