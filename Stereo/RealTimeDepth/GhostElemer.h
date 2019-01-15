@@ -1,6 +1,6 @@
 #ifndef _GHOSTELEMER_H_
 #define _GHOSTELEMER_H_
-#define Area 500
+#define Area 50
 
 #include <iostream>
 #include "opencv2/core.hpp"

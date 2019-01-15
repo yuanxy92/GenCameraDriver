@@ -6,7 +6,7 @@ class for depth map update
 */
 #ifndef _DEPTHMAP_H_
 #define _DEPTHMAP_H_
-#define disp_danger 10//the confindence of the disparity is low
+#define disp_danger 55//the confindence of the disparity is low
 #define largest_diff 0
 #define update_thresh 0 //do not update, if the max disparity is smalller 
 

@@ -4,6 +4,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 using namespace std;
 using namespace cv;
 
@@ -162,7 +163,7 @@ void depthmap::SavePFMFile(cv::Mat& img, const char* filename)
   {
     for (int x = 0; x < szt.width; ++x) 
     {
-      float tmp = -img.at<float>(y,x);
+      float tmp = img.at<float>(y,x);
       if ((int)fwrite(&tmp, sizeof(float), 1, stream) != 1)
         cout << "WriteFile: problem writing data" << endl;         
     }
@@ -299,6 +300,12 @@ int depthmap::pattern_match(int x_forward,int flag,Mat temp,Mat temp_area)
 	Point matchLoc;
 	minMaxLoc(final_result, &minVal, &maxVal, &minLoc, &maxLoc);
 
+    rectangle(temp_area,Rect(minLoc.x,minLoc.y,temp.cols,temp.rows),Scalar(255,0,0),2);
+
+    // imshow("temp",temp);
+    // imshow("result",temp_area);
+    // waitKey(500);
+
     if(flag > 0)
         disp_stand = x_forward - minLoc.x;
     else
@@ -327,7 +334,7 @@ void depthmap::refine_depth(Mat& mask_depth,Mat& mask,vector<Rect> result,Mat& f
         Scalar mean_ = cv::mean(temp_depth,t_mask);
         
         double mean_val = mean_[0];
-        //cout<<"mean_val"<<mean_val<<endl;
+        cout<<"mean_val"<<mean_val<<endl;
         //cout<<"max"<<maxVal<<endl;
 
         if(mean_val < update_thresh)//do not update and change the mask
@@ -341,16 +348,16 @@ void depthmap::refine_depth(Mat& mask_depth,Mat& mask,vector<Rect> result,Mat& f
                 //cout<<"refine"<<endl;
                 int x_forward = 1.2*(int)maxVal;///+
                 Rect match_rect;
-                match_rect.x = r.x - flag*x_forward;
-                match_rect.y = r.y;
-                match_rect.width = r.width + x_forward;
+                match_rect.x = std::max(r.x - flag*x_forward,0);
+                match_rect.y = std::max(r.y - r.height/4,0);
+                match_rect.width = std::min(r.width + x_forward,frame.cols-1);
                 if(match_rect.x < 0 || (match_rect.x + match_rect.width)>frame.cols)
                     {//cout<<"ignore"<<endl;
                     continue;}//on the side, ignore it
-                match_rect.height = r.height;
+                match_rect.height = std::min(r.height + r.height/2,frame.rows-1);
                 Mat temp_area = frame2(match_rect);
                 int disp_stand = pattern_match(x_forward,flag,temp,temp_area);
-                //cout<<"disp standard"<<disp_stand<<endl;
+                cout<<"disp standard"<<disp_stand<<endl;
                 for(int i = r.y ;i < r.y + r.height;i++)
                     for(int j = r.x; j < r.x + r.width;j++)
                         if(mask_depth.at<float>(i,j)> 0 && (mask_depth.at<float>(i,j) > 1.2*disp_stand || mask_depth.at<float>(i,j) < 0.8*disp_stand))
