@@ -64,6 +64,12 @@ namespace cam {
 			c = reader.GetReal(stridx, "c", 1000.0);
 			d = reader.GetReal(stridx, "d", 1000.0);
 			E = reader.GetReal(stridx, "E", 1000.0);
+
+			E = E / ((float)matmp.cols / (float)JIANING_WIDTH); //big depth to small depth
+			SysUtil::infoOutput(cv::format("E = %f", E));
+			getchar();
+
+
 			K = JIANING_WIDTH / (2 * b);
 			A = 1 / (K * a);
 			B = - b / a;
