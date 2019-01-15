@@ -30,6 +30,8 @@ int DepthMapUpdater::init(cv::Mat& masterBackground, cv::Mat& slaveBackground, c
 		std::cout<<"DepthMapUpdater::init empty mat!"<<std::endl;
 	_dep.init_depth(_backMaster, _backSlave, _elem.flag);
 
+	//init problem !!!!
+
 	_mog->apply(_gpu_backMaster, _gpu_mask, 0.01);
 #ifdef OUTPUT_MEDIAN_RESULT
 	char command[256];

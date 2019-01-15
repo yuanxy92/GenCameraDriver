@@ -145,7 +145,7 @@ namespace cam {
 		{
 			cv::Mat mul = cv::imread("./mul_mat.tiff", cv::IMREAD_UNCHANGED);
 			cv::cuda::GpuMat mul_cuda_(mul);
-			std::vector<cv::cuda::GpuMat> muls(camInfos.size(), mul_cuda_);
+			std::vector<cv::cuda::GpuMat> muls(sub_camInfos.size(), mul_cuda_);
 			sub_cameraPtr->setBrightnessAdjustment(muls);
 
 		}

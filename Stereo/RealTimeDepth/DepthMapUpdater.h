@@ -85,6 +85,7 @@ private:
 	depthmap _dep;
 
 	cv::Mat _backMaster, _backSlave, _backDepth;
+	//cv::Mat _masterInit;
 	cv::cuda::GpuMat _gpu_backMaster, _gpu_backSlave, _gpu_backDepth;
 
 	cv::Mat _mask,_depth;
