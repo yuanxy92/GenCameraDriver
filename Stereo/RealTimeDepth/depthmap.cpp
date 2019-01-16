@@ -350,11 +350,11 @@ void depthmap::refine_depth(Mat& mask_depth,Mat& mask,vector<Rect> result,Mat& f
                 Rect match_rect;
                 match_rect.x = std::max(r.x - flag*x_forward,0);
                 match_rect.y = std::max(r.y - r.height/4,0);
-                match_rect.width = std::min(r.width + x_forward,frame.cols-1);
-                if(match_rect.x < 0 || (match_rect.x + match_rect.width)>frame.cols)
-                    {//cout<<"ignore"<<endl;
-                    continue;}//on the side, ignore it
-                match_rect.height = std::min(r.height + r.height/2,frame.rows-1);
+                match_rect.width = std::min(r.width + x_forward,frame.cols-match_rect.x);
+                // if(match_rect.x < 0 || (match_rect.x + match_rect.width)>frame.cols)
+                //     {//cout<<"ignore"<<endl;
+                //     continue;}//on the side, ignore it
+                match_rect.height = std::min(r.height + r.height/2,frame.rows-match_rect.y);
                 Mat temp_area = frame2(match_rect);
                 int disp_stand = pattern_match(x_forward,flag,temp,temp_area);
                 cout<<"disp standard"<<disp_stand<<endl;
