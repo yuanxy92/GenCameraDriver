@@ -9,10 +9,9 @@ Implementation of PointGrey camera
 #define __GENERIC_CAMERA_DRIVER_FILE_H__
 
 #include <memory.h>
-#include <array>
 
 #include "GenCameraDriver.h"
-#include "NPPJpegCoder.h"
+
 namespace cam {
 
 	class GenCameraFile : public GenCamera {
@@ -22,13 +21,21 @@ namespace cam {
 		float bufferScale;
 		std::vector<std::string> videonames;
 		std::vector<std::string> filenames;
+		std::vector<int> frameshifts;
 		std::vector<size_t> frameCounts;
 		std::vector<cv::VideoCapture> readers;
 		// pre-define bayer pattern
 		GenCamBayerPattern bayerPattern;
+		// video start index
+		int startFrameInd;
 
-		// npp jpeg coder
-		std::vector<npp::NPPJpegCoder> encoder;
+		// sync file
+		bool hasSyncFile;
+		std::string syncfile;
+		std::vector<std::vector<int>> frameInds;
+		std::vector<std::vector<uint64_t>> timeStamps;
+		int syncInd;
+		int syncIndNext;
 
 	public:
 

@@ -1,0 +1,1 @@
+ffmpeg.exe -y -i "./test_img/CUCAU1731016_00_%5d.jpg" -b:v 50M ./out.mp4
