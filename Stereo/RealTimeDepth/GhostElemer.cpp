@@ -246,17 +246,17 @@ void GhostElemer::rotate_back(Mat& m)
     cv::flip(m,m,0);
     
 }
-cv::Mat GhostElemer::init_frame(Mat frame)
+void GhostElemer::init_frame(Mat &frame1)
 {
-	Mat frame1 = frame.clone();
-	if(frame.cols>frame.rows)
+	///Mat frame1 = frame.clone();
+	if(frame1.cols>frame1.rows)
 	{
 		if(flag == 1)
 			rotate_(frame1);
 		else
 			rotate_back(frame1);
 	}
-	return frame1;
+	//return frame1;
 }
 void GhostElemer::res_out(Mat& mask,Mat& depth_mask)
 {

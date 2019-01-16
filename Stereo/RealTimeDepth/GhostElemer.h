@@ -38,7 +38,7 @@ public:
     cv::Mat refine_mask(cv::Mat frame_init,cv::Mat frame,cv::Mat mask);
     void rotate_(cv::Mat& m);
     void rotate_back(cv::Mat& m);
-    cv::Mat init_frame(cv::Mat img);
+    void init_frame(cv::Mat &img);
     void res_out(cv::Mat& mask,cv::Mat& depth_mask);
     
 private:

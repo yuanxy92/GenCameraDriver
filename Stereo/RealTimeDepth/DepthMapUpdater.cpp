@@ -30,9 +30,7 @@ int DepthMapUpdater::init(cv::Mat& masterBackground, cv::Mat& slaveBackground, c
 		std::cout<<"DepthMapUpdater::init empty mat!"<<std::endl;
 	_dep.init_depth(_backMaster, _backSlave, _elem.flag);
 
-	//init problem !!!!
-
-	_mog->apply(_gpu_backMaster, _gpu_mask, 0.01);
+	//_mog->apply(_gpu_backMaster, _gpu_mask, 0.01);
 #ifdef OUTPUT_MEDIAN_RESULT
 	char command[256];
 	sprintf(command, "mkdir OUTPUT_MEDIAN_RESULT");
@@ -52,23 +50,28 @@ int DepthMapUpdater::update(cv::Mat& masterMat, cv::Mat& slaveMat, cv::Mat& dept
 	cv::resize(slaveMat, _s, cv::Size(JIANING_WIDTH, JIANING_HEIGHT));
 	_gpu_m.upload(_m);
 	_mog->apply(_gpu_m, _gpu_mask, 0.01);
+
+	_mog->getBackgroundImage(_gpu_updateBackground);
+	_gpu_updateBackground.download(_updateBackground);
+	_elem.init_frame(_updateBackground);
+
 	_gauss->apply(_gpu_mask, _gpu_mask);
 	_gpu_mask.download(_mask);
-	//std::vector<cv::Rect> result = _elem.Find_location(_mask);
+	std::vector<cv::Rect> result = _elem.Find_location(_mask, _m, _s);
 	_depth = _dep.get_depth(_m, _s);
-	cv::Mat diff_mask = _elem.refine_mask(_backMaster, _m, _mask);
+	cv::Mat diff_mask = _elem.refine_mask(_updateBackground, _m, _mask);
 	depthWithMask = _dep.update_depth_robust(_depth, diff_mask);
+
+	_dep.refine_depth(depthWithMask, diff_mask, result, _m, _s);
+	_elem.res_out(diff_mask, depthWithMask);
 	_frameCount++;
     return 0;
 }
 
 int DepthMapUpdater::update(cv::cuda::GpuMat& masterMat, cv::cuda::GpuMat& slaveMat, cv::Mat& depthWithMask)
 {
-	//std::cout << "into DepthMapUpdater::update GpuMat" << std::endl;
 	cv::Mat _m, _s;
 	cv::cuda::GpuMat _gpu_m,_gpu_s;
-	//std::cout << "master Mat .row .col "<< masterMat.cols << " " << masterMat.rows << std::endl;
-	//std::cout << "slave Mat .row .col "<< slaveMat.cols << " " << slaveMat.rows << std::endl;
 	cv::cuda::resize(masterMat, _gpu_m, cv::Size(JIANING_WIDTH, JIANING_HEIGHT));
 	cv::cuda::resize(slaveMat, _gpu_s, cv::Size(JIANING_WIDTH, JIANING_HEIGHT));
 	_gpu_m.download(_m);
@@ -80,17 +83,21 @@ int DepthMapUpdater::update(cv::cuda::GpuMat& masterMat, cv::cuda::GpuMat& slave
 	cv::imwrite(cv::format("OUTPUT_MEDIAN_RESULT/%d_test_m_%d.jpg",_thisUpdaterID,_frameCount),_m2);
 	cv::imwrite(cv::format("OUTPUT_MEDIAN_RESULT/%d_test_s_%d.jpg",_thisUpdaterID,_frameCount),_s2);
 #endif
-	//std::cout << "DepthMapUpdater::update resize & download done" << std::endl;
 	_mog->apply(_gpu_m, _gpu_mask, 0.01);
+
+	_mog->getBackgroundImage(_gpu_updateBackground);
+	_gpu_updateBackground.download(_updateBackground);
+	_elem.init_frame(_updateBackground);
+
 	_gauss->apply(_gpu_mask, _gpu_mask);
-	//std::cout << "DepthMapUpdater::update mog & gauss done" << std::endl;
 	_gpu_mask.download(_mask);
+	std::vector<cv::Rect> result = _elem.Find_location(_mask, _m, _s);
 	_depth = _dep.get_depth(_m, _s);
 
-	//std::cout << "DepthMapUpdater::update get_depth done" << std::endl;
-	cv::Mat diff_mask = _elem.refine_mask(_backMaster, _m, _mask);
+	cv::Mat diff_mask = _elem.refine_mask(_updateBackground, _m, _mask);
 	depthWithMask = _dep.update_depth_robust(_depth, diff_mask);
-	//std::cout << "DepthMapUpdater::update update_depth_robust done" << std::endl;
+	_dep.refine_depth(depthWithMask, diff_mask, result, _m, _s);
+	_elem.res_out(diff_mask, depthWithMask);
 #ifdef OUTPUT_MEDIAN_RESULT
 	//cv::imwrite(cv::format("test_mask_%d.jpg",_frameCount),_mask);
 	// cv::Mat dis_16;

@@ -56,9 +56,11 @@ int main(int argc, char** argv)
 	
 	Ptr<BackgroundSubtractor> mog = cuda::createBackgroundSubtractorMOG(70);
 	GpuMat d_fgmask;
+	GpuMat d_bgimg;
 	Ptr<cv::cuda::Filter> gauss = cv::cuda::createGaussianFilter(CV_8UC1, CV_8UC1, Size(5,5), 0);
     Mat fgmask;
     Mat bg_depth;
+	Mat bg;
     Mat depth_map;
 	Mat depth_mask;
 	GhostElemer elem;
@@ -80,12 +82,8 @@ int main(int argc, char** argv)
 	Mat init1 = frame.clone();
 	Mat init2 = frame2.clone();
 	Mat depth_init = dep.init_depth(init1,init2,elem.flag);
-	Mat frame_init = elem.init_frame(frame);
-	//Mat frame_init = elem.init_frame(frame_);
 	
-	GpuMat d_frame(frame_init);
-	//cv::resize(frame_init,frame_init,cv::Size(),.5,.5);
-	mog->apply(d_frame, d_fgmask, 0.01);
+	GpuMat d_frame;
 	int count = 0;
 	Mat diff_mask;
 	for (;;)
@@ -98,24 +96,29 @@ int main(int argc, char** argv)
 		//cv::resize(frame,frame_,cv::Size(),.5,.5);
 		cv::resize(frame, frame, cv::Size(), .25, .25);
 		cv::resize(frame2,frame2,cv::Size(), .25, .25);
-		//frame_o = frame.clone();
+		
 		//d_frame.upload(frame_);
 		d_frame.upload(frame);
 		int64 start = cv::getTickCount();
 		//update the model
 		mog->apply(d_frame, d_fgmask, 0.01);
+		mog->getBackgroundImage(d_bgimg);
 		gauss->apply(d_fgmask, d_fgmask);
 		d_fgmask.download(fgmask);
+		d_bgimg.download(bg);//get the background
+		elem.init_frame(bg);//rotate the background
 		//cv::resize(fgmask,fgmask,cv::Size(),.5,.5);
+		//cv:resize(bg,bg,cv::Size(),.5,.5);
 		result = elem.Find_location(fgmask,frame,frame2);//get vector<Rect> and mask
 		
 		depth_map = dep.get_depth(frame,frame2);
 
 		//refine the mask
-		diff_mask = elem.refine_mask(frame_init,frame,fgmask);
+		diff_mask = elem.refine_mask(bg,frame,fgmask);
 		depth_mask = dep.update_depth_robust(depth_map,diff_mask);
 		dep.refine_depth(depth_mask,diff_mask,result,frame,frame2);//refine the depth and mask,abs here
 		elem.res_out(diff_mask,depth_mask);
+		imshow("mask",diff_mask);
 		
 		double fps = cv::getTickFrequency() / (cv::getTickCount() - start);
 		std::cout << "time : " << 1000/fps << std::endl;
