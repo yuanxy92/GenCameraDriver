@@ -19,7 +19,7 @@ namespace cam {
 	}
 
 	// constructor
-	GenCameraFile::GenCameraFile() : hasSyncFile(false) {}
+	GenCameraFile::GenCameraFile() : hasSyncFile(false) { this->dir = "."; }
 	GenCameraFile::GenCameraFile(std::string dir) : hasSyncFile(false) {
 		this->camModel = cam::CameraModel::File;
 		this->camPurpose = cam::GenCamCapturePurpose::Streaming;

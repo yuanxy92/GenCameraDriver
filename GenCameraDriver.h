@@ -216,6 +216,18 @@ namespace cam {
 				return false;
 			}
 		}
+
+		static char singletolower(char in) {
+			if (in <= 'Z' && in >= 'A')
+				return in - ('Z' - 'z');
+			return in;
+		}
+
+		static inline std::string toLower(std::string in)
+		{
+			std::transform(in.begin(), in.end(), in.begin(), singletolower); //Better than ::tolower() when work with UTF-8
+			return in;
+		}
 	};
 
 	enum class Status {

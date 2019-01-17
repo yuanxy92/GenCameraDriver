@@ -32,6 +32,17 @@ namespace cam {
 			return -1;
 		}
 		int stereo_count = reader.GetInteger("Global", "stereo_count", 0);
+		sub_cameraBufferCount = reader.GetInteger("Global", "buffer_count", 200);
+		fileCameraPath = reader.Get("Global", "file_camera_path", ".");
+		std::string camModel = reader.Get("Global", "camera_model", "XIMEA");
+		if (SysUtil::toLower(camModel) == "ximea" || SysUtil::toLower(camModel) == "x")
+			this->sub_model = cam::CameraModel::XIMEA_xiC;
+		else if (SysUtil::toLower(camModel) == "file" || SysUtil::toLower(camModel) == "f")
+			this->sub_model = cam::CameraModel::File;
+		else if (SysUtil::toLower(camModel) == "ptgrey" || SysUtil::toLower(camModel) == "pointgrey" || SysUtil::toLower(camModel) == "p")
+			this->sub_model = cam::CameraModel::PointGrey_u3;
+		else
+			this->sub_model = cam::CameraModel::XIMEA_xiC;
 		for (int i = 0; i < stereo_count; i++)
 		{
 			std::string stridx = cv::format("Stereo%d", i);
@@ -127,31 +138,8 @@ namespace cam {
 			SysUtil::warningOutput("GenCameraStereo is already initialized. Please do not init twice !");
 			return 0;
 		}
-
-
-		//TODO : Now only support sub XIMEA camera
-		sub_model = CameraModel::XIMEA_xiC;
 		//TODO : How do we input the config file path?
 		config_file_path = "./StereoConfig.ini";
-		//TODO : Now can only open every camera
-		sub_cameraPtr = cam::createCamera(cam::CameraModel::XIMEA_xiC);
-		sub_cameraPtr->init();
-		sub_cameraPtr->getCamInfos(sub_camInfos);
-		sub_cameraPtr->setCamBufferType(GenCamBufferType::Raw);
-		sub_cameraPtr->setCaptureMode(GenCamCaptureMode::Continous, 200);
-		sub_cameraPtr->setCapturePurpose(GenCamCapturePurpose::Streaming);
-		if (sub_cameraPtr->getCamModelString() == "   XIMEA_xiC" && cam::SysUtil::existFile("./mul_mat.tiff"))
-		{
-			//SysUtil::infoOutput("sub_cameraPtr->setBrightnessAdjustment");
-			cv::Mat mul = cv::imread("./mul_mat.tiff", cv::IMREAD_UNCHANGED);
-			_gpu_sub_camera_brightness_adjustment.upload(mul);
-			// cv::cuda::GpuMat mul_cuda_(mul);
-			// std::vector<cv::cuda::GpuMat> muls(sub_camInfos.size(), mul_cuda_);
-			// sub_cameraPtr->setBrightnessAdjustment(muls);
-			//SysUtil::infoOutput(cv::format("sub_cameraPtr->setBrightnessAdjustment %d",muls.size() ));
-		}
-
-
 		load_config(this->config_file_path);
 		SysUtil::infoOutput(cv::format("GenCameraStereo::init %d Stereo cameras detected", pair_infos.size()));
 		if (pair_infos.size() == 0)
@@ -159,6 +147,21 @@ namespace cam {
 			SysUtil::errorOutput("GenCameraStereo::init failed! 0 pairs detected!");
 			return -1;
 		}
+
+		
+		//TODO : Now can only open every camera
+		sub_cameraPtr = cam::createCamera(this->sub_model, fileCameraPath);
+		sub_cameraPtr->init();
+		sub_cameraPtr->getCamInfos(sub_camInfos);
+		sub_cameraPtr->setCamBufferType(GenCamBufferType::Raw);
+		sub_cameraPtr->setCaptureMode(GenCamCaptureMode::Continous, sub_cameraBufferCount);
+		sub_cameraPtr->setCapturePurpose(GenCamCapturePurpose::Streaming);
+		if (sub_cameraPtr->getCamModelString() == "   XIMEA_xiC" && cam::SysUtil::existFile("./mul_mat.tiff"))
+		{
+			cv::Mat mul = cv::imread("./mul_mat.tiff", cv::IMREAD_UNCHANGED);
+			_gpu_sub_camera_brightness_adjustment.upload(mul);
+		}
+		
 		raw_imgs.resize(pair_infos.size() * 2);
 		for (int i = 0; i < pair_infos.size(); i++)
 		{
@@ -276,7 +279,7 @@ namespace cam {
 		{
 			for (int i = 0; i < pair_infos.size() * 2; i++)
 			{
-				delete this->raw_imgs[i].data;
+				//delete this->raw_imgs[i].data;
 			}
 		}
 		return 0;
