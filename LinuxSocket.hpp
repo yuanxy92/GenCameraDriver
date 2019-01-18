@@ -30,11 +30,6 @@ public:
 	int init(int port)
 	{
 		// init socket
-		int sockfd, newsockfd, portno;
-		socklen_t clilen;
-		char buffer[256];
-		struct sockaddr_in serv_addr, cli_addr;
-		int n;
 		sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		if (sockfd < 0)
 			error("ERROR opening socket");
@@ -71,6 +66,17 @@ public:
 		close(newsockfd);
 		close(sockfd);
 		return ret;
+	}
+private:
+	int sockfd, newsockfd, portno;
+	socklen_t clilen;
+	char buffer[256];
+	struct sockaddr_in serv_addr, cli_addr;
+	int n;
+	void error(const char *msg) 
+	{
+		perror(msg);
+		exit(1);
 	}
 #else
 	int init(int port)
