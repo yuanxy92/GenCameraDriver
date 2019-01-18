@@ -1183,6 +1183,113 @@ namespace npp {
 		return 0;
 	}
 
+	int NPPJpegCoder::decode(unsigned char * jpegdata, size_t input_datalength, std::vector<void*>& _gpu_YUV420data, std::vector<uint32_t>& steps)
+	{
+		NppiDCTState *pDCTState;
+		NPP_CHECK_NPP(nppiDCTInitAlloc(&pDCTState));
+
+		// check if this is a vlid JPEG file
+		int nPos = 0;
+		int nMarker = nextMarker(jpegdata, nPos, input_datalength);
+		if (nMarker != 0x0D8) {
+			std::cerr << "Invalid Jpeg Image" << std::endl;
+			return EXIT_FAILURE;
+		}
+		nMarker = nextMarker(jpegdata, nPos, input_datalength);
+		nMCUBlocksH = 0;
+		nMCUBlocksV = 0;
+
+		int nRestartInterval = -1;
+		while (nMarker != -1) {
+			if (nMarker == 0x0D8) {
+				// Embedded Thumbnail, skip it
+				int nNextMarker = nextMarker(jpegdata, nPos, input_datalength);
+				while (nNextMarker != -1 && nNextMarker != 0x0D9) {
+					nNextMarker = nextMarker(jpegdata, nPos, input_datalength);
+				}
+			}
+			if (nMarker == 0x0DD) {
+				readRestartInterval(jpegdata + nPos, nRestartInterval);
+			}
+			if ((nMarker == 0x0C0) | (nMarker == 0x0C2)) {
+				//Assert Baseline for this Sample
+				//Note: NPP does support progressive jpegs for both encode and decode
+				if (nMarker != 0x0C0) {
+					cerr << "The sample does only support baseline JPEG images" << endl;
+					return EXIT_SUCCESS;
+				}
+				// Baseline or Progressive Frame Header
+				readFrameHeader(jpegdata + nPos, oFrameHeader);
+				//Assert 3-Channel Image for this Sample
+				if (oFrameHeader.nComponents != 3) {
+					cerr << "The sample does only support color JPEG images" << endl;
+					return EXIT_SUCCESS;
+				}
+				// Compute channel sizes as stored in the JPEG (8x8 blocks & MCU block layout)
+				for (int i = 0; i < oFrameHeader.nComponents; ++i) {
+					nMCUBlocksV = max(nMCUBlocksV, oFrameHeader.aSamplingFactors[i] & 0x0f);
+					nMCUBlocksH = max(nMCUBlocksH, oFrameHeader.aSamplingFactors[i] >> 4);
+				}
+			}
+			if (nMarker == 0x0DB) {
+				// Quantization Tables
+				readQuantizationTables(jpegdata + nPos, aQuantizationTables);
+			}
+			if (nMarker == 0x0C4) {
+				// Huffman Tables
+				readHuffmanTables(jpegdata + nPos, aHuffmanTables);
+			}
+			if (nMarker == 0x0DA) {
+				// Scan
+				readScanHeader(jpegdata + nPos, oScanHeader);
+				nPos += 6 + oScanHeader.nComponents * 2;
+				int nAfterNextMarkerPos = nPos;
+				int nAfterScanMarker = nextMarker(jpegdata, nAfterNextMarkerPos, input_datalength);
+				if (nRestartInterval > 0) {
+					while (nAfterScanMarker >= 0x0D0 && nAfterScanMarker <= 0x0D7) {
+						// This is a restart marker, go on
+						nAfterScanMarker = nextMarker(jpegdata, nAfterNextMarkerPos, input_datalength);
+					}
+				}
+				NPP_CHECK_NPP(nppiDecodeHuffmanScanHost_JPEG_8u16s_P3R(jpegdata + nPos, nAfterNextMarkerPos - nPos - 2,
+					nRestartInterval, oScanHeader.nSs, oScanHeader.nSe, oScanHeader.nA >> 4, oScanHeader.nA & 0x0f,
+					aphDCT, aDCTStep,
+					apHuffmanDCTableDecode,
+					apHuffmanACTableDecode,
+					aSrcSize));
+			}
+			nMarker = nextMarker(jpegdata, nPos, input_datalength);
+		}
+
+		// Copy DCT coefficients and Quantization Tables from host to device
+		for (int i = 0; i < 4; ++i) {
+			NPP_CHECK_CUDA(cudaMemcpyAsync(pdQuantizationTables + i * 64, aQuantizationTables[i].aTable, 64, cudaMemcpyHostToDevice));
+		}
+		for (int i = 0; i < 3; ++i) {
+			NPP_CHECK_CUDA(cudaMemcpyAsync(apdDCT[i], aphDCT[i], aDCTStep[i] * aSrcSize[i].height / 8, cudaMemcpyHostToDevice));
+		}
+		// Inverse DCT
+		for (int i = 0; i < 3; ++i) {
+			NPP_CHECK_NPP(nppiDCTQuantInv8x8LS_JPEG_16s8u_C1R_NEW(apdDCT[i], aDCTStep[i],
+				apSrcImage[i], aSrcImageStep[i],
+				pdQuantizationTables + oFrameHeader.aQuantizationTableSelector[i] * 64,
+				aSrcSize[i],
+				pDCTState));
+		}
+		// convert from YUV to BGR
+		// yuv420 to rgb
+		NppiSize osize;
+		osize.width = this->width;
+		osize.height = this->height;
+		
+		for (int i = 0; i < 3; i++)
+		{
+			_gpu_YUV420data[i] = apSrcImage[i];
+			steps[i] = aSrcImageStep[i];
+		}
+		return 0;
+	}
+
 };
 
 

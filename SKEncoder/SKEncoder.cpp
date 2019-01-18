@@ -65,7 +65,7 @@ int SKEncoder::encode(std::vector<void*> gpu_YUVdata3, std::vector<uint32_t> ste
 {
 	if (_encodedFrameNum % _stat_step == 0)
 	{
-		SysUtil::infoOutput(SysUtil::format("%s : Frame:%d, Total:%d, FrameRate:%f fps\n",
+		SysUtil::infoOutput(SysUtil::format("%s : Frame:%d, Total:%d, FrameRate:%f fps",
 			_fileName.c_str(), _encodedFrameNum, _frameNum,
 			_stat_step * 1000000.0f / (SysUtil::getCurrentTimeMicroSecond() - _stat_last_time)));
 		_stat_last_time = SysUtil::getCurrentTimeMicroSecond();

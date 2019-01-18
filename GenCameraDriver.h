@@ -637,6 +637,13 @@ namespace cam {
 		*/
 		int saveVideos(std::string dir);
 
+		/**
+		@brief save captured videos to dir GpuVersion
+		@param std::string dir: input dir to save videos
+		@return int
+		*/
+		int saveVideosGpu(std::string dir);
+
 		/*************************************************************/
 		/*   function to set jpeg scale ratio for capture function   */
 		/*************************************************************/

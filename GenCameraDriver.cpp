@@ -12,6 +12,7 @@
 
 // include NPPJpegCoder
 #include "NPPJpegCoder.h"
+#include "SKEncoder.h"
 
 namespace cam {
 
@@ -211,6 +212,70 @@ namespace cam {
 					writer << rgb_img_mat;
 				}
 				writer.release();
+			}
+		}
+		return 0;
+	}
+	int GenCamera::saveVideosGpu(std::string dir)
+	{
+		if (this->bufferType != GenCamBufferType::JPEG)
+		{
+			cam::SysUtil::errorOutput("GenCamera::saveVideosGpu now only support Jpeg Type");
+			return -1;
+		}
+		SysUtil::mkdir(dir);
+		for (size_t i = 0; i < this->cameraNum; i++) 
+		{
+			// init npp jpeg coder
+			std::vector<npp::NPPJpegCoder> coder(4);
+			for (size_t k = 0; k < 4; k++) 
+			{
+				cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
+					static_cast<cam::GenCamImgRatio>(k));
+				coder[k].init(size.width, size.height, JPEGQuality);
+			}
+			// init video parameter
+			std::string videoname = cv::format("%s/%s.h265", dir.c_str(), camInfos[i].sn.c_str());
+
+			SKEncoder skencoder;
+			skencoder.init(this->bufferSize, cv::Size(camInfos[i].width, camInfos[i].height), videoname);
+			cv::cuda::GpuMat _gpu_Resized_YUV[3];
+			for (int j = 0; j < 1; j++)
+				_gpu_Resized_YUV[j].create(camInfos[i].height, camInfos[i].width, CV_8U);
+			for (int j = 1; j < 3; j++)
+				_gpu_Resized_YUV[j].create(camInfos[i].height / 2, camInfos[i].width / 2, CV_8U);
+			
+			for (size_t j = 0; j < this->bufferSize; j++)
+			{
+
+				std::vector<void*> _gpu_decoded_YUVdata(3), _gpu_toEncode_YUVdata(3);
+				std::vector<uint32_t> steps(3), steps_toencode(3);
+				int ratioInd = static_cast<int>(this->bufferImgs[j][i].ratio);
+				cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
+					static_cast<cam::GenCamImgRatio>(ratioInd));
+				coder[ratioInd].decode(
+					reinterpret_cast<uchar*>(this->bufferImgs[j][i].data),
+					this->bufferImgs[j][i].length,
+					_gpu_decoded_YUVdata,
+					steps);
+				cv::cuda::GpuMat Y(size.height, size.width, CV_8U, reinterpret_cast<uchar*>(_gpu_decoded_YUVdata[0]), steps[0]);
+				cv::cuda::GpuMat U(size.height / 2, size.width / 2, CV_8U, reinterpret_cast<uchar*>(_gpu_decoded_YUVdata[1]), steps[1]);
+				cv::cuda::GpuMat V(size.height / 2, size.width / 2, CV_8U, reinterpret_cast<uchar*>(_gpu_decoded_YUVdata[2]), steps[2]);
+				cv::cuda::resize(Y, _gpu_Resized_YUV[0], _gpu_Resized_YUV[0].size(), cv::INTER_LINEAR);
+				cv::cuda::resize(U, _gpu_Resized_YUV[1], _gpu_Resized_YUV[1].size(), cv::INTER_LINEAR);
+				cv::cuda::resize(V, _gpu_Resized_YUV[2], _gpu_Resized_YUV[2].size(), cv::INTER_LINEAR);
+				for (int k = 0; k < 3; k++)
+				{
+					_gpu_toEncode_YUVdata[k] = _gpu_Resized_YUV[k].data;
+					steps_toencode[k] = _gpu_Resized_YUV[k].step;
+				}
+				skencoder.encode(_gpu_toEncode_YUVdata, steps_toencode);
+			}
+			skencoder.endEncode();
+			// release npp jpeg coder
+			for (size_t k = 0; k < 4; k++) 
+			{
+				coder[k].release();
 			}
 		}
 		return 0;

@@ -363,6 +363,17 @@ namespace npp {
 		*/
 		int decode(unsigned char* jpegdata, size_t input_datalength,
 			cv::cuda::GpuMat & outimg, int type = 1);
+
+		/**
+		@brief decode jpeg image to YUV420 data
+		@param unsigned char* jpegdata: input jpeg data
+		@param size_t input_datalength: input jpeg data length
+		@param std::vector<void *> &_gpu_YUV420data: output Y,U,V data vector (gpu pointer)
+		@param std::vector<uint32_t> &steps: output Y,U,V data step (on gpu)
+		@return int
+		*/
+		int decode(unsigned char* jpegdata, size_t input_datalength,
+			std::vector<void *> &_gpu_YUV420data, std::vector<uint32_t> &steps);
 	};
 
 };

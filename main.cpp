@@ -72,9 +72,9 @@ int preview(int argc, char* argv[]) {
 int record(int argc, char* argv[]) {
 	std::vector<std::vector<cam::GenCamInfo>> A_camInfos;
 	std::vector<std::shared_ptr<cam::GenCamera>> A_cameraPtr;
-	bool wait = false;
+	bool wait = false, video = false;
 	int port = 0;
-	int frameNum = 200;
+	int frameNum = 500;
 	LxSoc lxsoc;
 	if (argc == 1)
 	{
@@ -105,8 +105,26 @@ int record(int argc, char* argv[]) {
 				i += 2;
 				lxsoc.init(port);
 			}
+			else if (t == "video" || t == "v")
+			{
+				video = true;
+			}
 		}
 	}
+
+	//output
+	{
+		cam::SysUtil::infoOutput(video ? ("Video Save Mode ON") : ("Images Save Mode ON"));
+#ifndef WIN32
+		if(wait)
+			cam::SysUtil::infoOutput(cv::format("Wait Mode ON, will wait on port %d", port));
+#endif
+		for (int i = 0; i < A_cameraPtr.size(); i++)
+		{
+			cam::SysUtil::infoOutput("Will add camera type = " + A_cameraPtr[i]->getCamModelString());
+		}
+	}
+
 	for (int i = 0; i < A_cameraPtr.size(); i++)
 	{
 		std::vector<cam::GenCamImgRatio> imgRatios;
@@ -176,7 +194,10 @@ int record(int argc, char* argv[]) {
 		std::vector<cam::GenCamInfo> camInfos = A_camInfos[i];
 		std::shared_ptr<cam::GenCamera> cameraPtr = A_cameraPtr[i];
 		cameraPtr->waitForRecordFinish();
-		cameraPtr->saveImages(timeStr);
+		if(!video)
+			cameraPtr->saveImages(timeStr);
+		else
+			cameraPtr->saveVideosGpu(timeStr);
 		for (int i = 0; i < camInfos.size(); i++) {
 			printf("%d:%s\n", i, camInfos[i].sn.c_str());
 			printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
