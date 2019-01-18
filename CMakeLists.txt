@@ -147,6 +147,36 @@ if ( NOT WIN32 )
     
 endif()
 
+# NvEncoder
+set(MY_HEADER_FILES
+    ${MY_HEADER_FILES}
+	SKEncoder/NvEncoder/NvEncoder/nvEncodeAPI.h
+    SKEncoder/NvEncoder/NvEncoder/NvEncoder.h
+    SKEncoder/NvEncoder/NvEncoder/NvEncoderCuda.h
+    SKEncoder/NvEncoder/Utils/Logger.h
+    SKEncoder/NvEncoder/Utils/NvEncoderCLIOptions.h
+    SKEncoder/NvEncoder/Utils/NvCodecUtils.h
+    SKEncoder/SKEncoder.h
+    SKEncoder/SKCommon.hpp
+)
+set(MY_SOURCE_FILES 
+    ${MY_SOURCE_FILES}
+	SKEncoder/NvEncoder/NvEncoder/NvEncoder.cpp
+    SKEncoder/NvEncoder/NvEncoder/NvEncoderCuda.cpp
+    SKEncoder/SKEncoder.cpp
+	)
+include_directories(
+    ${PROJECT_SOURCE_DIR}/SKEncoder
+    ${PROJECT_SOURCE_DIR}/SKEncoder/NvEncoder
+)
+if( WIN32 )
+    set(NVCUVID_LIB ${PROJECT_SOURCE_DIR}/SKEncoder/lib/x64/nvcuvid.lib)
+else()
+    set(NVCUVID_LIB 
+    ${PROJECT_SOURCE_DIR}/SKEncoder/lib/linux/stubs/x86_64/libnvcuvid.so
+    ${PROJECT_SOURCE_DIR}/SKEncoder/lib/linux/stubs/x86_64/libnvidia-encode.so)
+endif()
+
 
 set(MY_HEADER_FILES
     ${MY_HEADER_FILES}
@@ -246,7 +276,9 @@ if(NOT WIN32)
 endif()
 
 target_link_libraries(${name}
+	cuda
     ${OpenCV_LIBS}
+	${NVCUVID_LIB}
     ${CUDA_LIBRARY} 	
 	${CUDA_npp_LIBRARY} 
 	${CUDA_nppc_LIBRARY} 

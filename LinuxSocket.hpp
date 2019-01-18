@@ -58,13 +58,13 @@ public:
 		if (strcmp(buffer, command.c_str()) == 0) {
 			printf("Here is the message: %s\n", buffer);
 			ret = 1;
+			close(newsockfd);
+			close(sockfd);
 		}
 		else {
 			printf("Wrong command ! Here is the message: %s\n", buffer);
 			ret = -1;
 		}
-		close(newsockfd);
-		close(sockfd);
 		return ret;
 	}
 private:
