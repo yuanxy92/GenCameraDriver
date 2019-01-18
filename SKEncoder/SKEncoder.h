@@ -24,8 +24,18 @@
 #endif
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <cuda_runtime_api.h>
+
+
+/* definition to expand macro then apply to pragma message */
+#define VALUE_TO_STRING(x) #x
+#define VALUE(x) VALUE_TO_STRING(x)
+#define VAR_NAME_VALUE(var) #var "="  VALUE(var)
+#pragma message(VAR_NAME_VALUE(CUDART_VERSION))
+#if CUDART_VERSION < 10000
 #include <dynlink_nvcuvid.h>
 #include <dynlink_cuviddec.h>
+#endif
 #include <device_launch_parameters.h>
 
 #include "NvEncoder/NvEncoderCuda.h"
