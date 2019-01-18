@@ -156,6 +156,7 @@ set(MY_HEADER_FILES
     NPPJpegCoder.h
     GenCameraDriver.h
     RealCameraDriver.h
+    LinuxSocket.hpp
     # point grey camera
     PointGrey/PointGreyCamera.h
     # XIMEA camera

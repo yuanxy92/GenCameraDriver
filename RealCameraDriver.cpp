@@ -98,6 +98,11 @@ namespace cam {
 	@param int camInd: index of camera
 	*/
 	void RealCamera::capture_thread_JPEG_(int camInd) {
+		while (this->isStartRecord == false) {
+			SysUtil::sleep(2);
+		}
+
+
 		clock_t begin_time, end_time;
 		clock_t stat_last_time = SysUtil::getCurrentTimeMicroSecond();
 		int stat_frame_count = 0;

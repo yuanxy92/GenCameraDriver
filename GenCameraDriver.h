@@ -401,13 +401,11 @@ namespace cam {
 		std::vector<size_t> mappingVector;
 
 		// ratio set for each img
-		// considering that we may not have the ability to change the ratio very fast,
-		// we may need another vector to save the last setting in RealCameraDriver
-		// �� TODO (SHADOWK)
 		std::vector<GenCamImgRatio> imgRatios;
 
 	public:
-
+		// variable used to start capturing thread
+		int isStartRecord;
 	protected:
 
 	public:
