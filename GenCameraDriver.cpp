@@ -153,7 +153,21 @@ namespace cam {
 	int GenCamera::saveVideos(std::string dir) {
 		if (this->bufferType == GenCamBufferType::JPEG) {
 			SysUtil::mkdir(dir);
-			for (size_t i = 0; i < this->cameraNum; i++) {
+			for (size_t i = 0; i < this->cameraNum; i++) 
+			{
+				if (camInfos[i].sn.substr(0, 4) == "RAW_")
+				{
+					std::string sub_dir = dir + cv::format("./%s/", camInfos[i].sn.c_str());
+					SysUtil::mkdir(sub_dir);
+					cv::Mat img(camInfos[i].height, camInfos[i].width, CV_16UC1);
+					for (size_t j = 0; j < this->bufferSize; j++) {
+						char outname[256];
+						img.data = reinterpret_cast<uchar*>(this->bufferImgs[j][i].data);
+						sprintf(outname, "%s/%s_%02d_%05d.png", sub_dir.c_str(), camInfos[i].sn.c_str(), i, j);
+						cv::imwrite(outname, img);
+					}
+					continue;
+				}
 				// init npp jpeg coder
 				std::vector<npp::NPPJpegCoder> coder(4);
 				for (size_t k = 0; k < 4; k++) {
@@ -226,6 +240,20 @@ namespace cam {
 		SysUtil::mkdir(dir);
 		for (size_t i = 0; i < this->cameraNum; i++) 
 		{
+			if (camInfos[i].sn.substr(0, 4) == "RAW_")
+			{
+				std::string sub_dir = dir + cv::format("./%s/", camInfos[i].sn.c_str());
+				SysUtil::mkdir(sub_dir);
+				cv::Mat img(camInfos[i].height, camInfos[i].width, CV_16UC1);
+				for (size_t j = 0; j < this->bufferSize; j++) {
+					char outname[256];
+					img.data = reinterpret_cast<uchar*>(this->bufferImgs[j][i].data);
+					sprintf(outname, "%s/%s_%02d_%05d.png", sub_dir.c_str(), camInfos[i].sn.c_str(), i, j);
+					cv::imwrite(outname, img);
+				}
+				continue;
+			}
+
 			// init npp jpeg coder
 			std::vector<npp::NPPJpegCoder> coder(4);
 			for (size_t k = 0; k < 4; k++) 
