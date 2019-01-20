@@ -81,17 +81,19 @@ set(CUDA_NVCC_FLAGS
 	-gencode=arch=compute_61,code=\"sm_61,compute_61\"
     )
 
+# message($ENV{HOME})
+
 # pointgrey camera sdk
 if ( WIN32 )
     set(PTGREY_SDK_INCLUDE_DIR "C:/Program Files/Point Grey Research/Spinnaker/include")
 	set(PTGREY_SDK_LIBRARY_DEBUG debug "C:/Program Files/Point Grey Research/Spinnaker/lib64/vs2015/Spinnakerd_v140.lib")
 	set(PTGREY_SDK_LIBRARY_RELEASE  optimized "C:/Program Files/Point Grey Research/Spinnaker/lib64/vs2015/Spinnaker_v140.lib")
 else()
-    set(PTGREY_SDK_INCLUDE_DIR "/home/z/zhu-ty/spinnaker/include")
+    set(PTGREY_SDK_INCLUDE_DIR $ENV{HOME}"/zhu-ty/spinnaker/include")
     set(PTGREY_SDK_INCLUDE_DIR ${PTGREY_SDK_INCLUDE_DIR} "/usr/include/spinnaker/")
-    if(EXISTS "/home/z/zhu-ty/spinnaker/lib/libSpinnaker.so")
-        set(PTGREY_SDK_LIBRARY_DEBUG debug "/home/z/zhu-ty/spinnaker/lib/libSpinnaker.so")
-        set(PTGREY_SDK_LIBRARY_RELEASE optimized "/home/z/zhu-ty/spinnaker/lib/libSpinnaker.so")
+    if(EXISTS $ENV{HOME}"/zhu-ty/spinnaker/lib/libSpinnaker.so")
+        set(PTGREY_SDK_LIBRARY_DEBUG debug $ENV{HOME}"/zhu-ty/spinnaker/lib/libSpinnaker.so")
+        set(PTGREY_SDK_LIBRARY_RELEASE optimized $ENV{HOME}"/zhu-ty/spinnaker/lib/libSpinnaker.so")
     else()
     set(PTGREY_SDK_LIBRARY_DEBUG debug "libSpinnaker.so")
     set(PTGREY_SDK_LIBRARY_RELEASE optimized "libSpinnaker.so")
