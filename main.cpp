@@ -76,41 +76,49 @@ int record(int argc, char* argv[]) {
 	int port = 0;
 	int frameNum = 500;
 	LxSoc lxsoc;
-	if (argc == 1)
+
+	for (int i = 1; i < argc; i++)
 	{
-		A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::XIMEA_xiC));
-	}
-	else
-	{
-		for (int i = 1; i < argc; i++)
+		std::string t = std::string(argv[i]);
+		if (t == "XIMEA" || t == "x")
+			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::XIMEA_xiC));
+		else if (t == "PTGREY" || t == "PointGrey" || t == "p")
+			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::PointGrey_u3));
+		else if (t == "Stereo" || t == "STEREO" || t == "s")
+			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::Stereo));
+		else if (t == "File" || t == "FILE" || t == "f")
+			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::File));
+		else if (t == "frame")//format : frame [frameNum = %d]
 		{
-			std::string t = std::string(argv[i]);
-			if (t == "XIMEA" || t == "x")
-				A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::XIMEA_xiC));
-			else if (t == "PTGREY" || t == "PointGrey" || t == "p")
-				A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::PointGrey_u3));
-			else if (t == "Stereo" || t == "STEREO" || t == "s")
-				A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::Stereo));
-			else if (t == "wait")
+			if (i + 1 >= argc)
 			{
-				//format : wait [port = %d] [frameNum = %d]
-				wait = true;
-				if (i + 2 >= argc)
-				{
-					cam::SysUtil::errorOutput("when use wait mode, please specify port & frameNum\nSample: ./GenCameraDriver XIMEA wait 22336 200");
-					return -1;
-				}
-				port = atoi(argv[i + 1]);
-				frameNum = atoi(argv[i + 2]);
-				i += 2;
-				lxsoc.init(port);
+				cam::SysUtil::errorOutput("when specify frame count, please specify num\nSample: ./GenCameraDriver XIMEA frame 200");
+				return -1;
 			}
-			else if (t == "video" || t == "v")
+			frameNum = atoi(argv[i + 1]);
+			i += 1;
+		}
+		else if (t == "wait")//format : wait [port = %d] 
+		{
+			
+			wait = true;
+			if (i + 1 >= argc)
 			{
-				video = true;
+				cam::SysUtil::errorOutput("when use wait mode, please specify port\nSample: ./GenCameraDriver XIMEA wait 22336");
+				return -1;
 			}
+			port = atoi(argv[i + 1]);
+			i += 1;
+			lxsoc.init(port);
+		}
+		else if (t == "video" || t == "v")
+		{
+			video = true;
 		}
 	}
+
+	if(A_cameraPtr.size() == 0)
+		A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::XIMEA_xiC));
 
 	//output
 	{
