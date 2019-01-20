@@ -242,7 +242,7 @@ namespace cam {
 		{
 			if (camInfos[i].sn.substr(0, 4) == "RAW_")
 			{
-				std::string sub_dir = dir + cv::format("./%s/", camInfos[i].sn.c_str());
+				std::string sub_dir = dir + cv::format("/%s/", camInfos[i].sn.c_str());
 				SysUtil::mkdir(sub_dir);
 				cv::Mat img(camInfos[i].height, camInfos[i].width, CV_16UC1);
 				for (size_t j = 0; j < this->bufferSize; j++) {
