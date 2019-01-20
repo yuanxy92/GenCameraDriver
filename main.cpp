@@ -80,14 +80,34 @@ int record(int argc, char* argv[]) {
 	for (int i = 1; i < argc; i++)
 	{
 		std::string t = std::string(argv[i]);
-		if (t == "XIMEA" || t == "x")
+		if (t == "help" || t == "h")
+		{
+			std::cout <<
+				"Help:\n" <<
+				"Usage: ./GenCameraDriver [CameraType]([XIMEA],[PTGREY],[STEREO],[FILE [DIR]]) [frame [FrameCount]] [wait [WaitPort]] [video]\n" <<
+				"Sample1: \n(use ximea & file(video dir = \"./mp4s/\") camera type, save 200 frames, wait on sync signal on port 12344, save jpeg format)\n" <<
+				"./GenCameraDriver XIMEA FILE ./mp4s/ frame 200 wait 12344\n" <<
+				"Sample2: \n(use ptgrey camera type only, (save 500 frames(default)), save video format)\n" <<
+				"./GenCameraDriver PTGREY video\n" <<
+				std::endl;
+			return 0;
+		}
+		else if (t == "XIMEA" || t == "x")
 			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::XIMEA_xiC));
 		else if (t == "PTGREY" || t == "PointGrey" || t == "p")
 			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::PointGrey_u3));
 		else if (t == "Stereo" || t == "STEREO" || t == "s")
 			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::Stereo));
 		else if (t == "File" || t == "FILE" || t == "f")
-			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::File));
+		{
+			if (i + 1 >= argc)
+			{
+				cam::SysUtil::errorOutput("when use file camera, please specify dir\nSample: ./GenCameraDriver File ./mp4s/");
+				return -1;
+			}
+			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::File, argv[i + 1]));
+			i += 1;
+		}
 		else if (t == "frame")//format : frame [frameNum = %d]
 		{
 			if (i + 1 >= argc)
@@ -123,6 +143,7 @@ int record(int argc, char* argv[]) {
 	//output
 	{
 		cam::SysUtil::infoOutput(video ? ("Video Save Mode ON") : ("Images Save Mode ON"));
+		cam::SysUtil::infoOutput(cv::format("Record Frame Count %d", frameNum));
 #ifndef WIN32
 		if(wait)
 			cam::SysUtil::infoOutput(cv::format("Wait Mode ON, will wait on port %d", port));
