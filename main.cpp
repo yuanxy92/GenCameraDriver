@@ -75,6 +75,7 @@ int record(int argc, char* argv[]) {
 	bool wait = false, video = false;
 	int port = 0;
 	int frameNum = 500;
+	int brightness = 40;
 	LxSoc lxsoc;
 
 	for (int i = 1; i < argc; i++)
@@ -84,11 +85,11 @@ int record(int argc, char* argv[]) {
 		{
 			std::cout <<
 				"Help:\n" <<
-				"Usage: ./GenCameraDriver [CameraType]([XIMEA],[PTGREY],[STEREO],[FILE [DIR]]) [frame [FrameCount]] [wait [WaitPort]] [video]\n" <<
-				"Sample1: \n(use ximea & file(video dir = \"./mp4s/\") camera type, save 200 frames, wait on sync signal on port 12344, save jpeg format)\n" <<
+				"Usage: ./GenCameraDriver [CameraType]([XIMEA],[PTGREY],[STEREO],[FILE [DIR]]) [frame [FrameCount]] [bright [BrightnessLevel]] [wait [WaitPort]] [video]\n" <<
+				"Sample1: \n(use ximea & file(video dir = \"./mp4s/\") camera type, save 200 frames, wait on sync signal on port 12344, save jpeg format, set brightness level at 40(default))\n" <<
 				"./GenCameraDriver XIMEA FILE ./mp4s/ frame 200 wait 12344\n" <<
-				"Sample2: \n(use ptgrey camera type only, (save 500 frames(default)), save video format)\n" <<
-				"./GenCameraDriver PTGREY video\n" <<
+				"Sample2: \n(use ptgrey camera type only, (save 500 frames(default)), save video format, set brightness level at 25)\n" <<
+				"./GenCameraDriver PTGREY video bright 25\n" <<
 				std::endl;
 			return 0;
 		}
@@ -106,6 +107,16 @@ int record(int argc, char* argv[]) {
 				return -1;
 			}
 			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::File, argv[i + 1]));
+			i += 1;
+		}
+		else if (t == "bright")//format : bright [brightLevel = %d]
+		{
+			if (i + 1 >= argc)
+			{
+				cam::SysUtil::errorOutput("when specify brightness, please specify level\nSample: ./GenCameraDriver XIMEA bright 50");
+				return -1;
+			}
+			brightness = atoi(argv[i + 1]);
 			i += 1;
 		}
 		else if (t == "frame")//format : frame [frameNum = %d]
@@ -135,6 +146,10 @@ int record(int argc, char* argv[]) {
 		{
 			video = true;
 		}
+		else
+		{
+			cam::SysUtil::warningOutput("can't recognize argv = " + t);
+		}
 	}
 
 	if(A_cameraPtr.size() == 0)
@@ -143,7 +158,8 @@ int record(int argc, char* argv[]) {
 	//output
 	{
 		cam::SysUtil::infoOutput(video ? ("Video Save Mode ON") : ("Images Save Mode ON"));
-		cam::SysUtil::infoOutput(cv::format("Record Frame Count %d", frameNum));
+		cam::SysUtil::infoOutput(cv::format("Record Frame Count = %d", frameNum));
+		cam::SysUtil::infoOutput(cv::format("Brightness Autolevel = %d", brightness));
 #ifndef WIN32
 		if(wait)
 			cam::SysUtil::infoOutput(cv::format("Wait Mode ON, will wait on port %d", port));
@@ -166,10 +182,10 @@ int record(int argc, char* argv[]) {
 		cameraPtr->startCapture();
 		//cameraPtr->setFPS(-1, 10);
 		cameraPtr->setAutoExposure(-1, cam::Status::on);
-		cameraPtr->setAutoExposureLevel(-1, 30);
+		cameraPtr->setAutoExposureLevel(-1, brightness);
 		//cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
 		//cameraPtr->setAutoWhiteBalance(-1);
-		cameraPtr->setWhiteBalance(-1, 2.0, 1.0, 2.0);
+		cameraPtr->setWhiteBalance(-1, 1.8, 1.0, 2.1);
 		cameraPtr->makeSetEffective();
 		// set capturing setting
 		cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
