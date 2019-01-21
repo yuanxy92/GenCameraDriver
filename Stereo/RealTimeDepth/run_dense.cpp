@@ -10,6 +10,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <iostream>
+#include <string>
 #include <sys/time.h>
 #include <fstream>
 #include "depthmap.h"    
@@ -94,8 +95,8 @@ int main(int argc, char** argv)
 			break;
 		
 		//cv::resize(frame,frame_,cv::Size(),.5,.5);
-		cv::resize(frame, frame, cv::Size(), .25, .25);
-		cv::resize(frame2,frame2,cv::Size(), .25, .25);
+		//cv::resize(frame, frame, cv::Size(), .25, .25);
+		//cv::resize(frame2,frame2,cv::Size(), .25, .25);
 		
 		//d_frame.upload(frame_);
 		d_frame.upload(frame);
@@ -105,15 +106,21 @@ int main(int argc, char** argv)
 		mog->getBackgroundImage(d_bgimg);
 		gauss->apply(d_fgmask, d_fgmask);
 		d_fgmask.download(fgmask);
+		imshow("fgmask",fgmask);
 		d_bgimg.download(bg);//get the background
 		elem.init_frame(bg);//rotate the background
 		//cv::resize(fgmask,fgmask,cv::Size(),.5,.5);
 		//cv:resize(bg,bg,cv::Size(),.5,.5);
 		result = elem.Find_location(fgmask,frame,frame2);//get vector<Rect> and mask
-		
+		imwrite("./frame1/frame1_" + std::to_string(count) + ".png",frame);
+		imwrite("./frame2/frame2_" + std::to_string(count) + ".png",frame2);
+	
 		depth_map = dep.get_depth(frame,frame2);
-
+		char buffer1[80];
+		sprintf(buffer1,"./origin_dep/dep_%d.pfm",count);
+		dep.SavePFMFile(depth_map,buffer1);
 		//refine the mask
+		
 		diff_mask = elem.refine_mask(bg,frame,fgmask);
 		depth_mask = dep.update_depth_robust(depth_map,diff_mask);
 		dep.refine_depth(depth_mask,diff_mask,result,frame,frame2);//refine the depth and mask,abs here
@@ -126,6 +133,10 @@ int main(int argc, char** argv)
 		result.clear();
 		count = count + 1;
 		
+		imwrite("./mask/mask_"+std::to_string(count)+".png",diff_mask);
+		char buffer[80];
+		sprintf(buffer,"./depth/dep_%d.pfm",count);
+		dep.SavePFMFile(depth_mask,buffer);
 		int key = waitKey(10);
 		if (key == 27)
 			break;
