@@ -127,7 +127,7 @@ Rect GhostElemer::Rect_Join(Rect r1, Rect r2)
 	
 	return join1;
 }
-vector<Rect> GhostElemer::Find_location(Mat& img,Mat &frame,Mat &frame2)
+void GhostElemer::Find_location(Mat& img,Mat &frame,Mat &frame2)
 {
 	if(img.cols>img.rows)
 	{
@@ -188,9 +188,8 @@ vector<Rect> GhostElemer::Find_location(Mat& img,Mat &frame,Mat &frame2)
 		}
 		cv::rectangle(img,res_c[j],Scalar(255,255,255),-1);
 	}
-	//imshow("mask",img);
-	//waitKey(1000);
-	return res_c;
+	
+	//return res_c;
 }
 cv::Mat GhostElemer::refine_mask(cv::Mat frame_init,cv::Mat frame,cv::Mat mask)
 {
@@ -211,7 +210,7 @@ cv::Mat GhostElemer::refine_mask(cv::Mat frame_init,cv::Mat frame,cv::Mat mask)
 	cv::erode(diff,diff,element);
 	//imshow("diff",diff);
 	//waitKey(500);
-	return diff;	
+	return diff;
 	
 }
 

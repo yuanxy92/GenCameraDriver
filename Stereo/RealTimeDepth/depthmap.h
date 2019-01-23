@@ -49,7 +49,7 @@ public:
     @param cv::Mat& frame2 image right
 	@return refined mask_depth
 	*/
-    void refine_depth(cv::Mat& mask_depth,cv::Mat& mask,std::vector<cv::Rect> result,cv::Mat& frame,cv::Mat& frame2);
+    void refine_depth(cv::Mat& mask_depth,cv::Mat& mask,cv::Mat& frame,cv::Mat& frame2);
     cv::Mat rotate_(cv::Mat m);
     cv::Mat rotate_back(cv::Mat m);
 private:

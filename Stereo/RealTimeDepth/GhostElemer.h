@@ -26,7 +26,7 @@ public:
     @param cv::Mat&img foreground image
     @return std::vector<cv::Rect> vector of the result rect, also the rectangle mask is getted (img)
     */
-    std::vector<cv::Rect> Find_location(cv::Mat& img,cv::Mat& frame,cv::Mat& frame2);
+    void Find_location(cv::Mat& img,cv::Mat& frame,cv::Mat& frame2);
     std::vector<cv::Mat> Mat_res(std::vector<cv::Rect> res_c,cv::Mat frame,cv::Mat frame2);
     /**
     @brief refine the mask, instead of rectangle, is the shape of the target

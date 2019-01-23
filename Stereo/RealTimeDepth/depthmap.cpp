@@ -304,7 +304,7 @@ int depthmap::pattern_match(int x_forward,int flag,Mat temp,Mat temp_area)
 
     // imshow("temp",temp);
     // imshow("result",temp_area);
-    // waitKey(500);
+    // waitKey(200);
 
     if(flag > 0)
         disp_stand = x_forward - minLoc.x;
@@ -312,8 +312,23 @@ int depthmap::pattern_match(int x_forward,int flag,Mat temp,Mat temp_area)
         disp_stand = minLoc.x; 
     return disp_stand;
 }
-void depthmap::refine_depth(Mat& mask_depth,Mat& mask,vector<Rect> result,Mat& frame,Mat& frame2)
+void depthmap::refine_depth(Mat& mask_depth,Mat& mask,Mat& frame,Mat& frame2)
 {
+    
+    
+    vector<Rect> result;
+	vector<vector<Point> > contours;
+	cv::findContours(mask, contours, RETR_EXTERNAL, CHAIN_APPROX_NONE);
+	vector<Rect> boundRect(contours.size());
+	for (size_t i = 0; i < contours.size(); i++)
+	{
+		boundRect[i] = cv::boundingRect(contours[i]);
+        //boundRect[i] = Large_res(cv::boundingRect(contours[i]));//1.2
+		if (boundRect[i].area() > 200)
+		{
+			result.push_back(boundRect[i]);
+		}
+	}
     int flag = 0;
     double min;double max;
     minMaxLoc(mask_depth,&min,&max);
@@ -349,12 +364,12 @@ void depthmap::refine_depth(Mat& mask_depth,Mat& mask,vector<Rect> result,Mat& f
                 int x_forward = 1.2*(int)maxVal;///+
                 Rect match_rect;
                 match_rect.x = std::max(r.x - flag*x_forward,0);
-                match_rect.y = std::max(r.y - r.height/4,0);
+                match_rect.y = std::max(r.y - r.height/2,0);
                 match_rect.width = std::min(r.width + x_forward,frame.cols-1-match_rect.x);
                 // if(match_rect.x < 0 || (match_rect.x + match_rect.width)>frame.cols)
                 //     {//cout<<"ignore"<<endl;
                 //     continue;}//on the side, ignore it
-                match_rect.height = std::min(r.height + r.height/2,frame.rows-1-match_rect.y);
+                match_rect.height = std::min(r.height + r.height/1,frame.rows-1-match_rect.y);
                 Mat temp_area = frame2(match_rect);
                 int disp_stand = pattern_match(x_forward,flag,temp,temp_area);
                 //cout<<"disp standard"<<disp_stand<<endl;

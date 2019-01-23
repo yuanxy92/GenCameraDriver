@@ -57,12 +57,13 @@ int DepthMapUpdater::update(cv::Mat& masterMat, cv::Mat& slaveMat, cv::Mat& dept
 
 	_gauss->apply(_gpu_mask, _gpu_mask);
 	_gpu_mask.download(_mask);
-	std::vector<cv::Rect> result = _elem.Find_location(_mask, _m, _s);
+	//std::vector<cv::Rect> result = _elem.Find_location(_mask, _m, _s);
+	_elem.Find_location(_mask, _m, _s);
 	_depth = _dep.get_depth(_m, _s);
 	cv::Mat diff_mask = _elem.refine_mask(_updateBackground, _m, _mask);
 	depthWithMask = _dep.update_depth_robust(_depth, diff_mask);
 
-	_dep.refine_depth(depthWithMask, diff_mask, result, _m, _s);
+	_dep.refine_depth(depthWithMask, diff_mask, _m, _s);
 	_elem.res_out(diff_mask, depthWithMask);
 	_frameCount++;
     return 0;
@@ -91,12 +92,13 @@ int DepthMapUpdater::update(cv::cuda::GpuMat& masterMat, cv::cuda::GpuMat& slave
 
 	_gauss->apply(_gpu_mask, _gpu_mask);
 	_gpu_mask.download(_mask);
-	std::vector<cv::Rect> result = _elem.Find_location(_mask, _m, _s);
+	//std::vector<cv::Rect> result = _elem.Find_location(_mask, _m, _s);
+	_elem.Find_location(_mask, _m, _s);
 	_depth = _dep.get_depth(_m, _s);
 
 	cv::Mat diff_mask = _elem.refine_mask(_updateBackground, _m, _mask);
 	depthWithMask = _dep.update_depth_robust(_depth, diff_mask);
-	_dep.refine_depth(depthWithMask, diff_mask, result, _m, _s);
+	_dep.refine_depth(depthWithMask, diff_mask, _m, _s);
 	_elem.res_out(diff_mask, depthWithMask);
 #ifdef OUTPUT_MEDIAN_RESULT
 	//cv::imwrite(cv::format("test_mask_%d.jpg",_frameCount),_mask);
