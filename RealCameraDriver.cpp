@@ -242,10 +242,15 @@ namespace cam {
 					//brightness adjustment for lens here! (Only valid in JPEG)
 					if (camInd < this->brightness_cuda.size())
 					{
-						cv::cuda::GpuMat tmp, tmp2;
-						this->bufferImgs_cuda[camInd].convertTo(tmp, CV_32F);
-						cv::cuda::multiply(tmp, this->brightness_cuda[camInd], tmp2);
-						tmp2.convertTo(this->bufferImgs_cuda[camInd], CV_8U);
+						if (this->bufferImgs_cuda[camInd].size() == this->brightness_cuda[camInd].size())
+						{
+							cv::cuda::GpuMat tmp, tmp2;
+							this->bufferImgs_cuda[camInd].convertTo(tmp, CV_32F);
+							cv::cuda::multiply(tmp, this->brightness_cuda[camInd], tmp2);
+							tmp2.convertTo(this->bufferImgs_cuda[camInd], CV_8U);
+						}
+						else
+							SysUtil::warningOutput("image size does not match adjustment mat size, ignore.");
 					}
 						//this->bufferImgs_cuda[camInd] = this->bufferImgs_cuda[camInd].
 

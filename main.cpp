@@ -202,7 +202,7 @@ int record(int argc, char* argv[]) {
 			cv::cuda::GpuMat mul_cuda_(mul);
 			std::vector<cv::cuda::GpuMat> muls(camInfos.size(), mul_cuda_);
 			cameraPtr->setBrightnessAdjustment(muls);
-
+			cam::SysUtil::infoOutput("\nXIMEA camera & ./mul_mat.tiff has been found, will use this mat to deal with BrightnessAdjustment\nCheck main.cpp line "+ std::to_string(__LINE__) +std::string("\n"));
 		}
 		A_camInfos.push_back(camInfos);
 		cam::SysUtil::sleep(1000);
