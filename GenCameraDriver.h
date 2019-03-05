@@ -321,6 +321,14 @@ namespace cam {
 		Quarter = 2,
 		Octopus = 3 //one-eighth
 	};
+
+	/**
+	@brief camera sync type
+	*/
+	enum class GenCamSyncType {
+		Software = 0,
+		Hardware = 1
+	};
 	
 	/**
 	@brief class to save JPEG data
@@ -420,6 +428,12 @@ namespace cam {
 		@return int
 		*/
 		virtual int init() = 0;
+
+		/**
+		@brief set camera sync type
+		@return int
+		*/
+		virtual int setSyncType(GenCamSyncType type = GenCamSyncType::Software) = 0;
 
 		/**
 		@brief let cameras start capturing images

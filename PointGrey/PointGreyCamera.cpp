@@ -152,6 +152,15 @@ namespace cam {
 		return 0;
 	}
 
+	int GenCameraPTGREY::setSyncType(GenCamSyncType type)
+	{
+		if (type == GenCamSyncType::Software)
+			SysUtil::infoOutput("PointGrey cameras sync type set to SOFTWARE sync");
+		else
+			SysUtil::warningOutput("setSyncType (Hardware) function is not support for PointGrey camera.");
+		return 0;
+	}
+
 	/**
 	@brief get camera information
 	@param std::vector<GenCamInfo> & camInfos: output camera infos

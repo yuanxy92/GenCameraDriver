@@ -53,6 +53,12 @@ namespace cam {
 		int init() override;
 
 		/**
+		@brief set camera sync type
+		@return int
+		*/
+		int setSyncType(GenCamSyncType type) override;
+
+		/**
 		@brief start capture images
 		@return int
 		*/

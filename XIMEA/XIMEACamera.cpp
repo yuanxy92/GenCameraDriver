@@ -114,6 +114,35 @@ namespace cam {
 		return 0;
 	}
 
+	int GenCameraXIMEA::setSyncType(GenCamSyncType type)
+	{
+		if (type == GenCamSyncType::Software)
+		{
+			for (size_t i = 0; i < this->cameraNum; i++)
+			{
+				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_GPO_SELECTOR, 2));
+				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_GPO_MODE, XI_GPO_OFF));
+				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_GPI_SELECTOR, 2));
+				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_GPI_MODE, XI_GPI_OFF));
+				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_TRG_SOURCE, XI_TRG_OFF));
+			}
+			SysUtil::infoOutput("XIMEA cameras sync type set to SOFTWARE sync");
+		}
+		else
+		{
+			for (size_t i = 0; i < this->cameraNum; i++)
+			{
+				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_GPO_SELECTOR, 2));
+				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_GPO_MODE, XI_GPO_HIGH_IMPEDANCE));
+				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_GPI_SELECTOR, 2));
+				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_GPI_MODE, XI_GPI_TRIGGER));
+				checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_TRG_SOURCE, XI_TRG_EDGE_FALLING));
+			}
+			SysUtil::infoOutput("XIMEA camera sync type set to HARDWARE sync\nUse red(SIG)/blue(GND) & falling edge to trigger the camera.");
+		}
+		return 0;
+	}
+
 	/**
 	@brief start capture images
 	@return int

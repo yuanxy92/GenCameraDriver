@@ -68,6 +68,7 @@ namespace cam {
 		/*************************************************************/
 		/*          list of not used function in FileCamera          */
 		/*************************************************************/
+		int setSyncType(GenCamSyncType type) { return 0; }
 		int startCapture() { return 0; }
 		int stopCapture() { return 0; }
 		int setFPS(int camInd, float fps, 

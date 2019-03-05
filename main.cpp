@@ -72,7 +72,7 @@ int preview(int argc, char* argv[]) {
 int record(int argc, char* argv[]) {
 	std::vector<std::vector<cam::GenCamInfo>> A_camInfos;
 	std::vector<std::shared_ptr<cam::GenCamera>> A_cameraPtr;
-	bool wait = false, video = false;
+	bool wait = false, video = false, hard = false;
 	int port = 0;
 	int frameNum = 500;
 	int brightness = 40;
@@ -81,14 +81,14 @@ int record(int argc, char* argv[]) {
 	for (int i = 1; i < argc; i++)
 	{
 		std::string t = std::string(argv[i]);
-		if (t == "help" || t == "h")
+		if (t == "help")
 		{
 			std::cout <<
 				"Help:\n" <<
-				"Usage: ./GenCameraDriver [CameraType]([XIMEA],[PTGREY],[STEREO],[FILE [DIR]]) [frame [FrameCount]] [bright [BrightnessLevel]] [wait [WaitPort]] [video]\n" <<
-				"Sample1: \n(use ximea & file(video dir = \"./mp4s/\") camera type, save 200 frames, wait on sync signal on port 12344, save jpeg format, set brightness level at 40(default))\n" <<
-				"./GenCameraDriver XIMEA FILE ./mp4s/ frame 200 wait 12344\n" <<
-				"Sample2: \n(use ptgrey camera type only, (save 500 frames(default)), save video format, set brightness level at 25)\n" <<
+				"Usage: ./GenCameraDriver [CameraType]([XIMEA],[PTGREY],[STEREO],[FILE [DIR]]) [frame [FrameCount]] [bright [BrightnessLevel]] [wait [WaitPort]] [video] [hard]\n" <<
+				"Sample1: \n{use ximea & file(video dir = \"./mp4s/\") camera type, save 200 frames, wait on sync signal on port 12344, save jpeg format, set brightness level at 40(default), use hardware sync}\n" <<
+				"./GenCameraDriver XIMEA FILE ./mp4s/ frame 200 wait 12344 hard\n" <<
+				"Sample2: \n{(use ptgrey camera type only, (save 500 frames(default)), save video format, set brightness level at 25)}\n" <<
 				"./GenCameraDriver PTGREY video bright 25\n" <<
 				std::endl;
 			return 0;
@@ -146,6 +146,10 @@ int record(int argc, char* argv[]) {
 		{
 			video = true;
 		}
+		else if (t == "hard")
+		{
+			hard = true;
+		}
 		else
 		{
 			cam::SysUtil::warningOutput("can't recognize argv = " + t);
@@ -158,6 +162,7 @@ int record(int argc, char* argv[]) {
 	//output
 	{
 		cam::SysUtil::infoOutput(video ? ("Video Save Mode ON") : ("Images Save Mode ON"));
+		cam::SysUtil::infoOutput(hard ? ("Hardware Sync Mode ON") : ("Hardware Sync Mode OFF"));
 		cam::SysUtil::infoOutput(cv::format("Record Frame Count = %d", frameNum));
 		cam::SysUtil::infoOutput(cv::format("Brightness Autolevel = %d", brightness));
 #ifndef WIN32
@@ -177,7 +182,8 @@ int record(int argc, char* argv[]) {
 		std::shared_ptr<cam::GenCamera> cameraPtr = A_cameraPtr[i];
 		cameraPtr->init();
 		// set camera setting
-
+		if(hard == true)
+			cameraPtr->setSyncType(cam::GenCamSyncType::Hardware);
 		cameraPtr->setFPS(-1, 10);
 		cameraPtr->startCapture();
 		//cameraPtr->setFPS(-1, 10);

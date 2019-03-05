@@ -253,6 +253,15 @@ namespace cam {
 		return 0;
 	}
 
+	int GenCameraStereo::setSyncType(GenCamSyncType type)
+	{
+		if (type == GenCamSyncType::Software)
+			SysUtil::infoOutput("Stereo cameras sync type set to SOFTWARE sync");
+		else
+			SysUtil::warningOutput("setSyncType (Hardware) function is not support for Stereo camera.");
+		return 0;
+	}
+
 	int GenCameraStereo::startCapture() {
 		this->sub_cameraPtr->startCapture();
 		this->sub_cameraPtr->startCaptureThreads();

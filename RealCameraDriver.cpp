@@ -198,6 +198,7 @@ namespace cam {
 		int stat_frame_count = 0;
 		cv::cuda::Stream stream;
 		bool hasFrame;
+		std::vector<bool> mul_mat_waring_flag(this->cameraNum, true);
 		for (;;) {
 			hasFrame = false;
 			// check if threads are need to exit
@@ -249,8 +250,11 @@ namespace cam {
 							cv::cuda::multiply(tmp, this->brightness_cuda[camInd], tmp2);
 							tmp2.convertTo(this->bufferImgs_cuda[camInd], CV_8U);
 						}
-						else
+						else if (mul_mat_waring_flag[camInd])
+						{
 							SysUtil::warningOutput("image size does not match adjustment mat size, ignore.");
+							mul_mat_waring_flag[camInd] = false;
+						}
 					}
 						//this->bufferImgs_cuda[camInd] = this->bufferImgs_cuda[camInd].
 

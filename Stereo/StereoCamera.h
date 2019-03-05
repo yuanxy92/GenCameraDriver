@@ -163,6 +163,12 @@ namespace cam {
 		int init() override;
 
 		/**
+		@brief set camera sync type
+		@return int
+		*/
+		int setSyncType(GenCamSyncType type) override;
+
+		/**
 		@brief get camera information
 		@param std::vector<GenCamInfo> & camInfos: output camera infos
 		@return int
