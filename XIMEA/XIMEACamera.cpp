@@ -400,7 +400,7 @@ namespace cam {
 	int GenCameraXIMEA::setAutoExposureCompensation(int camInd,
 		Status status, float relativeEV) {
 		SysUtil::warningOutput("setAutoExposureCompensation function is not "\
-			" support for PointGrey camera. \n"\
+			" support for XIMEA camera. \n"\
 			"Please use setAutoExposureLevel instead !");
 		return 0;
 	}

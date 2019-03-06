@@ -186,12 +186,12 @@ int record(int argc, char* argv[]) {
 			cameraPtr->setSyncType(cam::GenCamSyncType::Hardware);
 		cameraPtr->setFPS(-1, 10);
 		cameraPtr->startCapture();
-		//cameraPtr->setFPS(-1, 10);
+		//cameraPtr->setExposure(-1, 20000);
 		cameraPtr->setAutoExposure(-1, cam::Status::on);
 		cameraPtr->setAutoExposureLevel(-1, brightness);
-		//cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
+		cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
 		//cameraPtr->setAutoWhiteBalance(-1);
-		cameraPtr->setWhiteBalance(-1, 1.8, 1.0, 2.1);
+		cameraPtr->setWhiteBalance(-1, 1.8, 1.0, 2.1); //only valid for ptgrey (ximea only work in rgb mode, but we use raw)
 		cameraPtr->makeSetEffective();
 		// set capturing setting
 		cameraPtr->setCamBufferType(cam::GenCamBufferType::JPEG);
