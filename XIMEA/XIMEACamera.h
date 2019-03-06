@@ -35,6 +35,7 @@ namespace cam {
 	private:
 		std::vector<HANDLE> hcams;
 		std::vector<XI_IMG> xiImages;
+		int internalBufferSize;
 	public:
 
 	private:

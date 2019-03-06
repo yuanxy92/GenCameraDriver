@@ -20,7 +20,7 @@ namespace cam {
 		}
 	}
 
-	GenCameraXIMEA::GenCameraXIMEA() {
+	GenCameraXIMEA::GenCameraXIMEA() : internalBufferSize(3) {
 		this->camModel = CameraModel::XIMEA_xiC;
 	}
 	GenCameraXIMEA::~GenCameraXIMEA() {}
@@ -83,7 +83,13 @@ namespace cam {
 		}
 		// set camera inside buffers to 1 (can get the newest image)
 		for (size_t i = 0; i < this->cameraNum; i++) {
-			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_BUFFERS_QUEUE_SIZE, 3));
+			int width, height;
+			// get camera 
+			checkXIMEAErrors(xiGetParamInt(hcams[i], XI_PRM_WIDTH, &width));
+			checkXIMEAErrors(xiGetParamInt(hcams[i], XI_PRM_HEIGHT, &height));
+			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_ACQ_BUFFER_SIZE_UNIT, 1));
+			checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_ACQ_BUFFER_SIZE, width * height * internalBufferSize));
+			//checkXIMEAErrors(xiSetParamInt(hcams[i], XI_PRM_BUFFERS_QUEUE_SIZE, internalBufferSize));
 		}
 		// enable lut
 		for (size_t i = 0; i < this->cameraNum; i++) {
