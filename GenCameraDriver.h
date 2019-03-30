@@ -34,7 +34,9 @@
 #define DELTA_EPOCH_IN_MICROSECS 11644473600000000ULL
 #endif
 #else
-#include<sys/time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/time.h>
 #endif
 
 namespace cam {
@@ -70,9 +72,11 @@ namespace cam {
 #ifdef WIN32
 			_mkdir(dir);
 #else
-			char command[256];
-			sprintf(command, "mkdir %s", dir);
-			system(command);
+			// char command[256] = {0};
+			// sprintf(command, "mkdir -pv %s", dir);
+			// printf("PRINTF:: %s\n", command);
+			infoOutput("Makring dir :" + std::string(dir));
+			printf("MKDIR RETURN:: %d\n",::mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH));
 #endif
 			return 0;
 		}

@@ -238,6 +238,8 @@ namespace cam {
 			return -1;
 		}
 		SysUtil::mkdir(dir);
+		//SysUtil::errorOutput(dir);
+		//getchar();
 		for (size_t i = 0; i < this->cameraNum; i++) 
 		{
 			if (camInfos[i].sn.substr(0, 4) == "RAW_")
