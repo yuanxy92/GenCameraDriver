@@ -84,9 +84,15 @@ namespace cam {
 				{
 					cv::Mat img(camInfos[i].height, camInfos[i].width, CV_16UC1);
 					for (size_t j = 0; j < this->bufferSize; j++) {
-						char outname[256];
+						char outname[1024];
 						img.data = reinterpret_cast<uchar*>(this->bufferImgs[j][i].data);
-						sprintf(outname, "%s/%s_%02d_%05d.png", dir.c_str(), _camInfos[i].sn.c_str(), i, j);
+						for(int k = 0;k < 99999;k++)
+						{
+							sprintf(outname, "%s/%s_%02d_%05d.png", dir.c_str(), _camInfos[i].sn.c_str(), i, j + k);
+							if(!SysUtil::existFile(outname))
+								break;
+							SysUtil::warningOutput("File Exist! FileName = " + std::string(outname));
+						}
 						cv::imwrite(outname, img);
 					}
 				}
@@ -101,7 +107,7 @@ namespace cam {
 					}
 					cv::Mat img(camInfos[i].height, camInfos[i].width, CV_8UC3);
 					for (size_t j = 0; j < this->bufferSize; j++) {
-						char outname[256];
+						char outname[1024];
 						int ratioInd = static_cast<int>(this->bufferImgs[j][i].ratio);
 						cv::Size size = cam::GenCamera::makeDoubleSize(cv::Size(camInfos[i].width, camInfos[i].height),
 							static_cast<cam::GenCamImgRatio>(ratioInd));
@@ -110,7 +116,13 @@ namespace cam {
 							this->bufferImgs[j][i].length,
 							img_d, 0);
 						img_d.download(img);
-						sprintf(outname, "%s/%s_%02d_%05d.jpg", dir.c_str(), _camInfos[i].sn.c_str(), i, j);
+						for(int k = 0;k < 99999;k++)
+						{
+							sprintf(outname, "%s/%s_%02d_%05d.jpg", dir.c_str(), _camInfos[i].sn.c_str(), i, j + k);
+							if(!SysUtil::existFile(outname))
+								break;
+							SysUtil::warningOutput("File Exist! FileName = " + std::string(outname));
+						}
 						cv::imwrite(outname, img);
 					}
 					// release npp jpeg coder

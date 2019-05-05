@@ -77,15 +77,16 @@ int record(int argc, char* argv[]) {
 	int frameNum = 500;
 	int brightness = 40;
 	LxSoc lxsoc;
+	std::string save_dir = "";
 
 	for (int i = 1; i < argc; i++)
 	{
-		std::string t = std::string(argv[i]);
+		std::string t = cam::SysUtil::toLower(std::string(argv[i]));
 		if (t == "help")
 		{
 			std::cout <<
 				"Help:\n" <<
-				"Usage: ./GenCameraDriver [CameraType]([XIMEA],[PTGREY],[STEREO],[FILE [DIR]]) [frame [FrameCount]] [bright [BrightnessLevel]] [wait [WaitPort]] [video] [hard]\n" <<
+				"Usage: ./GenCameraDriver [CameraType]([XIMEA],[PTGREY],[STEREO],[FILE [DIR]]) [frame [FrameCount]] [bright [BrightnessLevel]] [wait [WaitPort]] [video] [hard] [folder [folderName]]\n" <<
 				"Sample1: \n{use ximea & file(video dir = \"./mp4s/\") camera type, save 200 frames, wait on sync signal on port 12344, save jpeg format, set brightness level at 40(default), use hardware sync}\n" <<
 				"./GenCameraDriver XIMEA FILE ./mp4s/ frame 200 wait 12344 hard\n" <<
 				"Sample2: \n{(use ptgrey camera type only, (save 500 frames(default)), save video format, set brightness level at 25)}\n" <<
@@ -93,13 +94,13 @@ int record(int argc, char* argv[]) {
 				std::endl;
 			return 0;
 		}
-		else if (t == "XIMEA" || t == "x")
+		else if (t == "ximea" || t == "x")
 			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::XIMEA_xiC));
-		else if (t == "PTGREY" || t == "PointGrey" || t == "p")
+		else if (t == "ptgrey" || t == "pointgrey" || t == "p")
 			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::PointGrey_u3));
-		else if (t == "Stereo" || t == "STEREO" || t == "s")
+		else if (t == "stereo" || t == "s")
 			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::Stereo));
-		else if (t == "File" || t == "FILE" || t == "f")
+		else if (t == "file" || t == "f")
 		{
 			if (i + 1 >= argc)
 			{
@@ -149,6 +150,17 @@ int record(int argc, char* argv[]) {
 		else if (t == "hard")
 		{
 			hard = true;
+		}
+		else if (t == "folder")//format : folder [folderName]
+		{
+			if (i + 1 >= argc)
+			{
+				cam::SysUtil::errorOutput("when specify folder, please specify Name\nSample: ./GenCameraDriver XIMEA folder hello");
+				return -1;
+			}
+			save_dir = argv[i + 1];
+			i += 1;
+			cam::SysUtil::infoOutput(cv::format("Save Folder = %s", save_dir.c_str()));
 		}
 		else
 		{
@@ -238,7 +250,8 @@ int record(int argc, char* argv[]) {
 		}
 	}
 
-	std::string timeStr = getTimeString();
+	if(save_dir == "")
+		save_dir = getTimeString();
 
 	for (int i = 0; i < A_cameraPtr.size(); i++)
 	{
@@ -246,9 +259,9 @@ int record(int argc, char* argv[]) {
 		std::shared_ptr<cam::GenCamera> cameraPtr = A_cameraPtr[i];
 		cameraPtr->waitForRecordFinish();
 		if(!video)
-			cameraPtr->saveImages(timeStr);
+			cameraPtr->saveImages(save_dir);
 		else
-			cameraPtr->saveVideosGpu(timeStr);
+			cameraPtr->saveVideosGpu(save_dir);
 		for (int i = 0; i < camInfos.size(); i++) {
 			printf("%d:%s\n", i, camInfos[i].sn.c_str());
 			printf("%d: width:%d height:%d\n", i, camInfos[i].width, camInfos[i].height);
