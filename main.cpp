@@ -78,6 +78,7 @@ int record(int argc, char* argv[]) {
 	int brightness = 40;
 	LxSoc lxsoc;
 	std::string save_dir = "";
+	double exposure = 0;
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -86,7 +87,8 @@ int record(int argc, char* argv[]) {
 		{
 			std::cout <<
 				"Help:\n" <<
-				"Usage: ./GenCameraDriver [CameraType]([XIMEA],[PTGREY],[STEREO],[FILE [DIR]]) [frame [FrameCount]] [bright [BrightnessLevel]] [wait [WaitPort]] [video] [hard] [folder [folderName]]\n" <<
+				"Usage: ./GenCameraDriver [CameraType]([XIMEA],[PTGREY],[STEREO],[FILE [DIR]]) [frame [FrameCount]]\n" << 
+				"[bright [BrightnessLevel]] [wait [WaitPort]] [video] [hard] [folder [folderName]] [exposure [expo_time_ms]]\n" <<
 				"Sample1: \n{use ximea & file(video dir = \"./mp4s/\") camera type, save 200 frames, wait on sync signal on port 12344, save jpeg format, set brightness level at 40(default), use hardware sync}\n" <<
 				"./GenCameraDriver XIMEA FILE ./mp4s/ frame 200 wait 12344 hard\n" <<
 				"Sample2: \n{(use ptgrey camera type only, (save 500 frames(default)), save video format, set brightness level at 25)}\n" <<
@@ -108,6 +110,16 @@ int record(int argc, char* argv[]) {
 				return -1;
 			}
 			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::File, argv[i + 1]));
+			i += 1;
+		}
+		else if (t == "exposure")//format : exposure [exposure = %f]
+		{
+			if (i + 1 >= argc)
+			{
+				cam::SysUtil::errorOutput("when specify exposure, please specify exposure time\nSample: ./GenCameraDriver XIMEA exposure 50");
+				return -1;
+			}
+			exposure = atof(argv[i + 1]);
 			i += 1;
 		}
 		else if (t == "bright")//format : bright [brightLevel = %d]
@@ -176,7 +188,15 @@ int record(int argc, char* argv[]) {
 		cam::SysUtil::infoOutput(video ? ("Video Save Mode ON") : ("Images Save Mode ON"));
 		cam::SysUtil::infoOutput(hard ? ("Hardware Sync Mode ON") : ("Hardware Sync Mode OFF"));
 		cam::SysUtil::infoOutput(cv::format("Record Frame Count = %d", frameNum));
-		cam::SysUtil::infoOutput(cv::format("Brightness Autolevel = %d", brightness));
+
+		if(exposure > 1e-2)
+		{
+			cam::SysUtil::infoOutput(cv::format("Exposure Mode ON, Time = %lf ms", exposure));
+		}
+		else
+		{
+			cam::SysUtil::infoOutput(cv::format("Brightness Autolevel = %d", brightness));
+		}
 #ifndef WIN32
 		if(wait)
 			cam::SysUtil::infoOutput(cv::format("Wait Mode ON, will wait on port %d", port));
@@ -198,10 +218,16 @@ int record(int argc, char* argv[]) {
 			cameraPtr->setSyncType(cam::GenCamSyncType::Hardware);
 		cameraPtr->setFPS(-1, 10);
 		cameraPtr->startCapture();
-		//cameraPtr->setExposure(-1, 20000);
-		cameraPtr->setAutoExposure(-1, cam::Status::on);
-		cameraPtr->setAutoExposureLevel(-1, brightness);
-		cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
+		if(exposure > 1e-2)
+		{
+			cameraPtr->setExposure(-1, exposure * 1000);
+		}
+		else
+		{
+			cameraPtr->setAutoExposure(-1, cam::Status::on);
+			cameraPtr->setAutoExposureLevel(-1, brightness);
+			cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
+		}
 		//cameraPtr->setAutoWhiteBalance(-1);
 		cameraPtr->setWhiteBalance(-1, 1.8, 1.0, 2.1); //only valid for ptgrey (ximea only work in rgb mode, but we use raw)
 		cameraPtr->makeSetEffective();
