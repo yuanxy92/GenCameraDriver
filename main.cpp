@@ -79,6 +79,7 @@ int record(int argc, char* argv[]) {
 	LxSoc lxsoc;
 	std::string save_dir = "";
 	double exposure = 0;
+	std::vector<std::pair<std::string, double>> snExp;
 
 	for (int i = 1; i < argc; i++)
 	{
@@ -89,6 +90,7 @@ int record(int argc, char* argv[]) {
 				"Help:\n" <<
 				"Usage: ./GenCameraDriver [CameraType]([XIMEA],[PTGREY],[STEREO],[FILE [DIR]]) [frame [FrameCount]]\n" << 
 				"[bright [BrightnessLevel]] [wait [WaitPort]] [video] [hard] [folder [folderName]] [exposure [expo_time_ms]]\n" <<
+				"[expsn [sn] [expo_time_ms]]\n" <<
 				"Sample1: \n{use ximea & file(video dir = \"./mp4s/\") camera type, save 200 frames, wait on sync signal on port 12344, save jpeg format, set brightness level at 40(default), use hardware sync}\n" <<
 				"./GenCameraDriver XIMEA FILE ./mp4s/ frame 200 wait 12344 hard\n" <<
 				"Sample2: \n{(use ptgrey camera type only, (save 500 frames(default)), save video format, set brightness level at 25)}\n" <<
@@ -111,6 +113,10 @@ int record(int argc, char* argv[]) {
 			}
 			A_cameraPtr.push_back(cam::createCamera(cam::CameraModel::File, argv[i + 1]));
 			i += 1;
+		}
+		else if (t == "video" || t == "v")
+		{
+			video = true;
 		}
 		else if (t == "exposure")//format : exposure [exposure = %f]
 		{
@@ -155,10 +161,6 @@ int record(int argc, char* argv[]) {
 			i += 1;
 			lxsoc.init(port);
 		}
-		else if (t == "video" || t == "v")
-		{
-			video = true;
-		}
 		else if (t == "hard")
 		{
 			hard = true;
@@ -174,6 +176,16 @@ int record(int argc, char* argv[]) {
 			i += 1;
 			cam::SysUtil::infoOutput(cv::format("Save Folder = %s", save_dir.c_str()));
 		}
+		else if (t == "expsn")
+		{
+			if (i + 2 >= argc)
+			{
+				cam::SysUtil::errorOutput("expsn need sn and exposure time\nSample: ./GenCameraDriver XIMEA expsn CACU123 10.0");
+				return -1;
+			}
+			snExp.push_back(std::pair<std::string, double>(argv[i + 1], atof(argv[i + 2])));
+			i += 2;
+		}
 		else
 		{
 			cam::SysUtil::warningOutput("can't recognize argv = " + t);
@@ -188,7 +200,6 @@ int record(int argc, char* argv[]) {
 		cam::SysUtil::infoOutput(video ? ("Video Save Mode ON") : ("Images Save Mode ON"));
 		cam::SysUtil::infoOutput(hard ? ("Hardware Sync Mode ON") : ("Hardware Sync Mode OFF"));
 		cam::SysUtil::infoOutput(cv::format("Record Frame Count = %d", frameNum));
-
 		if(exposure > 1e-2)
 		{
 			cam::SysUtil::infoOutput(cv::format("Exposure Mode ON, Time = %lf ms", exposure));
@@ -201,10 +212,20 @@ int record(int argc, char* argv[]) {
 		if(wait)
 			cam::SysUtil::infoOutput(cv::format("Wait Mode ON, will wait on port %d", port));
 #endif
+		if (snExp.size() > 0)
+		{
+			cam::SysUtil::infoOutput("Exposure Special Setting SN List = ");
+			for (int i = 0; i < snExp.size(); i++)
+			{
+				cam::SysUtil::infoOutput(cv::format("SN = %s, exp = %lf ms", snExp[i].first.c_str(), snExp[i].second));
+			}
+		}
+
 		for (int i = 0; i < A_cameraPtr.size(); i++)
 		{
 			cam::SysUtil::infoOutput("Will add camera type = " + A_cameraPtr[i]->getCamModelString());
 		}
+		cam::SysUtil::sleep(1000);
 	}
 
 	for (int i = 0; i < A_cameraPtr.size(); i++)
@@ -228,6 +249,17 @@ int record(int argc, char* argv[]) {
 			cameraPtr->setAutoExposureLevel(-1, brightness);
 			cameraPtr->setAutoExposureCompensation(-1, cam::Status::on, -0.5);
 		}
+		//special SN setting
+		cameraPtr->getCamInfos(camInfos);
+		for (int j = 0; j < snExp.size(); j++)
+			for (int k = 0; k < camInfos.size(); k++)
+				if (camInfos[k].sn.find(snExp[j].first) != std::string::npos)
+				{
+					cameraPtr->setExposure(k, snExp[j].second * 1000);
+					cam::SysUtil::infoOutput(cv::format(
+						"Found SN = %s (with matching = %s), will set exposure to %lf ms",
+						camInfos[k].sn.c_str(), snExp[j].first.c_str(), snExp[j].second));
+				}
 		//cameraPtr->setAutoWhiteBalance(-1);
 		cameraPtr->setWhiteBalance(-1, 1.8, 1.0, 2.1); //only valid for ptgrey (ximea only work in rgb mode, but we use raw)
 		cameraPtr->makeSetEffective();
