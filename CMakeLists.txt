@@ -227,17 +227,17 @@ set(MY_SOURCE_FILES
     main.cpp
 )
 
-source_group("PointGrey" FILES
+source_group("_PointGrey_" FILES
     PointGrey/PointGreyCamera.h
     PointGrey/PointGreyCamera.cpp 
 )
 
-source_group("XIMEA" FILES
+source_group("_XIMEA_" FILES
     XIMEA/XIMEACamera.h
     XIMEA/XIMEACamera.cpp
 )
 
-source_group("Stereo" FILES
+source_group("_Stereo_" FILES
     Stereo/INIReader.h
     Stereo/StereoCamera.h
     Stereo/StereoCamera.cpp
@@ -248,7 +248,7 @@ source_group("Stereo" FILES
 	Stereo/ExposureFusion.cu
 )
 
-source_group("FileCamera" FILES
+source_group("_FileCamera_" FILES
     FileCamera/FileCamera.h
     FileCamera/FileCamera.cpp
 )
@@ -297,3 +297,42 @@ target_link_libraries(${name}
     ${PTGREY_SDK_LIBRARY_DEBUG} ${XIMEA_SDK_LIBRARY_DEBUG}
     ${PTGREY_SDK_LIBRARY_RELEASE} ${XIMEA_SDK_LIBRARY_RELEASE}
 )
+
+SET(SK_MAJOR_VERSION "1")
+SET(SK_MINOR_VERSION "0")
+add_definitions( -D__SK_MAJOR_VERSION__=${SK_MAJOR_VERSION})
+add_definitions( -D__SK_MINOR_VERSION__=${SK_MINOR_VERSION})
+
+FILE(WRITE ${CMAKE_BINARY_DIR}/skversion.h.in
+"\#define __GIT_VERSION__ \"@VERSION@\"\n"
+)
+IF(EXISTS ${PROJECT_SOURCE_DIR}/.git)
+FILE(WRITE ${CMAKE_BINARY_DIR}/skversion.cmake
+"EXECUTE_PROCESS(
+     COMMAND git log -1 --format=%ad --date=format:%y%m%d.%H%M%S
+	 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+     OUTPUT_VARIABLE VERSION
+     OUTPUT_STRIP_TRAILING_WHITESPACE
+ )
+ CONFIGURE_FILE(\${SRC} \${DST} @ONLY)
+")
+ELSE()
+FILE(WRITE ${CMAKE_BINARY_DIR}/skversion.cmake
+"EXECUTE_PROCESS(
+     COMMAND echo unknown
+     OUTPUT_VARIABLE VERSION
+     OUTPUT_STRIP_TRAILING_WHITESPACE
+ )
+ CONFIGURE_FILE(\${SRC} \${DST} @ONLY)
+")
+ENDIF()
+INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
+#ADD_EXECUTABLE(main main.c)
+ADD_CUSTOM_TARGET(
+    skversion
+    ${CMAKE_COMMAND} -D SRC=${CMAKE_BINARY_DIR}/skversion.h.in
+                     -D DST=${CMAKE_BINARY_DIR}/skversion.h
+                     -P ${CMAKE_BINARY_DIR}/skversion.cmake
+)
+
+ADD_DEPENDENCIES(${name} skversion)
