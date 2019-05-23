@@ -136,7 +136,8 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraFile::bufferImageData() {
-		syncInd = 0;
+		//syncInd = 0;
+		syncInd = startFrameInd;
 		syncIndNext = syncInd + 1;
 		this->bufferImgs.resize(this->bufferSize);
 		this->readers.resize(this->cameraNum);
