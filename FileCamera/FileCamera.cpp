@@ -228,7 +228,7 @@ namespace cam {
 				}
 				else {
 					for (size_t j = 0; j < bufferSize; j++) {
-						this->bufferImgs[j][i].length = sizeof(uchar) * smallImg.rows * smallImg.cols;
+						this->bufferImgs[j][i].length = sizeof(uchar) * smallImg.rows * smallImg.cols * 3;
 						memcpy(this->bufferImgs[j][i].data, smallImg.data,
 							this->bufferImgs[j][i].length);
 					}
@@ -288,14 +288,24 @@ namespace cam {
 			camInfos[i].autoExposure = cam::Status::off;
 			camInfos[i].bayerPattern = GenCamBayerPattern::BayerGRBG;
 			// read width and height from video file
-			cv::VideoCapture reader(videonames[i]);
-			camInfos[i].fps = reader.get(cv::CAP_PROP_FPS);
-			camInfos[i].width = reader.get(cv::CAP_PROP_FRAME_WIDTH) 
-				* this->bufferScale;
-			camInfos[i].height = reader.get(cv::CAP_PROP_FRAME_HEIGHT)
-				* this->bufferScale;
-			frameCounts[i] = reader.get(cv::CAP_PROP_FRAME_COUNT);
-			reader.release();
+			std::string fileExtension = videonames[i].substr(videonames[i].find_last_of(".") + 1);
+			if (fileExtension.compare("avi") == 0 || fileExtension.compare("mp4") == 0) {
+				cv::VideoCapture reader(videonames[i]);
+				camInfos[i].fps = reader.get(cv::CAP_PROP_FPS);
+				camInfos[i].width = reader.get(cv::CAP_PROP_FRAME_WIDTH)
+					* this->bufferScale;
+				camInfos[i].height = reader.get(cv::CAP_PROP_FRAME_HEIGHT)
+					* this->bufferScale;
+				frameCounts[i] = reader.get(cv::CAP_PROP_FRAME_COUNT);
+				reader.release();
+			}
+			else if (fileExtension.compare("jpg") == 0 || fileExtension.compare("png") == 0) {
+				cv::Mat img = cv::imread(videonames[i]);
+				camInfos[i].fps = 1;
+				camInfos[i].width = img.cols * this->bufferScale;
+				camInfos[i].height = img.rows * this->bufferScale;
+				frameCounts[i] = 1;
+			}
 		}
 		return 0;
 	}
