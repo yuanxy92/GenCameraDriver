@@ -349,8 +349,8 @@ namespace cam {
 			finalBufferSize = std::min<int>(finalBufferSize, frameCounts[i]);
 		}
 		if (finalBufferSize != bufferSize) {
-			SysUtil::warningOutput(std::string("Input bufferSize " + bufferSize) + " is too small."
-				+ std::string("change to " + finalBufferSize) + " !");
+			SysUtil::warningOutput(cv::format("Input bufferSize %d is too small change to %d !",
+				bufferSize, finalBufferSize));
 		}
 		this->bufferSize = finalBufferSize;
 		if (this->camPurpose == cam::GenCamCapturePurpose::FileCameraRecording) {
@@ -391,47 +391,53 @@ namespace cam {
 	@return int
 	*/
 	int GenCameraFile::bufferNextFrame() {
-		bool isFinalFrame = false;
-		for (size_t i = 0; i < this->cameraNum; i++) {
-			//SysUtil::infoOutput("Buffer next frame of video " + filenames[i]);
-			cv::Mat img, smallImg, bayerImg;
-			int j = 0;
-			if (hasSyncFile == false) {
-				readers[i] >> img;
-			}
-			else {
-				int frameNum = frameInds[i][syncIndNext] - frameInds[i][syncInd];
-				for (int k = 0; k < frameNum; k++) {
+		std::string fileExtension = videonames[0].substr(videonames[0].find_last_of(".") + 1);
+		if (fileExtension.compare("avi") == 0 || fileExtension.compare("mp4") == 0) {
+			bool isFinalFrame = false;
+			for (size_t i = 0; i < this->cameraNum; i++) {
+				//SysUtil::infoOutput("Buffer next frame of video " + filenames[i]);
+				cv::Mat img, smallImg, bayerImg;
+				int j = 0;
+				if (hasSyncFile == false) {
 					readers[i] >> img;
 				}
-			}
-			if (img.rows > 0) {
-				if (img.rows != camInfos[i].height || img.cols != camInfos[i].width) {
-					cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
+				else {
+					int frameNum = frameInds[i][syncIndNext] - frameInds[i][syncInd];
+					for (int k = 0; k < frameNum; k++) {
+						readers[i] >> img;
+					}
 				}
-				else smallImg = img;
-				//bayerImg = colorBGR2BayerRG(smallImg);
-				this->bufferImgs[j][i].length = sizeof(uchar) * smallImg.rows * smallImg.cols * 3;
-				memcpy(this->bufferImgs[j][i].data, smallImg.data,
-					this->bufferImgs[j][i].length);
+				if (img.rows > 0) {
+					if (img.rows != camInfos[i].height || img.cols != camInfos[i].width) {
+						cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
+					}
+					else smallImg = img;
+					//bayerImg = colorBGR2BayerRG(smallImg);
+					this->bufferImgs[j][i].length = sizeof(uchar) * smallImg.rows * smallImg.cols * 3;
+					memcpy(this->bufferImgs[j][i].data, smallImg.data,
+						this->bufferImgs[j][i].length);
+				}
+				else {
+					isFinalFrame = true;
+					break;
+				}
 			}
-			else {
-				isFinalFrame = true;
-				break;
+			if (hasSyncFile) {
+				syncInd++;
+				syncIndNext++;
+				if (syncIndNext >= frameInds[0].size()) {
+					isFinalFrame = true;
+				}
 			}
-		}
-		if (hasSyncFile) {
-			syncInd++;
-			syncIndNext++;
-			if (syncIndNext >= frameInds[0].size()) {
-				isFinalFrame = true;
+			if (isFinalFrame) {
+				for (size_t i = 0; i < this->cameraNum; i++)
+					readers[i].release();
+				return 1;
 			}
+			return 0;
 		}
-		if (isFinalFrame) {
-			for (size_t i = 0; i < this->cameraNum; i++)
-				readers[i].release();
-			return 1;
+		else {
+			return 0;
 		}
-		return 0;
 	}
 };
