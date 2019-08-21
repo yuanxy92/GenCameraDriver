@@ -213,7 +213,8 @@ namespace cam {
 					readers[i].release();
 				}
 			}
-			else if (fileExtension.compare("jpg") == 0 || fileExtension.compare("png") == 0) {
+			else if (fileExtension.compare("jpg") == 0 || fileExtension.compare("png") == 0 ||
+				fileExtension.compare("JPG") == 0 || fileExtension.compare("PNG") == 0) {
 				cv::Mat img = cv::imread(videonames[i]);
 				cv::Mat smallImg, bayerImg;
 				cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
@@ -299,7 +300,8 @@ namespace cam {
 				frameCounts[i] = reader.get(cv::CAP_PROP_FRAME_COUNT);
 				reader.release();
 			}
-			else if (fileExtension.compare("jpg") == 0 || fileExtension.compare("png") == 0) {
+			else if (fileExtension.compare("jpg") == 0 || fileExtension.compare("png") == 0 ||
+				fileExtension.compare("JPG") == 0 || fileExtension.compare("PNG") == 0) {
 				cv::Mat img = cv::imread(videonames[i]);
 				camInfos[i].fps = 1;
 				camInfos[i].width = img.cols * this->bufferScale;
