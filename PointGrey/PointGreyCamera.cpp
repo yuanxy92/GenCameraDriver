@@ -87,8 +87,8 @@ namespace cam {
 				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
 				//pCam->EndAcquisition();
 				Spinnaker::GenApi::INodeMap & sNodeMap = pCam->GetTLStreamNodeMap();
-				Spinnaker::GenApi::CIntegerPtr StreamNode = sNodeMap.GetNode("StreamDefaultBufferCount");
-				StreamNode->SetValue(3);
+				//Spinnaker::GenApi::CIntegerPtr StreamNode = sNodeMap.GetNode("StreamDefaultBufferCount");
+				//StreamNode->SetValue(3);
 				Spinnaker::GenApi::CEnumerationPtr StreamModeNode = sNodeMap.GetNode("StreamBufferHandlingMode");
 				StreamModeNode->SetIntValue(StreamModeNode->GetEntryByName("OldestFirst")->GetValue());
 
@@ -125,7 +125,6 @@ namespace cam {
 				// Set acquisition mode to continuous
 				Spinnaker::GenApi::CEnumerationPtr acquisitionModePtr = nodeMap.GetNode("AcquisitionMode");
 				acquisitionModePtr->SetIntValue(acquisitionModePtr->GetEntryByName("Continuous")->GetValue());
-
 				// Set auto exposure and auto gain
 				Spinnaker::GenApi::CEnumerationPtr exposureModePtr = nodeMap.GetNode("ExposureMode");
 				exposureModePtr->SetIntValue(exposureModePtr->GetEntryByName("Timed")->GetValue());
