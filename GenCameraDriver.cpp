@@ -99,7 +99,7 @@ namespace cam {
 						this->bufferImgs[j][i].length,
 						img_d, 0);
 					img_d.download(img);
-					sprintf(outname, "%s/%s_%02d_%05d.jpg", dir.c_str(), _camInfos[i].sn.c_str(), i, j);
+					sprintf(outname, "%s/%s_%02d_%05d.png", dir.c_str(), _camInfos[i].sn.c_str(), i, j);
 					cv::imwrite(outname, img);
 				}
 			}
