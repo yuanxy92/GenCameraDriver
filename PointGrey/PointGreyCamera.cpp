@@ -87,8 +87,8 @@ namespace cam {
 				Spinnaker::CameraPtr pCam = camList.GetByIndex(i);
 				//pCam->EndAcquisition();
 				Spinnaker::GenApi::INodeMap & sNodeMap = pCam->GetTLStreamNodeMap();
-				Spinnaker::GenApi::CIntegerPtr StreamNode = sNodeMap.GetNode("StreamDefaultBufferCount");
-				StreamNode->SetValue(3);
+				//Spinnaker::GenApi::CIntegerPtr StreamNode = sNodeMap.GetNode("StreamDefaultBufferCount");
+				//StreamNode->SetValue(3);
 				Spinnaker::GenApi::CEnumerationPtr StreamModeNode = sNodeMap.GetNode("StreamBufferHandlingMode");
 				StreamModeNode->SetIntValue(StreamModeNode->GetEntryByName("OldestFirst")->GetValue());
 
@@ -200,13 +200,13 @@ namespace cam {
 					whiteBalanceAutoPtr->SetIntValue(whiteBalanceAutoPtr->GetEntryByName("Off")->GetValue());
 				}
 				// get white balance gain
-				Spinnaker::GenApi::CFloatPtr balanceRatioPtr = nodeMap.GetNode("BalanceRatio");
-				Spinnaker::GenApi::CEnumerationPtr balanceRatioSelectorPtr = nodeMap.GetNode("BalanceRatioSelector");
-				balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Blue")->GetValue());
-				camInfos[i].blueGain = balanceRatioPtr->GetValue();
-				balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Red")->GetValue());
-				camInfos[i].redGain = balanceRatioPtr->GetValue();
-				camInfos[i].greenGain = 1.0f;
+				//Spinnaker::GenApi::CFloatPtr balanceRatioPtr = nodeMap.GetNode("BalanceRatio");
+				//Spinnaker::GenApi::CEnumerationPtr balanceRatioSelectorPtr = nodeMap.GetNode("BalanceRatioSelector");
+				//balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Blue")->GetValue());
+				//camInfos[i].blueGain = balanceRatioPtr->GetValue();
+				//balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Red")->GetValue());
+				//camInfos[i].redGain = balanceRatioPtr->GetValue();
+				//camInfos[i].greenGain = 1.0f;
 				// set raw type, after white balance
 				camInfos[i].isWBRaw = true;
 			}
@@ -379,13 +379,13 @@ namespace cam {
 				redGain = redGain / greenGain;
 				blueGain = blueGain / greenGain;
 				greenGain = 1.0f;
-				// get white balance gain
-				Spinnaker::GenApi::CFloatPtr balanceRatioPtr = nodeMap.GetNode("BalanceRatio");
-				Spinnaker::GenApi::CEnumerationPtr balanceRatioSelectorPtr = nodeMap.GetNode("BalanceRatioSelector");
-				balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Blue")->GetValue());
-				balanceRatioPtr->SetValue(blueGain);
-				balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Red")->GetValue());
-				balanceRatioPtr->SetValue(redGain);
+				//// get white balance gain
+				//Spinnaker::GenApi::CFloatPtr balanceRatioPtr = nodeMap.GetNode("BalanceRatio");
+				//Spinnaker::GenApi::CEnumerationPtr balanceRatioSelectorPtr = nodeMap.GetNode("BalanceRatioSelector");
+				//balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Blue")->GetValue());
+				//balanceRatioPtr->SetValue(blueGain);
+				//balanceRatioSelectorPtr->SetIntValue(balanceRatioSelectorPtr->GetEntryByName("Red")->GetValue());
+				//balanceRatioPtr->SetValue(redGain);
 			}
 		}
 		catch (Spinnaker::Exception &e) {
