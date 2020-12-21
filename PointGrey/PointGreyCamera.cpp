@@ -529,13 +529,13 @@ namespace cam {
 			// Select camera
 			Spinnaker::CameraPtr pCam = camList.GetByIndex(camInd);
 			Spinnaker::GenApi::INodeMap & nodeMap = pCam->GetNodeMap();
-			// turn off auto EV
-			Spinnaker::GenApi::CEnumerationPtr evAuto = nodeMap.GetNode("pgrExposureCompensationAuto");
-			if (evAuto) {
-				evAuto->SetIntValue(evAuto->GetEntryByName("Off")->GetValue());
-			}
+			//// turn off auto EV
+			//Spinnaker::GenApi::CEnumerationPtr evAuto = nodeMap.GetNode("pgrExposureCompensationAuto");
+			//if (evAuto) {
+			//	evAuto->SetIntValue(evAuto->GetEntryByName("Off")->GetValue());
+			//}
 			// get value
-			Spinnaker::GenApi::CFloatPtr evPtr = nodeMap.GetNode("pgrExposureCompensation");
+			Spinnaker::GenApi::CFloatPtr evPtr = nodeMap.GetNode("AutoExposureEVCompensation");
 			float evVal = evPtr->GetValue();
 			// set new EV value
 			float relativeEV;
