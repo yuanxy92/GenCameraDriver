@@ -11,6 +11,7 @@ Implementation of file camera
 #include <unistd.h>
 #endif
 #include "FileCamera.h"
+#include <opencv2\bgsegm.hpp>
 
 namespace cam {
 
@@ -409,6 +410,23 @@ namespace cam {
 						readers[i] >> img;
 					}
 				}
+
+				//// extract background
+				////cv::Ptr<cv::bgsegm::BackgroundSubtractorGMG> backSubPtr = cv::bgsegm::createBackgroundSubtractorGMG();
+				//cv::Ptr<cv::BackgroundSubtractorMOG2> backSubPtr = cv::createBackgroundSubtractorMOG2();
+				//// apply background subtractor
+				//cv::Mat mask;
+				//for (int backidx = 0; backidx < 40; backidx++) {
+				//	backSubPtr->apply(img, mask, -1);
+				//	readers[i] >> img;
+				//	readers[i] >> img;
+				//	readers[i] >> img;
+				//	readers[i] >> img;
+				//	readers[i] >> img;
+				//	readers[i] >> img;
+				//}
+				//backSubPtr->getBackgroundImage(img);
+
 				if (img.rows > 0) {
 					if (img.rows != camInfos[i].height || img.cols != camInfos[i].width) {
 						cv::resize(img, smallImg, cv::Size(camInfos[i].width, camInfos[i].height));
